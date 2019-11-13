@@ -1,0 +1,7 @@
+/single-line-diagram-model/target/
+/single-line-diagram-server/target/
+/target/
+
+# IntelliJ
+/.idea
+*.iml
