@@ -1,4 +1,10 @@
-package com.powsybl.single.line.diagram.server;
+/**
+ * Copyright (c) 2019, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
@@ -29,6 +35,12 @@ import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static com.powsybl.sld.server.SingleLineDiagramApi.DiagramRequest;
+
+/**
+ * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
+ */
+
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class SingleLineDiagramService {
@@ -49,6 +61,42 @@ class SingleLineDiagramService {
         return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, false, false);
     }
 
+    private StreamingResponseBody generateDiagramStream(String networkId, String voltageLevelId, DiagramRequest diagramRequested) {
+        Network network = getNetwork(networkId);
+
+        VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId);
+
+        try (ByteArrayOutputStream svgByteArrayOutputStream = new ByteArrayOutputStream();
+             ByteArrayOutputStream metadataByteArrayOutputStream = new ByteArrayOutputStream();
+             OutputStreamWriter svgWriter = new OutputStreamWriter(svgByteArrayOutputStream);
+             OutputStreamWriter metadataWriter = new OutputStreamWriter(metadataByteArrayOutputStream)) {
+
+            DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, LAYOUT_PARAMETERS);
+            DefaultDiagramInitialValueProvider defaultDiagramInitialValueProvider = new DefaultDiagramInitialValueProvider(network);
+            DefaultDiagramStyleProvider defaultDiagramStyleProvider = new DefaultDiagramStyleProvider();
+            DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY);
+
+            voltageLevelDiagram.writeSvg(
+                    "id",
+                    defaultSVGWriter,
+                    defaultDiagramInitialValueProvider,
+                    defaultDiagramStyleProvider,
+                    defaultNodeLabelConfiguration,
+                    svgWriter,
+                    metadataWriter);
+
+            if (diagramRequested.equals(DiagramRequest.SVG)) {
+                return outputStream -> outputStream.write(svgByteArrayOutputStream.toByteArray());
+            } else if (diagramRequested.equals(DiagramRequest.METADATA)) {
+                return outputStream -> outputStream.write(metadataByteArrayOutputStream.toByteArray());
+            }
+            return null;
+
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     private Network getNetwork(String networkId) {
         try {
             return networkStoreService.getNetwork(networkId);
@@ -58,71 +106,19 @@ class SingleLineDiagramService {
     }
 
     ResponseEntity<StreamingResponseBody> getVoltageLevelSvg(String networkId, String voltageLevelId) {
-        Network network = getNetwork(networkId);
 
-        VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId);
-
-        ByteArrayOutputStream svgByteArrayOutputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream metadataByteArrayOutputStream = new ByteArrayOutputStream();
-        OutputStreamWriter svgWriter = new OutputStreamWriter(svgByteArrayOutputStream);
-        OutputStreamWriter metadataWriter = new OutputStreamWriter(metadataByteArrayOutputStream);
-
-        DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, LAYOUT_PARAMETERS);
-        DefaultDiagramInitialValueProvider defaultDiagramInitialValueProvider = new DefaultDiagramInitialValueProvider(network);
-        DefaultDiagramStyleProvider defaultDiagramStyleProvider = new DefaultDiagramStyleProvider();
-        DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY);
-
-        voltageLevelDiagram.writeSvg(
-                "id",
-                defaultSVGWriter,
-                defaultDiagramInitialValueProvider,
-                defaultDiagramStyleProvider,
-                defaultNodeLabelConfiguration,
-                svgWriter,
-                metadataWriter);
-
-        StreamingResponseBody stream = outputStream -> outputStream.write(svgByteArrayOutputStream.toByteArray());
-
-        try {
-            svgWriter.close();
-            metadataWriter.close();
-        } catch (IOException e) {
+        StreamingResponseBody stream = generateDiagramStream(networkId, voltageLevelId, DiagramRequest.SVG);
+        if (stream == null) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_XML).body(stream);
     }
 
     ResponseEntity<StreamingResponseBody> getVoltageLevelMetadata(String networkId, String voltageLevelId) {
-        Network network = getNetwork(networkId);
-
-        VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId);
-
-        ByteArrayOutputStream svgByteArrayOutputStream = new ByteArrayOutputStream();
-        ByteArrayOutputStream metadataByteArrayOutputStream = new ByteArrayOutputStream();
-        OutputStreamWriter svgWriter = new OutputStreamWriter(svgByteArrayOutputStream);
-        OutputStreamWriter metadataWriter = new OutputStreamWriter(metadataByteArrayOutputStream);
-
-        DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, LAYOUT_PARAMETERS);
-        DefaultDiagramInitialValueProvider defaultDiagramInitialValueProvider = new DefaultDiagramInitialValueProvider(network);
-        DefaultDiagramStyleProvider defaultDiagramStyleProvider = new DefaultDiagramStyleProvider();
-        DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY);
-
-        voltageLevelDiagram.writeSvg(
-                "id",
-                defaultSVGWriter,
-                defaultDiagramInitialValueProvider,
-                defaultDiagramStyleProvider,
-                defaultNodeLabelConfiguration,
-                svgWriter,
-                metadataWriter);
-
-        StreamingResponseBody stream = outputStream -> outputStream.write(metadataByteArrayOutputStream.toByteArray());
-
-        try {
-            svgWriter.close();
-            metadataWriter.close();
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        StreamingResponseBody stream = generateDiagramStream(networkId, voltageLevelId, DiagramRequest.METADATA);
+        if (stream == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(stream);
@@ -150,25 +146,23 @@ class SingleLineDiagramService {
                 svgWriter,
                 metadataWriter);
 
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(byteArrayOutputStream);
-        ZipOutputStream zipOutputStream = new ZipOutputStream(bufferedOutputStream);
+        ZipOutputStream zipOutputStream = new ZipOutputStream(bufferedOutputStream)) {
 
-        zipOutputStream.putNextEntry(new ZipEntry("svg"));
-        IOUtils.copy(new StringReader(svgWriter.toString()), zipOutputStream);
-        zipOutputStream.closeEntry();
+            zipOutputStream.putNextEntry(new ZipEntry("svg"));
+            IOUtils.copy(new StringReader(svgWriter.toString()), zipOutputStream);
+            zipOutputStream.closeEntry();
 
-        zipOutputStream.putNextEntry(new ZipEntry("metadata"));
-        IOUtils.copy(new StringReader(metadataWriter.toString()), zipOutputStream);
-        zipOutputStream.closeEntry();
+            zipOutputStream.putNextEntry(new ZipEntry("metadata"));
+            IOUtils.copy(new StringReader(metadataWriter.toString()), zipOutputStream);
+            zipOutputStream.closeEntry();
 
-        zipOutputStream.finish();
-        zipOutputStream.flush();
-        zipOutputStream.close();
+            zipOutputStream.finish();
+            zipOutputStream.flush();
 
-        bufferedOutputStream.close();
-        byteArrayOutputStream.close();
+            return byteArrayOutputStream.toByteArray();
+        }
 
-        return byteArrayOutputStream.toByteArray();
     }
 }

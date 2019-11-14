@@ -1,6 +1,4 @@
-/single-line-diagram-model/target/
-/single-line-diagram-server/target/
-/target/
+target/
 
 # IntelliJ
 /.idea

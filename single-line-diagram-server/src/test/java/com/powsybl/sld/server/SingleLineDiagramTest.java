@@ -1,4 +1,4 @@
-package com.powsybl.single.line.diagram.server;
+package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
@@ -44,7 +44,7 @@ public class SingleLineDiagramTest {
         given(networkStoreService.getNetwork("test")).willReturn(createNetwork());
         given(networkStoreService.getNetwork("notFound")).willThrow(new PowsyblException());
 
-        MvcResult result = mvc.perform(get("/v1/voltage-level-diagram-server/svg/{networkId}/{voltageLevelId}/", "test", "vlFr1A"))
+        MvcResult result = mvc.perform(get("/v1/svg/{networkId}/{voltageLevelId}/", "test", "vlFr1A"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_XML_VALUE))
                 .andReturn();
@@ -52,35 +52,35 @@ public class SingleLineDiagramTest {
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
         //voltage level not existing
-        mvc.perform(get("/v1/voltage-level-diagram-server/svg/{networkId}/{voltageLevelId}/", "test", "notFound"))
+        mvc.perform(get("/v1/svg/{networkId}/{voltageLevelId}/", "test", "notFound"))
                 .andExpect(status().isNoContent());
 
         //network not existing
-        mvc.perform(get("/v1/voltage-level-diagram-server/svg/{networkId}/{voltageLevelId}/", "notFound", "vlFr1A"))
+        mvc.perform(get("/v1/svg/{networkId}/{voltageLevelId}/", "notFound", "vlFr1A"))
                 .andExpect(status().isNoContent());
 
-        mvc.perform(get("/v1/voltage-level-diagram-server/metadata/{networkId}/{voltageLevelId}/", "test", "vlFr1A"))
+        mvc.perform(get("/v1/metadata/{networkId}/{voltageLevelId}/", "test", "vlFr1A"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
 
         //voltage level not existing
-        mvc.perform(get("/v1/voltage-level-diagram-server/metadata/{networkId}/{voltageLevelId}/", "test", "NotFound"))
+        mvc.perform(get("/v1/metadata/{networkId}/{voltageLevelId}/", "test", "NotFound"))
                 .andExpect(status().isNoContent());
 
         //network not existing
-        mvc.perform(get("/v1/voltage-level-diagram-server/metadata/{networkId}/{voltageLevelId}/", "notFound", "vlFr1A"))
+        mvc.perform(get("/v1/metadata/{networkId}/{voltageLevelId}/", "notFound", "vlFr1A"))
                 .andExpect(status().isNoContent());
 
-        mvc.perform(get("/v1/voltage-level-diagram-server/svg-and-metadata/{networkId}/{voltageLevelId}/", "test", "vlFr1A"))
+        mvc.perform(get("/v1/svg-and-metadata/{networkId}/{voltageLevelId}/", "test", "vlFr1A"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/zip"));
 
         //voltage level not existing
-        mvc.perform(get("/v1/voltage-level-diagram-server/svg-and-metadata/{networkId}/{voltageLevelId}/", "test", "NotFound"))
+        mvc.perform(get("/v1/svg-and-metadata/{networkId}/{voltageLevelId}/", "test", "NotFound"))
                 .andExpect(status().isNoContent());
 
         //network not existing
-        mvc.perform(get("/v1/voltage-level-diagram-server/svg-and-metadata/{networkId}/{voltageLevelId}/", "notFound", "vlFr1A"))
+        mvc.perform(get("/v1/svg-and-metadata/{networkId}/{voltageLevelId}/", "notFound", "vlFr1A"))
                 .andExpect(status().isNoContent());
 
     }
