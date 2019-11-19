@@ -20,7 +20,7 @@ jobs:
           ref: refs/heads/master
 
       - name: Build and install network store client with Maven
-        run: mvn --batch-mode -Pclient install
+        run: mvn --batch-mode -Pclient install --file ../powsybl-network-store/pom.xml powsybl-network-store
 
       - name: Checkout sources
         uses: actions/checkout@v1
