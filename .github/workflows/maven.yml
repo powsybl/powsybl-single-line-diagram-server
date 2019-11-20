@@ -29,7 +29,6 @@ jobs:
         run: mvn --batch-mode package
 
       - name: Run SonarCloud analysis
-        if: matrix.os == 'ubuntu-latest'
         run: >
           mvn --batch-mode -Pjacoco package sonar:sonar
           -Dsonar.host.url=https://sonarcloud.io
