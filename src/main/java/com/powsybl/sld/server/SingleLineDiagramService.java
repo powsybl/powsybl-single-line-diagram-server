@@ -40,7 +40,6 @@ import static com.powsybl.sld.server.SingleLineDiagramApi.DiagramRequest;
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
  */
-
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class SingleLineDiagramService {

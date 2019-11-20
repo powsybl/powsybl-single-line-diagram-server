@@ -9,7 +9,6 @@ package com.powsybl.sld.server;
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
  */
-
 public final class SingleLineDiagramApi {
 
     private SingleLineDiagramApi() {

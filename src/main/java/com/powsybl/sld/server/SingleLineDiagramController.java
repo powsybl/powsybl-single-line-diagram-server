@@ -21,7 +21,6 @@ import java.io.*;
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
  */
-
 @RestController
 @RequestMapping(value = "/" + SingleLineDiagramApi.API_VERSION + "/")
 @Api(tags = "single-line-diagram-server")

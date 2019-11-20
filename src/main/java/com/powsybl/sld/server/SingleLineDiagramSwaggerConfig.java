@@ -21,7 +21,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
  */
-
 @Configuration
 @EnableSwagger2
 public class SingleLineDiagramSwaggerConfig {
@@ -44,7 +43,7 @@ public class SingleLineDiagramSwaggerConfig {
     }
 
     // Only select apis that matches the given Predicates.
-    private Predicate<String> paths() {
+    private static Predicate<String> paths() {
         // Match all paths except /error
         return Predicates.and(PathSelectors.regex("/" + ".*"),
                 Predicates.not(PathSelectors.regex("/error.*")));
