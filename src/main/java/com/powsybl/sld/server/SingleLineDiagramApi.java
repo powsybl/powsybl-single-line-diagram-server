@@ -15,10 +15,4 @@ public final class SingleLineDiagramApi {
     }
 
     public static final String API_VERSION = "v1";
-
-    public enum DiagramRequest {
-        SVG,
-        METADATA
-    }
-
 }
