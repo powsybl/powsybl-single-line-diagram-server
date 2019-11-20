@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -58,7 +57,7 @@ public class SingleLineDiagramController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level svg and metadata")})
     public @ResponseBody byte[] getVoltageLevelFullSvg(
             @ApiParam(value = "Network ID") @PathVariable("networkId") String networkId,
-            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId) throws IOException {
+            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId) {
         LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkId = {}, voltageLevelID = {}", networkId, voltageLevelId);
 
         return singleLineDiagramService.generateSvgAndMetadataZip(networkId, voltageLevelId);
