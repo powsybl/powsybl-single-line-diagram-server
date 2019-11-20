@@ -12,7 +12,6 @@ package com.powsybl.sld.server;
 public final class SingleLineDiagramApi {
 
     private SingleLineDiagramApi() {
-
     }
 
     public static final String API_VERSION = "v1";

@@ -21,7 +21,6 @@ import com.powsybl.sld.svg.DefaultDiagramInitialValueProvider;
 import com.powsybl.sld.svg.DefaultDiagramStyleProvider;
 import com.powsybl.sld.svg.DefaultNodeLabelConfiguration;
 import com.powsybl.sld.svg.DefaultSVGWriter;
-import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -32,6 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -45,6 +45,7 @@ import static com.powsybl.sld.server.SingleLineDiagramApi.DiagramRequest;
 class SingleLineDiagramService {
 
     private static final ResourcesComponentLibrary COMPONENT_LIBRARY = new ResourcesComponentLibrary("/ConvergenceLibrary");
+
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters();
 
     @Autowired
@@ -76,7 +77,7 @@ class SingleLineDiagramService {
             DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY);
 
             voltageLevelDiagram.writeSvg(
-                    "id",
+                    "",
                     defaultSVGWriter,
                     defaultDiagramInitialValueProvider,
                     defaultDiagramStyleProvider,
@@ -84,15 +85,18 @@ class SingleLineDiagramService {
                     svgWriter,
                     metadataWriter);
 
-            if (diagramRequested.equals(DiagramRequest.SVG)) {
-                return outputStream -> outputStream.write(svgByteArrayOutputStream.toByteArray());
-            } else if (diagramRequested.equals(DiagramRequest.METADATA)) {
-                return outputStream -> outputStream.write(metadataByteArrayOutputStream.toByteArray());
-            }
-            return null;
+            switch (diagramRequested) {
+                case SVG:
+                    return outputStream -> outputStream.write(svgByteArrayOutputStream.toByteArray());
 
+                case METADATA:
+                    return outputStream -> outputStream.write(metadataByteArrayOutputStream.toByteArray());
+
+                default:
+                    throw new IllegalStateException("Unknown diagram requested value: " + diagramRequested);
+            }
         } catch (IOException e) {
-            return null;
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -105,21 +109,12 @@ class SingleLineDiagramService {
     }
 
     ResponseEntity<StreamingResponseBody> getVoltageLevelSvg(String networkId, String voltageLevelId) {
-
         StreamingResponseBody stream = generateDiagramStream(networkId, voltageLevelId, DiagramRequest.SVG);
-        if (stream == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_XML).body(stream);
     }
 
     ResponseEntity<StreamingResponseBody> getVoltageLevelMetadata(String networkId, String voltageLevelId) {
         StreamingResponseBody stream = generateDiagramStream(networkId, voltageLevelId, DiagramRequest.METADATA);
-        if (stream == null) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(stream);
     }
 
@@ -137,7 +132,7 @@ class SingleLineDiagramService {
         DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY);
 
         voltageLevelDiagram.writeSvg(
-                "id",
+                "",
                 defaultSVGWriter,
                 defaultDiagramInitialValueProvider,
                 defaultDiagramStyleProvider,
@@ -146,15 +141,14 @@ class SingleLineDiagramService {
                 metadataWriter);
 
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(byteArrayOutputStream);
-        ZipOutputStream zipOutputStream = new ZipOutputStream(bufferedOutputStream)) {
+             ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(byteArrayOutputStream))) {
 
             zipOutputStream.putNextEntry(new ZipEntry("svg"));
-            IOUtils.copy(new StringReader(svgWriter.toString()), zipOutputStream);
+            zipOutputStream.write(svgWriter.toString().getBytes(StandardCharsets.UTF_8));
             zipOutputStream.closeEntry();
 
             zipOutputStream.putNextEntry(new ZipEntry("metadata"));
-            IOUtils.copy(new StringReader(metadataWriter.toString()), zipOutputStream);
+            zipOutputStream.write(metadataWriter.toString().getBytes(StandardCharsets.UTF_8));
             zipOutputStream.closeEntry();
 
             zipOutputStream.finish();
@@ -162,6 +156,5 @@ class SingleLineDiagramService {
 
             return byteArrayOutputStream.toByteArray();
         }
-
     }
 }
