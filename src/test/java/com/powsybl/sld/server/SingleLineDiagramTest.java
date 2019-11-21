@@ -22,6 +22,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.BDDMockito.given;
@@ -50,10 +51,13 @@ public class SingleLineDiagramTest {
 
     @Test
     public void test() throws Exception {
-        given(networkStoreService.getNetwork("test")).willReturn(createNetwork());
-        given(networkStoreService.getNetwork("notFound")).willThrow(new PowsyblException());
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        UUID notFoundNetworkId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
-        MvcResult result = mvc.perform(get("/v1/svg/{networkId}/{voltageLevelId}/", "test", "vlFr1A"))
+        given(networkStoreService.getNetwork(testNetworkId)).willReturn(createNetwork());
+        given(networkStoreService.getNetwork(notFoundNetworkId)).willThrow(new PowsyblException());
+
+        MvcResult result = mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_XML))
                 .andReturn();
@@ -61,37 +65,36 @@ public class SingleLineDiagramTest {
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
         //voltage level not existing
-        mvc.perform(get("/v1/svg/{networkId}/{voltageLevelId}/", "test", "notFound"))
+        mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}/", testNetworkId, "notFound"))
                 .andExpect(status().isNoContent());
 
         //network not existing
-        mvc.perform(get("/v1/svg/{networkId}/{voltageLevelId}/", "notFound", "vlFr1A"))
+        mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}/", notFoundNetworkId, "vlFr1A"))
                 .andExpect(status().isNoContent());
 
-        mvc.perform(get("/v1/metadata/{networkId}/{voltageLevelId}/", "test", "vlFr1A"))
+        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         //voltage level not existing
-        mvc.perform(get("/v1/metadata/{networkId}/{voltageLevelId}/", "test", "NotFound"))
+        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "NotFound"))
                 .andExpect(status().isNoContent());
 
         //network not existing
-        mvc.perform(get("/v1/metadata/{networkId}/{voltageLevelId}/", "notFound", "vlFr1A"))
+        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}/", notFoundNetworkId, "vlFr1A"))
                 .andExpect(status().isNoContent());
 
-        mvc.perform(get("/v1/svg-and-metadata/{networkId}/{voltageLevelId}/", "test", "vlFr1A"))
+        mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/zip"));
 
         //voltage level not existing
-        mvc.perform(get("/v1/svg-and-metadata/{networkId}/{voltageLevelId}/", "test", "NotFound"))
+        mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "NotFound"))
                 .andExpect(status().isNoContent());
 
         //network not existing
-        mvc.perform(get("/v1/svg-and-metadata/{networkId}/{voltageLevelId}/", "notFound", "vlFr1A"))
+        mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", notFoundNetworkId, "vlFr1A"))
                 .andExpect(status().isNoContent());
-
     }
 
     public static Network createNetwork() {

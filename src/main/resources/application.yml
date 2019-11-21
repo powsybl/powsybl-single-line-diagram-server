@@ -1,6 +1,6 @@
 spring:
   application:
-    name: single-line-diagram
+    name: single-line-diagram-server
 
 server:
   port: 5005
