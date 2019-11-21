@@ -30,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -47,11 +48,11 @@ class SingleLineDiagramService {
     @Autowired
     private NetworkStoreService networkStoreService;
 
-    private Network getNetwork(String networkId) {
+    private Network getNetwork(UUID networkUuid) {
         try {
-            return networkStoreService.getNetwork(networkId);
+            return networkStoreService.getNetwork(networkUuid);
         } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Network '" + networkId + "' not found");
+            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Network '" + networkUuid + "' not found");
         }
     }
 
@@ -65,8 +66,8 @@ class SingleLineDiagramService {
         return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, false, false);
     }
 
-    Pair<String, String> generateSvgAndMetadata(String networkId, String voltageLevelId) {
-        Network network = getNetwork(networkId);
+    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId) {
+        Network network = getNetwork(networkUuid);
 
         VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId);
 
@@ -92,8 +93,8 @@ class SingleLineDiagramService {
         }
     }
 
-    byte[] generateSvgAndMetadataZip(String networkId, String voltageLevelId) {
-        Pair<String, String> svgAndMetadata = generateSvgAndMetadata(networkId, voltageLevelId);
+    byte[] generateSvgAndMetadataZip(UUID networkUuid, String voltageLevelId) {
+        Pair<String, String> svgAndMetadata = generateSvgAndMetadata(networkUuid, voltageLevelId);
 
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(byteArrayOutputStream))) {
