@@ -59,7 +59,7 @@ public class SingleLineDiagramTest {
 
         MvcResult result = mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_XML))
+                .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
                 .andReturn();
 
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
@@ -86,7 +86,7 @@ public class SingleLineDiagramTest {
 
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/zip"));
+                .andExpect(content().contentType(SingleLineDiagramController.APPLICATION_ZIP));
 
         //voltage level not existing
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "NotFound"))

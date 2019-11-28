@@ -99,11 +99,11 @@ class SingleLineDiagramService {
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(byteArrayOutputStream))) {
 
-            zipOutputStream.putNextEntry(new ZipEntry("svg"));
+            zipOutputStream.putNextEntry(new ZipEntry(voltageLevelId + ".svg"));
             zipOutputStream.write(svgAndMetadata.getLeft().getBytes(StandardCharsets.UTF_8));
             zipOutputStream.closeEntry();
 
-            zipOutputStream.putNextEntry(new ZipEntry("metadata"));
+            zipOutputStream.putNextEntry(new ZipEntry(voltageLevelId + ".json"));
             zipOutputStream.write(svgAndMetadata.getRight().getBytes(StandardCharsets.UTF_8));
             zipOutputStream.closeEntry();
 
