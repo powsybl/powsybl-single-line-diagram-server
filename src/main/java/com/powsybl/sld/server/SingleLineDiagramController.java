@@ -10,7 +10,10 @@ import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
@@ -28,10 +31,13 @@ public class SingleLineDiagramController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SingleLineDiagramController.class);
 
+    static final String IMAGE_SVG_PLUS_XML = "image/svg+xml";
+    static final String APPLICATION_ZIP = "application/zip";
+
     @Inject
     private SingleLineDiagramService singleLineDiagramService;
 
-    @GetMapping(value = "/svg/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_XML_VALUE)
+    @GetMapping(value = "/svg/{networkUuid}/{voltageLevelId}", produces = IMAGE_SVG_PLUS_XML)
     @ApiOperation(value = "Get voltage level image", response = StreamingResponseBody.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level SVG")})
     public @ResponseBody String getVoltageLevelSvg(
@@ -53,14 +59,17 @@ public class SingleLineDiagramController {
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId).getRight();
     }
 
-    @GetMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = "application/zip")
+    @GetMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = APPLICATION_ZIP)
     @ApiOperation(value = "Get voltage level svg and metadata", response = StreamingResponseBody.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level svg and metadata")})
-    public @ResponseBody byte[] getVoltageLevelFullSvg(
+    public ResponseEntity<byte[]> getVoltageLevelFullSvg(
             @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId) {
         LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
-
-        return singleLineDiagramService.generateSvgAndMetadataZip(networkUuid, voltageLevelId);
+        HttpHeaders  headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                                                        .filename(voltageLevelId + ".zip")
+                                                        .build());
+        return ResponseEntity.ok().headers(headers).body(singleLineDiagramService.generateSvgAndMetadataZip(networkUuid, voltageLevelId));
     }
 }
