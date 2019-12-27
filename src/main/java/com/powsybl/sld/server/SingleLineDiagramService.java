@@ -76,7 +76,7 @@ class SingleLineDiagramService {
 
             DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, LAYOUT_PARAMETERS);
             DefaultDiagramInitialValueProvider defaultDiagramInitialValueProvider = new DefaultDiagramInitialValueProvider(network);
-            DefaultDiagramStyleProvider defaultDiagramStyleProvider = new DefaultDiagramStyleProvider();
+            DefaultDiagramStyleProvider defaultDiagramStyleProvider = new DefaultDiagramStyleProvider(network);
             DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY);
 
             voltageLevelDiagram.writeSvg("",
