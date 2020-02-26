@@ -21,6 +21,7 @@ import com.powsybl.sld.svg.DefaultDiagramInitialValueProvider;
 import com.powsybl.sld.svg.DefaultDiagramStyleProvider;
 import com.powsybl.sld.svg.DefaultNodeLabelConfiguration;
 import com.powsybl.sld.svg.DefaultSVGWriter;
+import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
@@ -76,7 +77,7 @@ class SingleLineDiagramService {
 
             DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, LAYOUT_PARAMETERS);
             DefaultDiagramInitialValueProvider defaultDiagramInitialValueProvider = new DefaultDiagramInitialValueProvider(network);
-            DefaultDiagramStyleProvider defaultDiagramStyleProvider = new DefaultDiagramStyleProvider(network);
+            DefaultDiagramStyleProvider defaultDiagramStyleProvider = new NominalVoltageDiagramStyleProvider(network);
             DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY);
 
             voltageLevelDiagram.writeSvg("",
