@@ -42,10 +42,11 @@ public class SingleLineDiagramController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level SVG")})
     public @ResponseBody String getVoltageLevelSvg(
             @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId) {
+            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
+            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName) {
         LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
 
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId).getLeft();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName).getLeft();
     }
 
     @GetMapping(value = "/metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -53,10 +54,11 @@ public class SingleLineDiagramController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level SVG metadata")})
     public @ResponseBody String getVoltageLevelMetadata(
             @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId) {
+            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
+            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName) {
         LOGGER.debug("getVoltageLevelMetadata request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
 
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId).getRight();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName).getRight();
     }
 
     @GetMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = APPLICATION_ZIP)
@@ -64,12 +66,13 @@ public class SingleLineDiagramController {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level svg and metadata")})
     public ResponseEntity<byte[]> getVoltageLevelFullSvg(
             @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId) {
+            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
+            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName) {
         LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
         HttpHeaders  headers = new HttpHeaders();
         headers.setContentDisposition(ContentDisposition.builder("attachment")
                                                         .filename(voltageLevelId + ".zip")
                                                         .build());
-        return ResponseEntity.ok().headers(headers).body(singleLineDiagramService.generateSvgAndMetadataZip(networkUuid, voltageLevelId));
+        return ResponseEntity.ok().headers(headers).body(singleLineDiagramService.generateSvgAndMetadataZip(networkUuid, voltageLevelId, useName));
     }
 }
