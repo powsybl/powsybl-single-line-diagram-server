@@ -57,20 +57,20 @@ class SingleLineDiagramService {
         }
     }
 
-    private static VoltageLevelDiagram createVoltageLevelDiagram(Network network, String voltageLevelId) {
+    private static VoltageLevelDiagram createVoltageLevelDiagram(Network network, String voltageLevelId, boolean useName) {
         VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
         if (voltageLevel == null) {
             throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Voltage level " + voltageLevelId + " not found");
         }
         VoltageLevelLayoutFactory voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
         GraphBuilder graphBuilder = new NetworkGraphBuilder(network);
-        return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, false, false);
+        return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, useName, false);
     }
 
-    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId) {
+    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId, boolean useName) {
         Network network = getNetwork(networkUuid);
 
-        VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId);
+        VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId, useName);
 
         try (StringWriter svgWriter = new StringWriter();
              StringWriter metadataWriter = new StringWriter()) {
@@ -94,8 +94,8 @@ class SingleLineDiagramService {
         }
     }
 
-    byte[] generateSvgAndMetadataZip(UUID networkUuid, String voltageLevelId) {
-        Pair<String, String> svgAndMetadata = generateSvgAndMetadata(networkUuid, voltageLevelId);
+    byte[] generateSvgAndMetadataZip(UUID networkUuid, String voltageLevelId, boolean useName) {
+        Pair<String, String> svgAndMetadata = generateSvgAndMetadata(networkUuid, voltageLevelId, useName);
 
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
              ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(byteArrayOutputStream))) {
