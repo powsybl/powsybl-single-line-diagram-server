@@ -66,11 +66,11 @@ public class SingleLineDiagramTest {
 
         //voltage level not existing
         mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}/", testNetworkId, "notFound"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNotFound());
 
         //network not existing
         mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}/", notFoundNetworkId, "vlFr1A"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNotFound());
 
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
@@ -78,11 +78,11 @@ public class SingleLineDiagramTest {
 
         //voltage level not existing
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "NotFound"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNotFound());
 
         //network not existing
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}/", notFoundNetworkId, "vlFr1A"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNotFound());
 
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
@@ -90,11 +90,11 @@ public class SingleLineDiagramTest {
 
         //voltage level not existing
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "NotFound"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNotFound());
 
         //network not existing
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", notFoundNetworkId, "vlFr1A"))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isNotFound());
     }
 
     public static Network createNetwork() {
