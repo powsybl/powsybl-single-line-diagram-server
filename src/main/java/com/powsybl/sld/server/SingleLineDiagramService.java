@@ -53,14 +53,14 @@ class SingleLineDiagramService {
         try {
             return networkStoreService.getNetwork(networkUuid);
         } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Network '" + networkUuid + "' not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Network '" + networkUuid + "' not found");
         }
     }
 
     private static VoltageLevelDiagram createVoltageLevelDiagram(Network network, String voltageLevelId, boolean useName) {
         VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
         if (voltageLevel == null) {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Voltage level " + voltageLevelId + " not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level " + voltageLevelId + " not found");
         }
         VoltageLevelLayoutFactory voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
         GraphBuilder graphBuilder = new NetworkGraphBuilder(network);
