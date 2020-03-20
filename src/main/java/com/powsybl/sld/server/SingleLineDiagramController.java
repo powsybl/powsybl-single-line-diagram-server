@@ -7,15 +7,18 @@
 package com.powsybl.sld.server;
 
 import io.swagger.annotations.*;
+
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.RawValue;
 
 import javax.inject.Inject;
 import java.util.UUID;
@@ -30,6 +33,7 @@ import java.util.UUID;
 public class SingleLineDiagramController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SingleLineDiagramController.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     static final String IMAGE_SVG_PLUS_XML = "image/svg+xml";
     static final String APPLICATION_ZIP = "application/zip";
@@ -61,18 +65,21 @@ public class SingleLineDiagramController {
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName).getRight();
     }
 
-    @GetMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = APPLICATION_ZIP)
+    @GetMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get voltage level svg and metadata", response = StreamingResponseBody.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level svg and metadata")})
-    public ResponseEntity<byte[]> getVoltageLevelFullSvg(
+    public @ResponseBody String getVoltageLevelFullSvg(
             @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
-            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName) {
+            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName) throws JsonProcessingException {
         LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
-        HttpHeaders  headers = new HttpHeaders();
-        headers.setContentDisposition(ContentDisposition.builder("attachment")
-                                                        .filename(voltageLevelId + ".zip")
-                                                        .build());
-        return ResponseEntity.ok().headers(headers).body(singleLineDiagramService.generateSvgAndMetadataZip(networkUuid, voltageLevelId, useName));
+
+        Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName);
+        String svg = svgAndMetadata.getLeft();
+        String metadata = svgAndMetadata.getRight();
+        return OBJECT_MAPPER.writeValueAsString(
+                OBJECT_MAPPER.createObjectNode()
+                    .put("svg", svg)
+                    .putRawValue("metadata", new RawValue(metadata)));
     }
 }

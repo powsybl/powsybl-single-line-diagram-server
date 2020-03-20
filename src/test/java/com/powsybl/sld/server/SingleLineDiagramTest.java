@@ -86,7 +86,7 @@ public class SingleLineDiagramTest {
 
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(SingleLineDiagramController.APPLICATION_ZIP));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         //voltage level not existing
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "NotFound"))

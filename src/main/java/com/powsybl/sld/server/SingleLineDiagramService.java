@@ -30,10 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -94,26 +91,4 @@ class SingleLineDiagramService {
         }
     }
 
-    byte[] generateSvgAndMetadataZip(UUID networkUuid, String voltageLevelId, boolean useName) {
-        Pair<String, String> svgAndMetadata = generateSvgAndMetadata(networkUuid, voltageLevelId, useName);
-
-        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-             ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(byteArrayOutputStream))) {
-
-            zipOutputStream.putNextEntry(new ZipEntry(voltageLevelId + ".svg"));
-            zipOutputStream.write(svgAndMetadata.getLeft().getBytes(StandardCharsets.UTF_8));
-            zipOutputStream.closeEntry();
-
-            zipOutputStream.putNextEntry(new ZipEntry(voltageLevelId + ".json"));
-            zipOutputStream.write(svgAndMetadata.getRight().getBytes(StandardCharsets.UTF_8));
-            zipOutputStream.closeEntry();
-
-            zipOutputStream.finish();
-            zipOutputStream.flush();
-
-            return byteArrayOutputStream.toByteArray();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
 }
