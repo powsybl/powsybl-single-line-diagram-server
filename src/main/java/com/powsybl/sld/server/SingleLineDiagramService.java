@@ -21,6 +21,7 @@ import com.powsybl.sld.svg.DefaultDiagramInitialValueProvider;
 import com.powsybl.sld.svg.DefaultDiagramStyleProvider;
 import com.powsybl.sld.svg.DefaultNodeLabelConfiguration;
 import com.powsybl.sld.svg.DefaultSVGWriter;
+import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
@@ -29,10 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -52,31 +50,31 @@ class SingleLineDiagramService {
         try {
             return networkStoreService.getNetwork(networkUuid);
         } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Network '" + networkUuid + "' not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Network '" + networkUuid + "' not found");
         }
     }
 
-    private static VoltageLevelDiagram createVoltageLevelDiagram(Network network, String voltageLevelId) {
+    private static VoltageLevelDiagram createVoltageLevelDiagram(Network network, String voltageLevelId, boolean useName) {
         VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
         if (voltageLevel == null) {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Voltage level " + voltageLevelId + " not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level " + voltageLevelId + " not found");
         }
         VoltageLevelLayoutFactory voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
         GraphBuilder graphBuilder = new NetworkGraphBuilder(network);
-        return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, false, false);
+        return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, useName, false);
     }
 
-    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId) {
+    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId, boolean useName) {
         Network network = getNetwork(networkUuid);
 
-        VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId);
+        VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId, useName);
 
         try (StringWriter svgWriter = new StringWriter();
              StringWriter metadataWriter = new StringWriter()) {
 
             DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, LAYOUT_PARAMETERS);
             DefaultDiagramInitialValueProvider defaultDiagramInitialValueProvider = new DefaultDiagramInitialValueProvider(network);
-            DefaultDiagramStyleProvider defaultDiagramStyleProvider = new DefaultDiagramStyleProvider(network);
+            DefaultDiagramStyleProvider defaultDiagramStyleProvider = new NominalVoltageDiagramStyleProvider();
             DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY);
 
             voltageLevelDiagram.writeSvg("",
@@ -93,26 +91,4 @@ class SingleLineDiagramService {
         }
     }
 
-    byte[] generateSvgAndMetadataZip(UUID networkUuid, String voltageLevelId) {
-        Pair<String, String> svgAndMetadata = generateSvgAndMetadata(networkUuid, voltageLevelId);
-
-        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-             ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(byteArrayOutputStream))) {
-
-            zipOutputStream.putNextEntry(new ZipEntry(voltageLevelId + ".svg"));
-            zipOutputStream.write(svgAndMetadata.getLeft().getBytes(StandardCharsets.UTF_8));
-            zipOutputStream.closeEntry();
-
-            zipOutputStream.putNextEntry(new ZipEntry(voltageLevelId + ".json"));
-            zipOutputStream.write(svgAndMetadata.getRight().getBytes(StandardCharsets.UTF_8));
-            zipOutputStream.closeEntry();
-
-            zipOutputStream.finish();
-            zipOutputStream.flush();
-
-            return byteArrayOutputStream.toByteArray();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
 }
