@@ -47,10 +47,11 @@ public class SingleLineDiagramController {
     public @ResponseBody String getVoltageLevelSvg(
             @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
-            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName) {
+            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel) {
         LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
-
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName).getLeft();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName, centerLabel, diagonalLabel).getLeft();
     }
 
     @GetMapping(value = "/metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -59,10 +60,12 @@ public class SingleLineDiagramController {
     public @ResponseBody String getVoltageLevelMetadata(
             @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
-            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName) {
+            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel) {
         LOGGER.debug("getVoltageLevelMetadata request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
 
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName).getRight();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName, centerLabel, diagonalLabel).getRight();
     }
 
     @GetMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -71,10 +74,13 @@ public class SingleLineDiagramController {
     public @ResponseBody String getVoltageLevelFullSvg(
             @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
-            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName) throws JsonProcessingException {
+            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel)
+        throws JsonProcessingException {
         LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
 
-        Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName);
+        Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName, centerLabel, diagonalLabel);
         String svg = svgAndMetadata.getLeft();
         String metadata = svgAndMetadata.getRight();
         return OBJECT_MAPPER.writeValueAsString(
