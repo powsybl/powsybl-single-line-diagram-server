@@ -61,7 +61,7 @@ class SingleLineDiagramService {
         }
         VoltageLevelLayoutFactory voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
         GraphBuilder graphBuilder = new NetworkGraphBuilder(network);
-        return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, useName, false);
+        return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, useName);
     }
 
     Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId, boolean useName) {
