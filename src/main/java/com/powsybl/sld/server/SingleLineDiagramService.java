@@ -41,7 +41,8 @@ class SingleLineDiagramService {
 
     private static final ResourcesComponentLibrary COMPONENT_LIBRARY = new ResourcesComponentLibrary("/ConvergenceLibrary");
 
-    private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters();
+    private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
+            .setAdaptCellHeightToContent(true);
 
     @Autowired
     private NetworkStoreService networkStoreService;
