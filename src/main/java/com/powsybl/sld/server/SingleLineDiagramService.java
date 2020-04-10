@@ -65,18 +65,21 @@ class SingleLineDiagramService {
         return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, useName);
     }
 
-    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId, boolean useName) {
+    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId, boolean useName, boolean labelCentered, boolean diagonalLabel) {
         Network network = getNetwork(networkUuid);
 
         VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId, useName);
 
         try (StringWriter svgWriter = new StringWriter();
              StringWriter metadataWriter = new StringWriter()) {
+            LayoutParameters renderedLayout = new LayoutParameters(LAYOUT_PARAMETERS);
+            renderedLayout.setLabelCentered(labelCentered);
+            renderedLayout.setLabelDiagonal(diagonalLabel);
 
-            DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, LAYOUT_PARAMETERS);
+            DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, renderedLayout);
             DefaultDiagramInitialValueProvider defaultDiagramInitialValueProvider = new DefaultDiagramInitialValueProvider(network);
             DefaultDiagramStyleProvider defaultDiagramStyleProvider = new NominalVoltageDiagramStyleProvider();
-            DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY, LAYOUT_PARAMETERS);
+            DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY, renderedLayout);
 
             voltageLevelDiagram.writeSvg("",
                                          defaultSVGWriter,
