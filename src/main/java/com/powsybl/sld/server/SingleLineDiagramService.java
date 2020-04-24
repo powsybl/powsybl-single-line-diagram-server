@@ -22,6 +22,7 @@ import com.powsybl.sld.svg.DefaultDiagramStyleProvider;
 import com.powsybl.sld.svg.DefaultNodeLabelConfiguration;
 import com.powsybl.sld.svg.DefaultSVGWriter;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
+import com.powsybl.sld.util.TopologicalStyleProvider;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
@@ -29,7 +30,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.util.UUID;
 
 /**
@@ -65,7 +68,8 @@ class SingleLineDiagramService {
         return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, useName);
     }
 
-    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId, boolean useName, boolean labelCentered, boolean diagonalLabel) {
+    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId, boolean useName, boolean labelCentered,
+                                                boolean diagonalLabel, boolean topologicalColoring) {
         Network network = getNetwork(networkUuid);
 
         VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId, useName);
@@ -78,7 +82,8 @@ class SingleLineDiagramService {
 
             DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, renderedLayout);
             DefaultDiagramInitialValueProvider defaultDiagramInitialValueProvider = new DefaultDiagramInitialValueProvider(network);
-            DefaultDiagramStyleProvider defaultDiagramStyleProvider = new NominalVoltageDiagramStyleProvider();
+            DefaultDiagramStyleProvider defaultDiagramStyleProvider = topologicalColoring ? new TopologicalStyleProvider(network)
+                                                                                          : new NominalVoltageDiagramStyleProvider();
             DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY, renderedLayout);
 
             voltageLevelDiagram.writeSvg("",
