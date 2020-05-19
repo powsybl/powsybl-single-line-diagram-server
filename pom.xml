@@ -107,6 +107,11 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven.surefire.version}</version>
+                    <configuration>
+                        <classpathDependencyExcludes>
+                            <classpathDependencyExclude>com.powsybl:powsybl-config-classic</classpathDependencyExclude>
+                        </classpathDependencyExcludes>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -270,6 +275,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test-autoconfigure</artifactId>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-config-test</artifactId>
+            <version>${powsybl-core.version}</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 </project>
