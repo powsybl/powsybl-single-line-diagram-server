@@ -281,7 +281,7 @@
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-test</artifactId>
             <version>${powsybl-core.version}</version>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>
