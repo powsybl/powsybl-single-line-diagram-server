@@ -46,7 +46,7 @@ class SingleLineDiagramService {
 
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
             .setAdaptCellHeightToContent(true)
-            .setIndicateOpenLines(true);
+            .setHighlightLineState(true);
 
     @Autowired
     private NetworkStoreService networkStoreService;
