@@ -45,7 +45,8 @@ class SingleLineDiagramService {
     private static final ResourcesComponentLibrary COMPONENT_LIBRARY = new ResourcesComponentLibrary("/ConvergenceLibrary");
 
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
-            .setAdaptCellHeightToContent(true);
+            .setAdaptCellHeightToContent(true)
+            .setHighlightLineState(true);
 
     @Autowired
     private NetworkStoreService networkStoreService;
@@ -83,7 +84,7 @@ class SingleLineDiagramService {
             DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, renderedLayout);
             DefaultDiagramInitialValueProvider defaultDiagramInitialValueProvider = new DefaultDiagramInitialValueProvider(network);
             DefaultDiagramStyleProvider defaultDiagramStyleProvider = topologicalColoring ? new TopologicalStyleProvider(network)
-                                                                                          : new NominalVoltageDiagramStyleProvider();
+                                                                                          : new NominalVoltageDiagramStyleProvider(network);
             DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY, renderedLayout);
 
             voltageLevelDiagram.writeSvg("",
