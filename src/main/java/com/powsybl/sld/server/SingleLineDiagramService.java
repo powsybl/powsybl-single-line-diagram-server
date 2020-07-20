@@ -17,9 +17,8 @@ import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.layout.SmartVoltageLevelLayoutFactory;
 import com.powsybl.sld.layout.VoltageLevelLayoutFactory;
 import com.powsybl.sld.library.ResourcesComponentLibrary;
-import com.powsybl.sld.svg.DefaultDiagramInitialValueProvider;
+import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
 import com.powsybl.sld.svg.DefaultDiagramStyleProvider;
-import com.powsybl.sld.svg.DefaultNodeLabelConfiguration;
 import com.powsybl.sld.svg.DefaultSVGWriter;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import com.powsybl.sld.util.TopologicalStyleProvider;
@@ -82,16 +81,14 @@ class SingleLineDiagramService {
             renderedLayout.setLabelDiagonal(diagonalLabel);
 
             DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, renderedLayout);
-            DefaultDiagramInitialValueProvider defaultDiagramInitialValueProvider = new DefaultDiagramInitialValueProvider(network);
             DefaultDiagramStyleProvider defaultDiagramStyleProvider = topologicalColoring ? new TopologicalStyleProvider(network)
                                                                                           : new NominalVoltageDiagramStyleProvider(network);
-            DefaultNodeLabelConfiguration defaultNodeLabelConfiguration = new DefaultNodeLabelConfiguration(COMPONENT_LIBRARY, renderedLayout);
+            DefaultDiagramLabelProvider labelProvider = new DefaultDiagramLabelProvider(network, COMPONENT_LIBRARY, renderedLayout);
 
             voltageLevelDiagram.writeSvg("",
                                          defaultSVGWriter,
-                                         defaultDiagramInitialValueProvider,
+                                         labelProvider,
                                          defaultDiagramStyleProvider,
-                                         defaultNodeLabelConfiguration,
                                          svgWriter,
                                          metadataWriter);
 
