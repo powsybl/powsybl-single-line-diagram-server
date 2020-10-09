@@ -79,6 +79,7 @@ class SingleLineDiagramService {
             LayoutParameters renderedLayout = new LayoutParameters(LAYOUT_PARAMETERS);
             renderedLayout.setLabelCentered(labelCentered);
             renderedLayout.setLabelDiagonal(diagonalLabel);
+            renderedLayout.setAddNodesInfos(true);
 
             DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, renderedLayout);
             DefaultDiagramStyleProvider defaultDiagramStyleProvider = topologicalColoring ? new TopologicalStyleProvider(network)
