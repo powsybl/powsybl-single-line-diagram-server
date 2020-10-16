@@ -60,6 +60,7 @@
         <powsybl-core.version>3.6.0</powsybl-core.version>
         <powsybl-single-line-diagram.version>1.7.0</powsybl-single-line-diagram.version>
         <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
+        <openide.version>RELEASE90</openide.version><!-- gephi uses RELEASE82 but it's not available on central -->
     </properties>
 
     <build>
@@ -106,6 +107,26 @@
                 <artifactId>guava</artifactId>
                 <version>${guava.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.netbeans.api</groupId>
+                <artifactId>org-openide-nodes</artifactId>
+                <version>${openide.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.netbeans.api</groupId>
+                <artifactId>org-openide-util</artifactId>
+                <version>${openide.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.netbeans.api</groupId>
+                <artifactId>org-openide-util-lookup</artifactId>
+                <version>${openide.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.netbeans.api</groupId>
+                <artifactId>org-openide-filesystems</artifactId>
+                <version>${openide.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -138,6 +159,11 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-single-line-diagram-core</artifactId>
+            <version>${powsybl-single-line-diagram.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-single-line-diagram-force-layout</artifactId>
             <version>${powsybl-single-line-diagram.version}</version>
         </dependency>
 

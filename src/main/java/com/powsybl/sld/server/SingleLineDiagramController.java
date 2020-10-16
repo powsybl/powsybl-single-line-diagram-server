@@ -25,6 +25,7 @@ import java.util.UUID;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
+ * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
  */
 @RestController
 @RequestMapping(value = "/" + SingleLineDiagramApi.API_VERSION + "/")
@@ -36,11 +37,12 @@ public class SingleLineDiagramController {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     static final String IMAGE_SVG_PLUS_XML = "image/svg+xml";
-    static final String APPLICATION_ZIP = "application/zip";
 
     @Inject
     private SingleLineDiagramService singleLineDiagramService;
 
+    // voltage levels
+    //
     @GetMapping(value = "/svg/{networkUuid}/{voltageLevelId}", produces = IMAGE_SVG_PLUS_XML)
     @ApiOperation(value = "Get voltage level image", response = StreamingResponseBody.class)
     @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level SVG")})
@@ -90,5 +92,64 @@ public class SingleLineDiagramController {
                 OBJECT_MAPPER.createObjectNode()
                     .put("svg", svg)
                     .putRawValue("metadata", new RawValue(metadata)));
+    }
+
+    // substations
+    //
+    @GetMapping(value = "/substation-svg/{networkUuid}/{substationId}", produces = IMAGE_SVG_PLUS_XML)
+    @ApiOperation(value = "Get substation image", response = StreamingResponseBody.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "The substation svg")})
+    public @ResponseBody String getSubstationSvg(
+            @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @ApiParam(value = "Substation ID") @PathVariable("substationId") String substationId,
+            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
+            @ApiParam(value = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
+            @ApiParam(value = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout) {
+        LOGGER.debug("getSubstationSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
+
+        return singleLineDiagramService.generateSubstationSvgAndMetadata(networkUuid, substationId, useName, centerLabel,
+                diagonalLabel, topologicalColoring, substationLayout).getLeft();
+    }
+
+    @GetMapping(value = "/substation-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get substation svg metadata", response = StreamingResponseBody.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "The substation svg metadata")})
+    public @ResponseBody String getSubstationMetadata(
+            @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @ApiParam(value = "Substation ID") @PathVariable("substationId") String substationId,
+            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
+            @ApiParam(value = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
+            @ApiParam(value = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout) {
+        LOGGER.debug("getSubstationMetadata request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
+
+        return singleLineDiagramService.generateSubstationSvgAndMetadata(networkUuid, substationId, useName, centerLabel,
+                diagonalLabel, topologicalColoring, substationLayout).getRight();
+    }
+
+    @GetMapping(value = "substation-svg-and-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get substation svg and metadata", response = StreamingResponseBody.class)
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "The substation svg and metadata")})
+    public @ResponseBody String getSubstationFullSvg(
+            @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @ApiParam(value = "Substation ID") @PathVariable("substationId") String substationId,
+            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
+            @ApiParam(value = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
+            @ApiParam(value = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout) throws JsonProcessingException {
+        LOGGER.debug("getSubstationFullSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
+
+        Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSubstationSvgAndMetadata(networkUuid, substationId, useName,
+                centerLabel, diagonalLabel, topologicalColoring, substationLayout);
+        String svg = svgAndMetadata.getLeft();
+        String metadata = svgAndMetadata.getRight();
+        return OBJECT_MAPPER.writeValueAsString(
+                OBJECT_MAPPER.createObjectNode()
+                        .put("svg", svg)
+                        .putRawValue("metadata", new RawValue(metadata)));
     }
 }

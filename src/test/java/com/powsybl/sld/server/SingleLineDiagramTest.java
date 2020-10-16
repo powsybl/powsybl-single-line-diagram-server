@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
+ * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
  */
 @RunWith(SpringRunner.class)
 @WebMvcTest(SingleLineDiagramController.class)
@@ -94,6 +95,54 @@ public class SingleLineDiagramTest {
 
         //network not existing
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", notFoundNetworkId, "vlFr1A"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testSubstations() throws Exception {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        UUID notFoundNetworkId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+
+        given(networkStoreService.getNetwork(testNetworkId)).willReturn(createNetwork());
+        given(networkStoreService.getNetwork(notFoundNetworkId)).willThrow(new PowsyblException());
+
+        MvcResult result = mvc.perform(get("/v1/substation-svg/{networkUuid}/{substationId}/", testNetworkId, "subFr1"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+                .andReturn();
+
+        assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
+
+        // substation not existing
+        mvc.perform(get("/v1/substation-svg/{networkUuid}/{substationId}/", testNetworkId, "notFound"))
+                .andExpect(status().isNotFound());
+
+        // network not existing
+        mvc.perform(get("/v1/substation-svg/{networkUuid}/{substationId}/", notFoundNetworkId, "subFr1"))
+                .andExpect(status().isNotFound());
+
+        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}/", testNetworkId, "subFr1"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        // substation not existing
+        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}/", testNetworkId, "NotFound"))
+                .andExpect(status().isNotFound());
+
+        // network not existing
+        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}/", notFoundNetworkId, "subFr2"))
+                .andExpect(status().isNotFound());
+
+        mvc.perform(get("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}/", testNetworkId, "subFr2"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        // substation not existing
+        mvc.perform(get("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}/", testNetworkId, "NotFound"))
+                .andExpect(status().isNotFound());
+
+        // network not existing
+        mvc.perform(get("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}/", notFoundNetworkId, "subFr2"))
                 .andExpect(status().isNotFound());
     }
 
