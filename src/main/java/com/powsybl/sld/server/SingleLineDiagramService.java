@@ -8,13 +8,19 @@ package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.GraphBuilder;
 import com.powsybl.sld.NetworkGraphBuilder;
+import com.powsybl.sld.SubstationDiagram;
 import com.powsybl.sld.VoltageLevelDiagram;
+import com.powsybl.sld.force.layout.ForceSubstationLayoutFactory;
+import com.powsybl.sld.layout.HorizontalSubstationLayoutFactory;
 import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.layout.SmartVoltageLevelLayoutFactory;
+import com.powsybl.sld.layout.SubstationLayoutFactory;
+import com.powsybl.sld.layout.VerticalSubstationLayoutFactory;
 import com.powsybl.sld.layout.VoltageLevelLayoutFactory;
 import com.powsybl.sld.library.ResourcesComponentLibrary;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
@@ -36,6 +42,7 @@ import java.util.UUID;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
+ * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
  */
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
@@ -58,6 +65,8 @@ class SingleLineDiagramService {
         }
     }
 
+    // voltage level
+    //
     private static VoltageLevelDiagram createVoltageLevelDiagram(Network network, String voltageLevelId, boolean useName) {
         VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
         if (voltageLevel == null) {
@@ -99,4 +108,70 @@ class SingleLineDiagramService {
         }
     }
 
+    // substation
+    //
+    private static SubstationDiagram createSubstationDiagram(Network network, String substationId, boolean useName,
+                                                             String substationLayout) {
+        Substation substation = network.getSubstation(substationId);
+        if (substation == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Substation " + substationId + " not found");
+        }
+        VoltageLevelLayoutFactory voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
+
+        SubstationLayoutFactory substationLayoutFactory;
+        switch (substationLayout) {
+            case "horizontal" :
+                substationLayoutFactory = new HorizontalSubstationLayoutFactory();
+                break;
+            case "vertical" :
+                substationLayoutFactory = new VerticalSubstationLayoutFactory();
+                break;
+            case "smart" :
+                substationLayoutFactory = new ForceSubstationLayoutFactory(ForceSubstationLayoutFactory.CompactionType.NONE);
+                break;
+            case "smartHorizontalCompaction" :
+                substationLayoutFactory = new ForceSubstationLayoutFactory(ForceSubstationLayoutFactory.CompactionType.HORIZONTAL);
+                break;
+            case "smartVerticalCompaction" :
+                substationLayoutFactory = new ForceSubstationLayoutFactory(ForceSubstationLayoutFactory.CompactionType.VERTICAL);
+                break;
+            default:
+                throw new PowsyblException("Substation layout " + substationLayout + " incorrect");
+        }
+
+        GraphBuilder graphBuilder = new NetworkGraphBuilder(network);
+        return SubstationDiagram.build(graphBuilder, substationId, substationLayoutFactory, voltageLevelLayoutFactory, useName);
+    }
+
+    Pair<String, String> generateSubstationSvgAndMetadata(UUID networkUuid, String substationId, boolean useName,
+                                                          boolean labelCentered, boolean diagonalLabel, boolean topologicalColoring,
+                                                          String substationLayout) {
+        Network network = getNetwork(networkUuid);
+
+        SubstationDiagram substationDiagram = createSubstationDiagram(network, substationId, useName, substationLayout);
+
+        try (StringWriter svgWriter = new StringWriter();
+             StringWriter metadataWriter = new StringWriter()) {
+            LayoutParameters renderedLayout = new LayoutParameters(LAYOUT_PARAMETERS);
+            renderedLayout.setLabelCentered(labelCentered);
+            renderedLayout.setLabelDiagonal(diagonalLabel);
+            renderedLayout.setAddNodesInfos(false);
+
+            DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, renderedLayout);
+            DefaultDiagramStyleProvider defaultDiagramStyleProvider = topologicalColoring ? new TopologicalStyleProvider(network)
+                    : new NominalVoltageDiagramStyleProvider(network);
+            DefaultDiagramLabelProvider labelProvider = new DefaultDiagramLabelProvider(network, COMPONENT_LIBRARY, renderedLayout);
+
+            substationDiagram.writeSvg("",
+                    defaultSVGWriter,
+                    labelProvider,
+                    defaultDiagramStyleProvider,
+                    svgWriter,
+                    metadataWriter);
+
+            return Pair.of(svgWriter.toString(), metadataWriter.toString());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 }
