@@ -52,13 +52,13 @@
 
         <java.version>11</java.version>
 
-        <guava.version>20.0</guava.version>
-        <mockito.version>2.28.2</mockito.version>
-        <springboot.version>2.1.5.RELEASE</springboot.version>
+        <guava.version>29.0-jre</guava.version>
+        <mockito.version>3.2.4</mockito.version>
+        <springboot.version>2.2.9.RELEASE</springboot.version>
         <springfox.version>2.9.2</springfox.version>
 
-        <powsybl-core.version>3.6.0</powsybl-core.version>
-        <powsybl-single-line-diagram.version>1.7.0</powsybl-single-line-diagram.version>
+        <powsybl-core.version>3.7.1</powsybl-core.version>
+        <powsybl-single-line-diagram.version>1.7.2</powsybl-single-line-diagram.version>
         <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
         <openide.version>RELEASE90</openide.version><!-- gephi uses RELEASE82 but it's not available on central -->
     </properties>
