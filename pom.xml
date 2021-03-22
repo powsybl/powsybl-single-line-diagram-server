@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent-ws</artifactId>
-        <version>3</version>
+        <version>5</version>
     </parent>
 
     <artifactId>powsybl-single-line-diagram-server</artifactId>
@@ -54,11 +54,11 @@
 
         <guava.version>29.0-jre</guava.version>
         <mockito.version>3.2.4</mockito.version>
-        <springboot.version>2.2.9.RELEASE</springboot.version>
+        <springboot.version>2.4.3</springboot.version>
         <springfox.version>2.9.2</springfox.version>
 
-        <powsybl-core.version>3.8.0</powsybl-core.version>
-        <powsybl-single-line-diagram.version>1.8.0</powsybl-single-line-diagram.version>
+        <powsybl-core.version>4.0.1</powsybl-core.version>
+        <powsybl-single-line-diagram.version>2.0.0</powsybl-single-line-diagram.version>
         <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
         <openide.version>RELEASE90</openide.version><!-- gephi uses RELEASE82 but it's not available on central -->
     </properties>
