@@ -11,6 +11,7 @@ import io.swagger.annotations.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 
-import javax.inject.Inject;
 import java.util.UUID;
 
 /**
@@ -38,7 +38,7 @@ public class SingleLineDiagramController {
 
     static final String IMAGE_SVG_PLUS_XML = "image/svg+xml";
 
-    @Inject
+    @Autowired
     private SingleLineDiagramService singleLineDiagramService;
 
     // voltage levels
