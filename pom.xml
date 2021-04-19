@@ -52,8 +52,6 @@
 
         <java.version>11</java.version>
 
-        <guava.version>29.0-jre</guava.version>
-        <mockito.version>3.2.4</mockito.version>
         <springboot.version>2.2.9.RELEASE</springboot.version>
         <springfox.version>2.9.2</springfox.version>
 
@@ -95,6 +93,14 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- imports -->
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-core</artifactId>
+                <version>${powsybl-core.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -102,10 +108,17 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <!-- project specific dependencies (also overrides imports, but separate for clarity) -->
             <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>${guava.version}</version>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger-ui</artifactId>
+                <version>${springfox.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger2</artifactId>
+                <version>${springfox.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.netbeans.api</groupId>
@@ -127,64 +140,78 @@
                 <artifactId>org-openide-filesystems</artifactId>
                 <version>${openide.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-network-store-client</artifactId>
+                <version>${powsybl-network-store.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-single-line-diagram-core</artifactId>
+                <version>${powsybl-single-line-diagram.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-single-line-diagram-force-layout</artifactId>
+                <version>${powsybl-single-line-diagram.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
         <!-- Compilation dependencies -->
         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger-ui</artifactId>
-            <version>${springfox.version}</version>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-network-store-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-single-line-diagram-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-single-line-diagram-force-layout</artifactId>
         </dependency>
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger2</artifactId>
-            <version>${springfox.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-network-store-client</artifactId>
-            <version>${powsybl-network-store.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-single-line-diagram-core</artifactId>
-            <version>${powsybl-single-line-diagram.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-single-line-diagram-force-layout</artifactId>
-            <version>${powsybl-single-line-diagram.version}</version>
-        </dependency>
-
         <!-- Runtime dependencies -->
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-classic</artifactId>
-            <version>${powsybl-core.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
             <scope>runtime</scope>
         </dependency>
 
         <!-- Test dependencies -->
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-config-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -195,13 +222,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test-autoconfigure</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-config-test</artifactId>
-            <version>${powsybl-core.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
