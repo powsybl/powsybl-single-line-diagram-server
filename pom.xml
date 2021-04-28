@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent-ws</artifactId>
-        <version>3</version>
+        <version>4</version>
     </parent>
 
     <artifactId>powsybl-single-line-diagram-server</artifactId>
@@ -52,11 +52,12 @@
 
         <java.version>11</java.version>
 
+        <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
         <springboot.version>2.2.9.RELEASE</springboot.version>
         <springfox.version>2.9.2</springfox.version>
 
-        <powsybl-core.version>4.0.1</powsybl-core.version>
-        <powsybl-single-line-diagram.version>2.0.0</powsybl-single-line-diagram.version>
+        <powsybl-core.version>4.1.2</powsybl-core.version>
+        <powsybl-single-line-diagram.version>2.1.0</powsybl-single-line-diagram.version>
         <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
         <openide.version>RELEASE90</openide.version><!-- gephi uses RELEASE82 but it's not available on central -->
     </properties>
@@ -182,6 +183,12 @@
         </dependency>
 
         <!-- Runtime dependencies -->
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${jaxb-runtime.version}</version>
+            <scope>runtime</scope>
+        </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-classic</artifactId>
