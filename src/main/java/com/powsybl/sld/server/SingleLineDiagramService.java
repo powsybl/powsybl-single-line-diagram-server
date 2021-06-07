@@ -48,7 +48,7 @@ import java.util.UUID;
 @Service
 class SingleLineDiagramService {
 
-    private static final ResourcesComponentLibrary COMPONENT_LIBRARY = new ResourcesComponentLibrary("/ConvergenceLibrary");
+    private static final ResourcesComponentLibrary COMPONENT_LIBRARY = new ResourcesComponentLibrary("/ConvergenceLibrary", "/GridsuiteLibrary");
 
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
             .setAdaptCellHeightToContent(true)
