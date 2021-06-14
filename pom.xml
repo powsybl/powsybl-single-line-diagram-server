@@ -53,7 +53,7 @@
         <java.version>11</java.version>
 
         <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
-        <springboot.version>2.4.5</springboot.version>
+        <springboot.version>2.4.7</springboot.version>
         <springfox.version>2.9.2</springfox.version>
 
         <powsybl-core.version>4.1.2</powsybl-core.version>
