@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<components>
+    <component>
+        <metadata type="LOCK">
+            <size width="24" height="24"/>
+            <styleClass>sld-lock</styleClass>
+            <subComponent name="LOCK">
+                <fileName>lock_black_24dp.svg</fileName>
+            </subComponent>
+            <allowRotation>false</allowRotation>
+        </metadata>
+    </component>
+    <component>
+        <metadata type="FLASH">
+            <size width="24" height="24"/>
+            <styleClass>sld-flash</styleClass>
+            <subComponent name="FLASH">
+                <fileName>bolt_black_24dp.svg</fileName>
+            </subComponent>
+            <allowRotation>false</allowRotation>
+        </metadata>
+    </component>
+</components>
