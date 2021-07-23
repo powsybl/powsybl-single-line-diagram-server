@@ -15,7 +15,7 @@ import com.powsybl.sld.GraphBuilder;
 import com.powsybl.sld.NetworkGraphBuilder;
 import com.powsybl.sld.SubstationDiagram;
 import com.powsybl.sld.VoltageLevelDiagram;
-import com.powsybl.sld.force.layout.ForceSubstationLayoutFactory;
+import com.powsybl.sld.layout.ForceSubstationLayoutFactory;
 import com.powsybl.sld.layout.HorizontalSubstationLayoutFactory;
 import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.layout.SmartVoltageLevelLayoutFactory;
@@ -48,7 +48,7 @@ import java.util.UUID;
 @Service
 class SingleLineDiagramService {
 
-    private static final ResourcesComponentLibrary COMPONENT_LIBRARY = new ResourcesComponentLibrary("/ConvergenceLibrary", "/GridsuiteLibrary");
+    private static final ResourcesComponentLibrary COMPONENT_LIBRARY = new ResourcesComponentLibrary("GridsuiteAndConvergenceLibrary", "/ConvergenceLibrary", "/GridsuiteLibrary");
 
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
             .setAdaptCellHeightToContent(true)
