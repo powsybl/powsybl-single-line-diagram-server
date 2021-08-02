@@ -54,7 +54,7 @@
 
         <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
         <springboot.version>2.4.7</springboot.version>
-        <springfox.version>2.9.2</springfox.version>
+        <springdoc-openapi.version>1.4.8</springdoc-openapi.version>
 
         <powsybl-core.version>4.3.1</powsybl-core.version>
         <powsybl-single-line-diagram.version>2.3.0</powsybl-single-line-diagram.version>
@@ -112,14 +112,9 @@
 
             <!-- project specific dependencies (also overrides imports, but separate for clarity) -->
             <dependency>
-                <groupId>io.springfox</groupId>
-                <artifactId>springfox-swagger-ui</artifactId>
-                <version>${springfox.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.springfox</groupId>
-                <artifactId>springfox-swagger2</artifactId>
-                <version>${springfox.version}</version>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-ui</artifactId>
+                <version>${springdoc-openapi.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.netbeans.api</groupId>
@@ -174,12 +169,12 @@
             <artifactId>powsybl-single-line-diagram-force-layout</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger2</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-ui</artifactId>
         </dependency>
 
         <!-- Runtime dependencies -->
@@ -192,11 +187,6 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-classic</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger-ui</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>

@@ -6,8 +6,11 @@
  */
 package com.powsybl.sld.server;
 
-import io.swagger.annotations.*;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +31,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping(value = "/" + SingleLineDiagramApi.API_VERSION + "/")
-@Api(tags = "single-line-diagram-server")
+@Tag(name = "single-line-diagram-server")
 @ComponentScan(basePackageClasses = SingleLineDiagramService.class)
 public class SingleLineDiagramController {
 
@@ -44,44 +46,44 @@ public class SingleLineDiagramController {
     // voltage levels
     //
     @GetMapping(value = "/svg/{networkUuid}/{voltageLevelId}", produces = IMAGE_SVG_PLUS_XML)
-    @ApiOperation(value = "Get voltage level image", response = StreamingResponseBody.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level SVG")})
+    @Operation(summary = "Get voltage level image")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage level SVG")})
     public @ResponseBody String getVoltageLevelSvg(
-            @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
-            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
-            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
-            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
-            @ApiParam(value = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring) {
+            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @Parameter(description = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
+            @Parameter(description = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @Parameter(description = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
+            @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring) {
         LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName, centerLabel, diagonalLabel, topologicalColoring).getLeft();
     }
 
     @GetMapping(value = "/metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Get the voltage level svg metadata", response = StreamingResponseBody.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level SVG metadata")})
+    @Operation(summary = "Get the voltage level svg metadata")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage level SVG metadata")})
     public @ResponseBody String getVoltageLevelMetadata(
-            @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
-            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
-            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
-            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
-            @ApiParam(value = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring) {
+            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @Parameter(description = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
+            @Parameter(description = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @Parameter(description = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
+            @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring) {
         LOGGER.debug("getVoltageLevelMetadata request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
 
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, voltageLevelId, useName, centerLabel, diagonalLabel, topologicalColoring).getRight();
     }
 
     @GetMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Get voltage level svg and metadata", response = StreamingResponseBody.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "The voltage level svg and metadata")})
+    @Operation(summary = "Get voltage level svg and metadata")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage level svg and metadata")})
     public @ResponseBody String getVoltageLevelFullSvg(
-            @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @ApiParam(value = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
-            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
-            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
-            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
-            @ApiParam(value = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring)
+            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @Parameter(description = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
+            @Parameter(description = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @Parameter(description = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
+            @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring)
         throws JsonProcessingException {
         LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
 
@@ -97,16 +99,16 @@ public class SingleLineDiagramController {
     // substations
     //
     @GetMapping(value = "/substation-svg/{networkUuid}/{substationId}", produces = IMAGE_SVG_PLUS_XML)
-    @ApiOperation(value = "Get substation image", response = StreamingResponseBody.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "The substation svg")})
+    @Operation(summary = "Get substation image")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The substation svg")})
     public @ResponseBody String getSubstationSvg(
-            @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @ApiParam(value = "Substation ID") @PathVariable("substationId") String substationId,
-            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
-            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
-            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
-            @ApiParam(value = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
-            @ApiParam(value = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout) {
+            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @Parameter(description = "Substation ID") @PathVariable("substationId") String substationId,
+            @Parameter(description = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @Parameter(description = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
+            @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
+            @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout) {
         LOGGER.debug("getSubstationSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
 
         return singleLineDiagramService.generateSubstationSvgAndMetadata(networkUuid, substationId, useName, centerLabel,
@@ -114,16 +116,16 @@ public class SingleLineDiagramController {
     }
 
     @GetMapping(value = "/substation-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Get substation svg metadata", response = StreamingResponseBody.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "The substation svg metadata")})
+    @Operation(summary = "Get substation svg metadata")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The substation svg metadata")})
     public @ResponseBody String getSubstationMetadata(
-            @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @ApiParam(value = "Substation ID") @PathVariable("substationId") String substationId,
-            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
-            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
-            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
-            @ApiParam(value = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
-            @ApiParam(value = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout) {
+            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @Parameter(description = "Substation ID") @PathVariable("substationId") String substationId,
+            @Parameter(description = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @Parameter(description = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
+            @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
+            @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout) {
         LOGGER.debug("getSubstationMetadata request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
 
         return singleLineDiagramService.generateSubstationSvgAndMetadata(networkUuid, substationId, useName, centerLabel,
@@ -131,16 +133,16 @@ public class SingleLineDiagramController {
     }
 
     @GetMapping(value = "substation-svg-and-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Get substation svg and metadata", response = StreamingResponseBody.class)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "The substation svg and metadata")})
+    @Operation(summary = "Get substation svg and metadata")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The substation svg and metadata")})
     public @ResponseBody String getSubstationFullSvg(
-            @ApiParam(value = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @ApiParam(value = "Substation ID") @PathVariable("substationId") String substationId,
-            @ApiParam(value = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
-            @ApiParam(value = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
-            @ApiParam(value = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
-            @ApiParam(value = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
-            @ApiParam(value = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout) throws JsonProcessingException {
+            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @Parameter(description = "Substation ID") @PathVariable("substationId") String substationId,
+            @Parameter(description = "useName") @RequestParam(name = "useName", defaultValue = "false") boolean useName,
+            @Parameter(description = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
+            @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
+            @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
+            @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout) throws JsonProcessingException {
         LOGGER.debug("getSubstationFullSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
 
         Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSubstationSvgAndMetadata(networkUuid, substationId, useName,
