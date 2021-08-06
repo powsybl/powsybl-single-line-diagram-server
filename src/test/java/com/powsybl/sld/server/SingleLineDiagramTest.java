@@ -166,6 +166,15 @@ public class SingleLineDiagramTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    public void testComponentLibraries() throws Exception {
+        MvcResult result = mvc.perform(get("/v1/svg-component-libraries"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        assertEquals("[\"GridSuiteAndConvergence\",\"Convergence\"]", result.getResponse().getContentAsString());
+    }
+
     public static Network createNetwork() {
         Network network = Network.create("test", "test");
         Substation substationFr1 = network.newSubstation()
