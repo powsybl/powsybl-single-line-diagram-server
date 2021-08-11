@@ -22,7 +22,7 @@ import com.powsybl.sld.layout.SmartVoltageLevelLayoutFactory;
 import com.powsybl.sld.layout.SubstationLayoutFactory;
 import com.powsybl.sld.layout.VerticalSubstationLayoutFactory;
 import com.powsybl.sld.layout.VoltageLevelLayoutFactory;
-import com.powsybl.sld.library.ResourcesComponentLibrary;
+import com.powsybl.sld.library.ComponentLibrary;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
 import com.powsybl.sld.svg.DefaultDiagramStyleProvider;
 import com.powsybl.sld.svg.DefaultSVGWriter;
@@ -38,7 +38,10 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -47,9 +50,6 @@ import java.util.UUID;
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class SingleLineDiagramService {
-
-    private static final ResourcesComponentLibrary COMPONENT_LIBRARY = new ResourcesComponentLibrary("GridsuiteAndConvergenceLibrary", "/ConvergenceLibrary", "/GridsuiteLibrary");
-
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
             .setAdaptCellHeightToContent(true)
             .setHighlightLineState(true)
@@ -79,7 +79,7 @@ class SingleLineDiagramService {
     }
 
     Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId, boolean useName, boolean labelCentered,
-                                                boolean diagonalLabel, boolean topologicalColoring) {
+                                                boolean diagonalLabel, boolean topologicalColoring, String componentLibrary) {
         Network network = getNetwork(networkUuid);
 
         VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId, useName);
@@ -91,10 +91,15 @@ class SingleLineDiagramService {
             renderedLayout.setLabelDiagonal(diagonalLabel);
             renderedLayout.setAddNodesInfos(true);
 
-            DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, renderedLayout);
+            Optional<ComponentLibrary> compLibrary = ComponentLibrary.find(componentLibrary);
+            if (!compLibrary.isPresent()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + componentLibrary + "' not found");
+            }
+
+            DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(compLibrary.get(), renderedLayout);
             DefaultDiagramStyleProvider defaultDiagramStyleProvider = topologicalColoring ? new TopologicalStyleProvider(network)
                                                                                           : new NominalVoltageDiagramStyleProvider(network);
-            DefaultDiagramLabelProvider labelProvider = new DefaultDiagramLabelProvider(network, COMPONENT_LIBRARY, renderedLayout);
+            DefaultDiagramLabelProvider labelProvider = new DefaultDiagramLabelProvider(network, compLibrary.get(), renderedLayout);
 
             voltageLevelDiagram.writeSvg("",
                                          defaultSVGWriter,
@@ -146,7 +151,7 @@ class SingleLineDiagramService {
 
     Pair<String, String> generateSubstationSvgAndMetadata(UUID networkUuid, String substationId, boolean useName,
                                                           boolean labelCentered, boolean diagonalLabel, boolean topologicalColoring,
-                                                          String substationLayout) {
+                                                          String substationLayout, String componentLibrary) {
         Network network = getNetwork(networkUuid);
 
         SubstationDiagram substationDiagram = createSubstationDiagram(network, substationId, useName, substationLayout);
@@ -158,10 +163,15 @@ class SingleLineDiagramService {
             renderedLayout.setLabelDiagonal(diagonalLabel);
             renderedLayout.setAddNodesInfos(false);
 
-            DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(COMPONENT_LIBRARY, renderedLayout);
+            Optional<ComponentLibrary> compLibrary = ComponentLibrary.find(componentLibrary);
+            if (!compLibrary.isPresent()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + componentLibrary + "' not found");
+            }
+
+            DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(compLibrary.get(), renderedLayout);
             DefaultDiagramStyleProvider defaultDiagramStyleProvider = topologicalColoring ? new TopologicalStyleProvider(network)
                     : new NominalVoltageDiagramStyleProvider(network);
-            DefaultDiagramLabelProvider labelProvider = new DefaultDiagramLabelProvider(network, COMPONENT_LIBRARY, renderedLayout);
+            DefaultDiagramLabelProvider labelProvider = new DefaultDiagramLabelProvider(network, compLibrary.get(), renderedLayout);
 
             substationDiagram.writeSvg("",
                     defaultSVGWriter,
@@ -174,5 +184,9 @@ class SingleLineDiagramService {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    Collection<String> getAvailableSvgComponentLibraries() {
+        return ComponentLibrary.findAll().stream().map(ComponentLibrary::getName).collect(Collectors.toList());
     }
 }
