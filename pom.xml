@@ -52,6 +52,7 @@
 
         <java.version>11</java.version>
 
+        <jib.container.environment>SPRING_PROFILES_ACTIVE=default</jib.container.environment>
         <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
         <springboot.version>2.4.7</springboot.version>
         <springdoc-openapi.version>1.4.8</springdoc-openapi.version>
