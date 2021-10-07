@@ -1,0 +1,5 @@
+server:
+  port: 5005
+
+network-store-server:
+  base-uri: http://localhost:8080
