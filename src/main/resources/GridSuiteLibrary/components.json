@@ -1,0 +1,36 @@
+{
+  "components": [
+    {
+      "type": "LOCK",
+      "id": null,
+      "size": {
+        "width": 24.0,
+        "height": 24.0
+      },
+      "allowRotation": false,
+      "subComponents": [
+        {
+          "name": "LOCK",
+          "fileName": "lock_black_24dp.svg",
+          "styleClass": "sld-lock"
+        }
+      ]
+    },
+    {
+      "type": "FLASH",
+      "id": null,
+      "size": {
+        "width": 24.0,
+        "height": 24.0
+      },
+      "allowRotation": false,
+      "subComponents": [
+        {
+          "name": "FLASH",
+          "fileName": "bolt_black_24dp.svg",
+          "styleClass": "sld-lock"
+        }
+      ]
+    }
+  ]
+}
