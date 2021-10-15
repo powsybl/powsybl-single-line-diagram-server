@@ -3,6 +3,7 @@
     {
       "type": "LOCK",
       "id": null,
+      "anchorPoints" : [],
       "size": {
         "width": 24.0,
         "height": 24.0
@@ -11,14 +12,15 @@
       "subComponents": [
         {
           "name": "LOCK",
-          "fileName": "lock_black_24dp.svg",
-          "styleClass": "sld-lock"
+          "fileName": "lock_black_24dp.svg"
         }
-      ]
+      ],
+      "styleClass": "sld-lock"
     },
     {
       "type": "FLASH",
       "id": null,
+      "anchorPoints" : [],
       "size": {
         "width": 24.0,
         "height": 24.0
@@ -27,10 +29,10 @@
       "subComponents": [
         {
           "name": "FLASH",
-          "fileName": "bolt_black_24dp.svg",
-          "styleClass": "sld-lock"
+          "fileName": "bolt_black_24dp.svg"
         }
-      ]
+      ],
+      "styleClass": "sld-lock"
     }
   ]
 }
