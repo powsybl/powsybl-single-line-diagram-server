@@ -92,7 +92,7 @@ class SingleLineDiagramService {
             renderedLayout.setAddNodesInfos(true);
 
             Optional<ComponentLibrary> compLibrary = ComponentLibrary.find(componentLibrary);
-            if (!compLibrary.isPresent()) {
+            if (compLibrary.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + componentLibrary + "' not found");
             }
 
@@ -164,7 +164,7 @@ class SingleLineDiagramService {
             renderedLayout.setAddNodesInfos(false);
 
             Optional<ComponentLibrary> compLibrary = ComponentLibrary.find(componentLibrary);
-            if (!compLibrary.isPresent()) {
+            if (compLibrary.isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + componentLibrary + "' not found");
             }
 
