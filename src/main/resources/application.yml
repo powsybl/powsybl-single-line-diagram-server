@@ -1,9 +1,0 @@
-spring:
-  profiles:
-    active: default,local
-
-  application:
-    name: single-line-diagram-server
-
-server:
-  forward-headers-strategy: framework
