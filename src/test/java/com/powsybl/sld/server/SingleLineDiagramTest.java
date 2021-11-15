@@ -45,6 +45,10 @@ public class SingleLineDiagramTest {
     @MockBean
     private  NetworkStoreService networkStoreService;
 
+    private static final String VARIANT_1_ID = "variant_1";
+    private static final String VARIANT_2_ID = "variant_2";
+    private static final String VARIANT_NOT_FOUND_ID = "variant_notFound";
+
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
@@ -62,7 +66,18 @@ public class SingleLineDiagramTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
                 .andReturn();
+        assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
+        result = mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_1_ID, testNetworkId, "vlFr1A"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+            .andReturn();
+        assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
+
+        result = mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+            .andReturn();
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
         //voltage level not existing
@@ -73,9 +88,17 @@ public class SingleLineDiagramTest {
         mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}/", notFoundNetworkId, "vlFr1A"))
                 .andExpect(status().isNotFound());
 
+        //variant not existing
+        mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A"))
+            .andExpect(status().isNotFound());
+
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_1_ID, testNetworkId, "vlFr1A"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         //voltage level not existing
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "NotFound"))
@@ -85,9 +108,17 @@ public class SingleLineDiagramTest {
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}/", notFoundNetworkId, "vlFr1A"))
                 .andExpect(status().isNotFound());
 
+        //variant not existing
+        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A"))
+            .andExpect(status().isNotFound());
+
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         //voltage level not existing
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "NotFound"))
@@ -96,6 +127,10 @@ public class SingleLineDiagramTest {
         //network not existing
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", notFoundNetworkId, "vlFr1A"))
                 .andExpect(status().isNotFound());
+
+        //variant not existing
+        mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A"))
+            .andExpect(status().isNotFound());
     }
 
     @Test
@@ -110,7 +145,12 @@ public class SingleLineDiagramTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
                 .andReturn();
+        assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
+        result = mvc.perform(get("/v1/substation-svg/{networkUuid}/{substationId}?variantId=" + VARIANT_1_ID, testNetworkId, "subFr1"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+            .andReturn();
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
         // substation not existing
@@ -121,9 +161,17 @@ public class SingleLineDiagramTest {
         mvc.perform(get("/v1/substation-svg/{networkUuid}/{substationId}/", notFoundNetworkId, "subFr1"))
                 .andExpect(status().isNotFound());
 
+        // variant not existing
+        mvc.perform(get("/v1/substation-svg/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr1"))
+            .andExpect(status().isNotFound());
+
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}/", testNetworkId, "subFr1"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_2_ID, testNetworkId, "subFr1"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         // substation not existing
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}/", testNetworkId, "NotFound"))
@@ -133,11 +181,19 @@ public class SingleLineDiagramTest {
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}/", notFoundNetworkId, "subFr2"))
                 .andExpect(status().isNotFound());
 
+        // variant not existing
+        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr2"))
+            .andExpect(status().isNotFound());
+
         mvc.perform(get("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?substationLayout=horizontal", testNetworkId, "subFr2"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
-        mvc.perform(get("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?substationLayout=vertical", testNetworkId, "subFr2"))
+        mvc.perform(get("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?substationLayout=horizontal", testNetworkId, "subFr2"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mvc.perform(get("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_2_ID + "&substationLayout=vertical", testNetworkId, "subFr2"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
@@ -164,6 +220,10 @@ public class SingleLineDiagramTest {
         // network not existing
         mvc.perform(get("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}/", notFoundNetworkId, "subFr2"))
                 .andExpect(status().isNotFound());
+
+        // variant not existing
+        mvc.perform(get("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr2"))
+            .andExpect(status().isNotFound());
     }
 
     @Test
@@ -253,7 +313,9 @@ public class SingleLineDiagramTest {
                 .setName("busEs1B")
                 .add();
 
-        return network;
+        network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
+        network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
 
+        return network;
     }
 }

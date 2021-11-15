@@ -28,6 +28,7 @@ import com.powsybl.sld.svg.DefaultDiagramStyleProvider;
 import com.powsybl.sld.svg.DefaultSVGWriter;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import com.powsybl.sld.util.TopologicalStyleProvider;
+import com.powsybl.sld.utils.DiagramParameters;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
@@ -58,11 +59,15 @@ class SingleLineDiagramService {
     @Autowired
     private NetworkStoreService networkStoreService;
 
-    private Network getNetwork(UUID networkUuid) {
+    private Network getNetwork(UUID networkUuid, String variantId) {
         try {
-            return networkStoreService.getNetwork(networkUuid);
+            Network network = networkStoreService.getNetwork(networkUuid);
+            if (variantId != null) {
+                network.getVariantManager().setWorkingVariant(variantId);
+            }
+            return network;
         } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Network '" + networkUuid + "' not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
 
@@ -78,26 +83,25 @@ class SingleLineDiagramService {
         return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, useName);
     }
 
-    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String voltageLevelId, boolean useName, boolean labelCentered,
-                                                boolean diagonalLabel, boolean topologicalColoring, String componentLibrary) {
-        Network network = getNetwork(networkUuid);
+    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String voltageLevelId, DiagramParameters diagParams) {
+        Network network = getNetwork(networkUuid, variantId);
 
-        VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId, useName);
+        VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId, diagParams.isUseName());
 
         try (StringWriter svgWriter = new StringWriter();
              StringWriter metadataWriter = new StringWriter()) {
             LayoutParameters renderedLayout = new LayoutParameters(LAYOUT_PARAMETERS);
-            renderedLayout.setLabelCentered(labelCentered);
-            renderedLayout.setLabelDiagonal(diagonalLabel);
+            renderedLayout.setLabelCentered(diagParams.isLabelCentered());
+            renderedLayout.setLabelDiagonal(diagParams.isDiagonalLabel());
             renderedLayout.setAddNodesInfos(true);
 
-            Optional<ComponentLibrary> compLibrary = ComponentLibrary.find(componentLibrary);
+            Optional<ComponentLibrary> compLibrary = ComponentLibrary.find(diagParams.getComponentLibrary());
             if (compLibrary.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + componentLibrary + "' not found");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found");
             }
 
             DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(compLibrary.get(), renderedLayout);
-            DefaultDiagramStyleProvider defaultDiagramStyleProvider = topologicalColoring ? new TopologicalStyleProvider(network)
+            DefaultDiagramStyleProvider defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new TopologicalStyleProvider(network)
                                                                                           : new NominalVoltageDiagramStyleProvider(network);
             DefaultDiagramLabelProvider labelProvider = new DefaultDiagramLabelProvider(network, compLibrary.get(), renderedLayout);
 
@@ -149,27 +153,26 @@ class SingleLineDiagramService {
         return SubstationDiagram.build(graphBuilder, substationId, substationLayoutFactory, voltageLevelLayoutFactory, useName);
     }
 
-    Pair<String, String> generateSubstationSvgAndMetadata(UUID networkUuid, String substationId, boolean useName,
-                                                          boolean labelCentered, boolean diagonalLabel, boolean topologicalColoring,
-                                                          String substationLayout, String componentLibrary) {
-        Network network = getNetwork(networkUuid);
+    Pair<String, String> generateSubstationSvgAndMetadata(UUID networkUuid, String variantId, String substationId,
+                                                          DiagramParameters diagParams, String substationLayout) {
+        Network network = getNetwork(networkUuid, variantId);
 
-        SubstationDiagram substationDiagram = createSubstationDiagram(network, substationId, useName, substationLayout);
+        SubstationDiagram substationDiagram = createSubstationDiagram(network, substationId, diagParams.isUseName(), substationLayout);
 
         try (StringWriter svgWriter = new StringWriter();
              StringWriter metadataWriter = new StringWriter()) {
             LayoutParameters renderedLayout = new LayoutParameters(LAYOUT_PARAMETERS);
-            renderedLayout.setLabelCentered(labelCentered);
-            renderedLayout.setLabelDiagonal(diagonalLabel);
+            renderedLayout.setLabelCentered(diagParams.isLabelCentered());
+            renderedLayout.setLabelDiagonal(diagParams.isDiagonalLabel());
             renderedLayout.setAddNodesInfos(false);
 
-            Optional<ComponentLibrary> compLibrary = ComponentLibrary.find(componentLibrary);
+            Optional<ComponentLibrary> compLibrary = ComponentLibrary.find(diagParams.getComponentLibrary());
             if (compLibrary.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + componentLibrary + "' not found");
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found");
             }
 
             DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(compLibrary.get(), renderedLayout);
-            DefaultDiagramStyleProvider defaultDiagramStyleProvider = topologicalColoring ? new TopologicalStyleProvider(network)
+            DefaultDiagramStyleProvider defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new TopologicalStyleProvider(network)
                     : new NominalVoltageDiagramStyleProvider(network);
             DefaultDiagramLabelProvider labelProvider = new DefaultDiagramLabelProvider(network, compLibrary.get(), renderedLayout);
 
