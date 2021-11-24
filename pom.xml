@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent-ws</artifactId>
-        <version>5</version>
+        <version>7</version>
     </parent>
 
     <artifactId>powsybl-single-line-diagram-server</artifactId>
@@ -52,7 +52,6 @@
 
         <java.version>11</java.version>
 
-        <jib.container.environment>SPRING_PROFILES_ACTIVE=default</jib.container.environment>
         <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
         <springboot.version>2.4.7</springboot.version>
         <springdoc-openapi.version>1.4.8</springdoc-openapi.version>
@@ -60,6 +59,7 @@
         <powsybl-core.version>4.4.0</powsybl-core.version>
         <powsybl-single-line-diagram.version>2.4.0</powsybl-single-line-diagram.version>
         <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
+        <powsybl-ws-commons.version>1.0.0</powsybl-ws-commons.version>
     </properties>
 
     <build>
@@ -131,6 +131,11 @@
                 <artifactId>powsybl-single-line-diagram-force-layout</artifactId>
                 <version>${powsybl-single-line-diagram.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-ws-commons</artifactId>
+                <version>${powsybl-ws-commons.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -147,6 +152,10 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-single-line-diagram-force-layout</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-ws-commons</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
