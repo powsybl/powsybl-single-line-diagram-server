@@ -148,6 +148,7 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-single-line-diagram-core</artifactId>
+            <!-- FIXME: to remove in SLD 2.8.0 -->
             <exclusions>
                 <exclusion>
                     <groupId>com.powsybl</groupId>

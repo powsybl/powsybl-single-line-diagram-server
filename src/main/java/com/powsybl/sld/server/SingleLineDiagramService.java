@@ -85,7 +85,7 @@ class SingleLineDiagramService {
 
     Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String id, DiagramParameters diagParams) {
         Network network = getNetwork(networkUuid, variantId);
-        // FIXME: will be unnecessary in next release because, check will be done inside SLD library
+        // FIXME: to remove in SLD 2.8.0
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
         }
