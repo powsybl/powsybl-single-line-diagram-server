@@ -8,24 +8,11 @@ package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.Substation;
-import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.network.store.client.NetworkStoreService;
-import com.powsybl.sld.GraphBuilder;
-import com.powsybl.sld.NetworkGraphBuilder;
-import com.powsybl.sld.SubstationDiagram;
-import com.powsybl.sld.VoltageLevelDiagram;
-import com.powsybl.sld.layout.ForceSubstationLayoutFactory;
-import com.powsybl.sld.layout.HorizontalSubstationLayoutFactory;
-import com.powsybl.sld.layout.LayoutParameters;
-import com.powsybl.sld.layout.SmartVoltageLevelLayoutFactory;
-import com.powsybl.sld.layout.SubstationLayoutFactory;
-import com.powsybl.sld.layout.VerticalSubstationLayoutFactory;
-import com.powsybl.sld.layout.VoltageLevelLayoutFactory;
+import com.powsybl.sld.SingleLineDiagram;
+import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.ComponentLibrary;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
-import com.powsybl.sld.svg.DefaultDiagramStyleProvider;
-import com.powsybl.sld.svg.DefaultSVGWriter;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import com.powsybl.sld.util.TopologicalStyleProvider;
 import com.powsybl.sld.utils.DiagramParameters;
@@ -40,7 +27,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -51,10 +37,11 @@ import java.util.stream.Collectors;
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class SingleLineDiagramService {
+
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
             .setAdaptCellHeightToContent(true)
             .setHighlightLineState(true)
-        .setCssLocation(LayoutParameters.CssLocation.EXTERNAL_NO_IMPORT);
+            .setCssLocation(LayoutParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
     @Autowired
     private NetworkStoreService networkStoreService;
@@ -71,117 +58,57 @@ class SingleLineDiagramService {
         }
     }
 
-    // voltage level
-    //
-    private static VoltageLevelDiagram createVoltageLevelDiagram(Network network, String voltageLevelId, boolean useName) {
-        VoltageLevel voltageLevel = network.getVoltageLevel(voltageLevelId);
-        if (voltageLevel == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level " + voltageLevelId + " not found");
-        }
-        VoltageLevelLayoutFactory voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
-        GraphBuilder graphBuilder = new NetworkGraphBuilder(network);
-        return VoltageLevelDiagram.build(graphBuilder, voltageLevelId, voltageLevelLayoutFactory, useName);
-    }
-
-    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String voltageLevelId, DiagramParameters diagParams) {
-        Network network = getNetwork(networkUuid, variantId);
-
-        VoltageLevelDiagram voltageLevelDiagram = createVoltageLevelDiagram(network, voltageLevelId, diagParams.isUseName());
-
-        try (StringWriter svgWriter = new StringWriter();
-             StringWriter metadataWriter = new StringWriter()) {
-            LayoutParameters renderedLayout = new LayoutParameters(LAYOUT_PARAMETERS);
-            renderedLayout.setLabelCentered(diagParams.isLabelCentered());
-            renderedLayout.setLabelDiagonal(diagParams.isDiagonalLabel());
-            renderedLayout.setAddNodesInfos(true);
-
-            Optional<ComponentLibrary> compLibrary = ComponentLibrary.find(diagParams.getComponentLibrary());
-            if (compLibrary.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found");
-            }
-
-            DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(compLibrary.get(), renderedLayout);
-            DefaultDiagramStyleProvider defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new TopologicalStyleProvider(network)
-                                                                                          : new NominalVoltageDiagramStyleProvider(network);
-            DefaultDiagramLabelProvider labelProvider = new DefaultDiagramLabelProvider(network, compLibrary.get(), renderedLayout);
-
-            voltageLevelDiagram.writeSvg("",
-                                         defaultSVGWriter,
-                                         labelProvider,
-                                         defaultDiagramStyleProvider,
-                                         svgWriter,
-                                         metadataWriter);
-
-            return Pair.of(svgWriter.toString(), metadataWriter.toString());
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    // substation
-    //
-    private static SubstationDiagram createSubstationDiagram(Network network, String substationId, boolean useName,
-                                                             String substationLayout) {
-        Substation substation = network.getSubstation(substationId);
-        if (substation == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Substation " + substationId + " not found");
-        }
-        VoltageLevelLayoutFactory voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
-
+    private static SubstationLayoutFactory getSubstationLayoutFactory(String substationLayout) {
         SubstationLayoutFactory substationLayoutFactory;
         switch (substationLayout) {
-            case "horizontal" :
+            case "horizontal":
                 substationLayoutFactory = new HorizontalSubstationLayoutFactory();
                 break;
-            case "vertical" :
+            case "vertical":
                 substationLayoutFactory = new VerticalSubstationLayoutFactory();
                 break;
-            case "smart" :
+            case "smart":
                 substationLayoutFactory = new ForceSubstationLayoutFactory(ForceSubstationLayoutFactory.CompactionType.NONE);
                 break;
-            case "smartHorizontalCompaction" :
+            case "smartHorizontalCompaction":
                 substationLayoutFactory = new ForceSubstationLayoutFactory(ForceSubstationLayoutFactory.CompactionType.HORIZONTAL);
                 break;
-            case "smartVerticalCompaction" :
+            case "smartVerticalCompaction":
                 substationLayoutFactory = new ForceSubstationLayoutFactory(ForceSubstationLayoutFactory.CompactionType.VERTICAL);
                 break;
             default:
                 throw new PowsyblException("Substation layout " + substationLayout + " incorrect");
         }
 
-        GraphBuilder graphBuilder = new NetworkGraphBuilder(network);
-        return SubstationDiagram.build(graphBuilder, substationId, substationLayoutFactory, voltageLevelLayoutFactory, useName);
+        return substationLayoutFactory;
     }
 
-    Pair<String, String> generateSubstationSvgAndMetadata(UUID networkUuid, String variantId, String substationId,
-                                                          DiagramParameters diagParams, String substationLayout) {
+    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String id, DiagramParameters diagParams) {
         Network network = getNetwork(networkUuid, variantId);
-
-        SubstationDiagram substationDiagram = createSubstationDiagram(network, substationId, diagParams.isUseName(), substationLayout);
+        // FIXME: to remove in SLD 2.8.0
+        if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
+        }
 
         try (StringWriter svgWriter = new StringWriter();
              StringWriter metadataWriter = new StringWriter()) {
-            LayoutParameters renderedLayout = new LayoutParameters(LAYOUT_PARAMETERS);
-            renderedLayout.setLabelCentered(diagParams.isLabelCentered());
-            renderedLayout.setLabelDiagonal(diagParams.isDiagonalLabel());
-            renderedLayout.setAddNodesInfos(false);
+            LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
+            layoutParameters.setLabelCentered(diagParams.isLabelCentered());
+            layoutParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
+            layoutParameters.setUseName(diagParams.isUseName());
+            layoutParameters.setAddNodesInfos(true); // only used for voltage level diagrams
 
-            Optional<ComponentLibrary> compLibrary = ComponentLibrary.find(diagParams.getComponentLibrary());
-            if (compLibrary.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found");
-            }
+            ComponentLibrary compLibrary = ComponentLibrary.find(diagParams.getComponentLibrary())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found"));
 
-            DefaultSVGWriter defaultSVGWriter = new DefaultSVGWriter(compLibrary.get(), renderedLayout);
-            DefaultDiagramStyleProvider defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new TopologicalStyleProvider(network)
-                    : new NominalVoltageDiagramStyleProvider(network);
-            DefaultDiagramLabelProvider labelProvider = new DefaultDiagramLabelProvider(network, compLibrary.get(), renderedLayout);
+            var defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new TopologicalStyleProvider(network)
+                                                                                 : new NominalVoltageDiagramStyleProvider(network);
+            var labelProvider = new DefaultDiagramLabelProvider(network, compLibrary, layoutParameters);
 
-            substationDiagram.writeSvg("",
-                    defaultSVGWriter,
-                    labelProvider,
-                    defaultDiagramStyleProvider,
-                    svgWriter,
-                    metadataWriter);
+            var voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
+            var substationLayoutFactory = getSubstationLayoutFactory(diagParams.getSubstationLayout());
+            SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, layoutParameters, compLibrary,
+                    substationLayoutFactory, voltageLevelLayoutFactory, labelProvider, defaultDiagramStyleProvider, "");
 
             return Pair.of(svgWriter.toString(), metadataWriter.toString());
         } catch (IOException e) {

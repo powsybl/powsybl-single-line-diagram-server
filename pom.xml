@@ -56,8 +56,8 @@
         <springboot.version>2.4.7</springboot.version>
         <springdoc-openapi.version>1.4.8</springdoc-openapi.version>
 
-        <powsybl-core.version>4.5.1</powsybl-core.version>
-        <powsybl-single-line-diagram.version>2.5.1</powsybl-single-line-diagram.version>
+        <powsybl-core.version>4.6.1</powsybl-core.version>
+        <powsybl-single-line-diagram.version>2.7.0</powsybl-single-line-diagram.version>
         <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
         <powsybl-ws-commons.version>1.1.0</powsybl-ws-commons.version>
     </properties>
@@ -148,6 +148,13 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-single-line-diagram-core</artifactId>
+            <!-- FIXME: to remove in SLD 2.8.0 -->
+            <exclusions>
+                <exclusion>
+                    <groupId>com.powsybl</groupId>
+                    <artifactId>powsybl-iidm-impl</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
