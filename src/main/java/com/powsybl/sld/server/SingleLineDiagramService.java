@@ -67,15 +67,6 @@ class SingleLineDiagramService {
             case "vertical":
                 substationLayoutFactory = new VerticalSubstationLayoutFactory();
                 break;
-            case "smart":
-                substationLayoutFactory = new ForceSubstationLayoutFactory(ForceSubstationLayoutFactory.CompactionType.NONE);
-                break;
-            case "smartHorizontalCompaction":
-                substationLayoutFactory = new ForceSubstationLayoutFactory(ForceSubstationLayoutFactory.CompactionType.HORIZONTAL);
-                break;
-            case "smartVerticalCompaction":
-                substationLayoutFactory = new ForceSubstationLayoutFactory(ForceSubstationLayoutFactory.CompactionType.VERTICAL);
-                break;
             default:
                 throw new PowsyblException("Substation layout " + substationLayout + " incorrect");
         }
@@ -85,7 +76,6 @@ class SingleLineDiagramService {
 
     Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String id, DiagramParameters diagParams) {
         Network network = getNetwork(networkUuid, variantId);
-        // FIXME: to remove in SLD 2.8.0
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
         }

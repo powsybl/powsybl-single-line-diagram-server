@@ -2,7 +2,6 @@
   "components": [
     {
       "type": "LOCK",
-      "id": null,
       "anchorPoints" : [],
       "size": {
         "width": 24.0,
@@ -19,7 +18,6 @@
     },
     {
       "type": "FLASH",
-      "id": null,
       "anchorPoints" : [],
       "size": {
         "width": 24.0,
