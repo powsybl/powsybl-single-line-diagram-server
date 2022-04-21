@@ -31,20 +31,9 @@ class NetworkAreaDiagramService {
     @Autowired
     private NetworkStoreService networkStoreService;
 
-    private Network getNetwork(UUID networkUuid, String variantId) {
-        try {
-            Network network = networkStoreService.getNetwork(networkUuid);
-            if (variantId != null) {
-                network.getVariantManager().setWorkingVariant(variantId);
-            }
-            return network;
-        } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
-    }
 
     public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, String voltageLevelId, int depth) {
-        Network network = getNetwork(networkUuid, variantId);
+        Network network = SingleLineDiagramService.getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(voltageLevelId) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level" + voltageLevelId + " not found");
         }
