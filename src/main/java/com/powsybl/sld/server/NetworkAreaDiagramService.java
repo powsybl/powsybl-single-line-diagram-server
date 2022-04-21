@@ -6,7 +6,6 @@
  */
 package com.powsybl.sld.server;
 
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.nad.NetworkAreaDiagram;
 import com.powsybl.nad.svg.SvgParameters;
@@ -30,7 +29,6 @@ import java.util.UUID;
 class NetworkAreaDiagramService {
     @Autowired
     private NetworkStoreService networkStoreService;
-
 
     public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, String voltageLevelId, int depth) {
         Network network = SingleLineDiagramService.getNetwork(networkUuid, variantId, networkStoreService);
