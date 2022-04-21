@@ -223,6 +223,30 @@ public class SingleLineDiagramTest {
         assertEquals("[\"GridSuiteAndConvergence\",\"Convergence\"]", result.getResponse().getContentAsString());
     }
 
+    @Test
+    public void testNetworkAreaDiagram() throws Exception {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        UUID notFoundNetworkId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+
+        given(networkStoreService.getNetwork(testNetworkId)).willReturn(createNetwork());
+        given(networkStoreService.getNetwork(notFoundNetworkId)).willThrow(new PowsyblException());
+
+        MvcResult result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID + "&depth=0", testNetworkId, "vlFr1A"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+                .andReturn();
+        assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
+
+        result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID + "&depth=2", testNetworkId, "vlFr1A"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+                .andReturn();
+        assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
+
+        mvc.perform(get("/v1/network-area-diagram/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID + "&depth=2", testNetworkId, "notFound"))
+                .andExpect(status().isNotFound());
+    }
+
     public static Network createNetwork() {
         Network network = Network.create("test", "test");
         Substation substationFr1 = network.newSubstation()
