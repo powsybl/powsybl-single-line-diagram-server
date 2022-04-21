@@ -1,0 +1,60 @@
+/**
+ * Copyright (c) 2019, RTE (http://www.rte-france.com)
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+package com.powsybl.sld.server;
+
+import com.powsybl.commons.PowsyblException;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.nad.NetworkAreaDiagram;
+import com.powsybl.nad.svg.SvgParameters;
+import com.powsybl.network.store.client.NetworkStoreService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.UncheckedIOException;
+import java.util.UUID;
+
+/**
+ * @author Etienne Homer<etienne.homer at rte-france.com>
+ */
+@ComponentScan(basePackageClasses = {NetworkStoreService.class})
+@Service
+class NetworkAreaDiagramService {
+    @Autowired
+    private NetworkStoreService networkStoreService;
+
+    private Network getNetwork(UUID networkUuid, String variantId) {
+        try {
+            Network network = networkStoreService.getNetwork(networkUuid);
+            if (variantId != null) {
+                network.getVariantManager().setWorkingVariant(variantId);
+            }
+            return network;
+        } catch (PowsyblException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
+
+    public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, String voltageLevelId, int depth) {
+        Network network = getNetwork(networkUuid, variantId);
+        if (network.getVoltageLevel(voltageLevelId) == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level" + voltageLevelId + " not found");
+        }
+
+        try (StringWriter svgWriter = new StringWriter()) {
+            new NetworkAreaDiagram(network, voltageLevelId, depth).draw(svgWriter, new SvgParameters().setSvgWidthAndHeightAdded(true));
+
+            return svgWriter.toString();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+}

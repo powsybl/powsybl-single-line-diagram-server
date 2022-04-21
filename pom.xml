@@ -59,6 +59,9 @@
 
         <powsybl-core.version>4.7.0</powsybl-core.version>
         <powsybl-single-line-diagram.version>2.9.1</powsybl-single-line-diagram.version>
+        <powsybl.nad.version>0.3.0</powsybl.nad.version>
+<!--        <slf4j.version>1.7.22</slf4j.version>-->
+
         <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
         <powsybl-ws-commons.version>1.1.0</powsybl-ws-commons.version>
     </properties>
@@ -125,10 +128,20 @@
             </dependency>
 
             <!-- project specific dependencies (also overrides imports, but separate for clarity) -->
+<!--            <dependency>-->
+<!--                <groupId>org.slf4j</groupId>-->
+<!--                <artifactId>slf4j-simple</artifactId>-->
+<!--                <version>${slf4j.version}</version>-->
+<!--            </dependency>-->
             <dependency>
                 <groupId>org.springdoc</groupId>
                 <artifactId>springdoc-openapi-ui</artifactId>
                 <version>${springdoc-openapi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-network-area-diagram</artifactId>
+                <version>${powsybl.nad.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.powsybl</groupId>
@@ -150,6 +163,10 @@
 
     <dependencies>
         <!-- Compilation dependencies -->
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-network-area-diagram</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-network-store-client</artifactId>

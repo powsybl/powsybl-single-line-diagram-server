@@ -15,7 +15,7 @@ import com.powsybl.sld.library.ComponentLibrary;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import com.powsybl.sld.util.TopologicalStyleProvider;
-import com.powsybl.sld.utils.DiagramParameters;
+import com.powsybl.sld.utils.SingleLineDiagramParameters;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
@@ -74,7 +74,7 @@ class SingleLineDiagramService {
         return substationLayoutFactory;
     }
 
-    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String id, DiagramParameters diagParams) {
+    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams) {
         Network network = getNetwork(networkUuid, variantId);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
