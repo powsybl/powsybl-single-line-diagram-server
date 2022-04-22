@@ -19,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -30,14 +31,16 @@ class NetworkAreaDiagramService {
     @Autowired
     private NetworkStoreService networkStoreService;
 
-    public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, String voltageLevelId, int depth) {
+    public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
         Network network = SingleLineDiagramService.getNetwork(networkUuid, variantId, networkStoreService);
-        if (network.getVoltageLevel(voltageLevelId) == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level" + voltageLevelId + " not found");
-        }
+        voltageLevelsIds.forEach(voltageLevelId -> {
+            if (network.getVoltageLevel(voltageLevelId) == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level" + voltageLevelId + " not found");
+            }
+        });
 
         try (StringWriter svgWriter = new StringWriter()) {
-            new NetworkAreaDiagram(network, voltageLevelId, depth).draw(svgWriter, new SvgParameters().setSvgWidthAndHeightAdded(true));
+            new NetworkAreaDiagram(network, voltageLevelsIds, depth).draw(svgWriter, new SvgParameters().setSvgWidthAndHeightAdded(true));
 
             return svgWriter.toString();
         } catch (IOException e) {

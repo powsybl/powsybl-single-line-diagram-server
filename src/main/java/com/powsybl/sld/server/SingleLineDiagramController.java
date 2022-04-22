@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -185,16 +186,16 @@ public class SingleLineDiagramController {
     }
 
     // network area diagram
-    @GetMapping(value = "/network-area-diagram/{networkUuid}/{voltageLevelId}", produces = IMAGE_SVG_PLUS_XML)
+    @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = IMAGE_SVG_PLUS_XML)
     @Operation(summary = "Get network area diagram image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
     public @ResponseBody String getNetworkAreaDiagramSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @Parameter(description = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelUuid,
+            @Parameter(description = "Voltage levels ids") @RequestParam(name = "voltageLevelsIds", required = false) List<String> voltageLevelsIds,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth) {
-        LOGGER.debug("getSubstationSvg request received with parameter networkUuid = {}, depth = {}", networkUuid, depth);
+        LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, voltageLevelsIds, depth);
 
-        return networkAeraDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelUuid, depth);
+        return networkAeraDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
     }
 }

@@ -231,19 +231,19 @@ public class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId)).willReturn(createNetwork());
         given(networkStoreService.getNetwork(notFoundNetworkId)).willThrow(new PowsyblException());
 
-        MvcResult result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID + "&depth=0", testNetworkId, "vlFr1A"))
+        MvcResult result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0" + "&voltageLevelsIds=vlFr1A", testNetworkId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
                 .andReturn();
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
-        result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID + "&depth=2", testNetworkId, "vlFr1A"))
+        result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=vlFr1A", testNetworkId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
                 .andReturn();
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
-        mvc.perform(get("/v1/network-area-diagram/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID + "&depth=2", testNetworkId, "notFound"))
+        mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=notFound", testNetworkId))
                 .andExpect(status().isNotFound());
     }
 
