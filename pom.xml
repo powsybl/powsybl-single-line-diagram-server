@@ -57,7 +57,7 @@
         <springdoc-openapi.version>1.5.13</springdoc-openapi.version>
         <jackson.version>2.13.2.20220328</jackson.version>
 
-        <powsybl-core.version>4.7.0</powsybl-core.version>
+        <powsybl-core.version>4.8.0</powsybl-core.version>
         <powsybl-single-line-diagram.version>2.9.1</powsybl-single-line-diagram.version>
         <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
         <powsybl-ws-commons.version>1.1.0</powsybl-ws-commons.version>
