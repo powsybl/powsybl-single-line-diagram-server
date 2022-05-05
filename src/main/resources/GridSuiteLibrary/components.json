@@ -7,7 +7,6 @@
         "width": 24.0,
         "height": 24.0
       },
-      "allowRotation": false,
       "subComponents": [
         {
           "name": "LOCK",
@@ -23,7 +22,6 @@
         "width": 24.0,
         "height": 24.0
       },
-      "allowRotation": false,
       "subComponents": [
         {
           "name": "FLASH",
