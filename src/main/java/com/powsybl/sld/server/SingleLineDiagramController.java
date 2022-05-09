@@ -194,7 +194,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "Voltage levels ids") @RequestParam(name = "voltageLevelsIds", required = false) List<String> voltageLevelsIds,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth) {
-        LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", sanitizeParameter(networkUuid.toString()), sanitizeParameter(voltageLevelsIds.toString()), sanitizeParameter(String.valueOf(depth)));
+        LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {0}, voltageLevelsIds = {1}, depth = {2}", sanitizeParameter(networkUuid.toString()), sanitizeParameter(voltageLevelsIds.toString()), sanitizeParameter(String.valueOf(depth)));
 
         return networkAeraDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
     }
