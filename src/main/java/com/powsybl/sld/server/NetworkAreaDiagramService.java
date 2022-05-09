@@ -10,6 +10,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.nad.NetworkAreaDiagram;
 import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.network.store.client.NetworkStoreService;
+import com.powsybl.network.store.client.PreloadingStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,7 @@ class NetworkAreaDiagramService {
     private NetworkStoreService networkStoreService;
 
     public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
-        Network network = SingleLineDiagramService.getNetwork(networkUuid, variantId, networkStoreService);
+        Network network = SingleLineDiagramService.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         voltageLevelsIds.forEach(voltageLevelId -> {
             if (network.getVoltageLevel(voltageLevelId) == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level" + voltageLevelId + " not found");

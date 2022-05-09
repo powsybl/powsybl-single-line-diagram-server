@@ -9,6 +9,7 @@ package com.powsybl.sld.server;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.network.store.client.NetworkStoreService;
+import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.ComponentLibrary;
@@ -46,9 +47,9 @@ class SingleLineDiagramService {
     @Autowired
     private NetworkStoreService networkStoreService;
 
-    public static Network getNetwork(UUID networkUuid, String variantId, NetworkStoreService networkStoreService) {
+    public static Network getNetwork(UUID networkUuid, String variantId, NetworkStoreService networkStoreService, PreloadingStrategy preloadingStrategy) {
         try {
-            Network network = networkStoreService.getNetwork(networkUuid);
+            Network network = networkStoreService.getNetwork(networkUuid, preloadingStrategy);
             if (variantId != null) {
                 network.getVariantManager().setWorkingVariant(variantId);
             }
@@ -56,6 +57,10 @@ class SingleLineDiagramService {
         } catch (PowsyblException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
+    }
+
+    public static Network getNetwork(UUID networkUuid, String variantId, NetworkStoreService networkStoreService) {
+        return getNetwork(networkUuid, variantId, networkStoreService, null);
     }
 
     private static SubstationLayoutFactory getSubstationLayoutFactory(String substationLayout) {

@@ -9,6 +9,7 @@ package com.powsybl.sld.server;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
 import com.powsybl.network.store.client.NetworkStoreService;
+import com.powsybl.network.store.client.PreloadingStrategy;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,8 +60,8 @@ public class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         UUID notFoundNetworkId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
-        given(networkStoreService.getNetwork(testNetworkId)).willReturn(createNetwork());
-        given(networkStoreService.getNetwork(notFoundNetworkId)).willThrow(new PowsyblException());
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
+        given(networkStoreService.getNetwork(notFoundNetworkId, null)).willThrow(new PowsyblException());
 
         MvcResult result = mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}/", testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
@@ -138,8 +139,8 @@ public class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         UUID notFoundNetworkId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
-        given(networkStoreService.getNetwork(testNetworkId)).willReturn(createNetwork());
-        given(networkStoreService.getNetwork(notFoundNetworkId)).willThrow(new PowsyblException());
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
+        given(networkStoreService.getNetwork(notFoundNetworkId, null)).willThrow(new PowsyblException());
 
         MvcResult result = mvc.perform(get("/v1/substation-svg/{networkUuid}/{substationId}/", testNetworkId, "subFr1"))
                 .andExpect(status().isOk())
@@ -228,8 +229,8 @@ public class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         UUID notFoundNetworkId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
-        given(networkStoreService.getNetwork(testNetworkId)).willReturn(createNetwork());
-        given(networkStoreService.getNetwork(notFoundNetworkId)).willThrow(new PowsyblException());
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+        given(networkStoreService.getNetwork(notFoundNetworkId, PreloadingStrategy.COLLECTION)).willThrow(new PowsyblException());
 
         MvcResult result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0" + "&voltageLevelsIds=vlFr1A", testNetworkId))
                 .andExpect(status().isOk())
