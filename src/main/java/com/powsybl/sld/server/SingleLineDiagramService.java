@@ -46,6 +46,10 @@ class SingleLineDiagramService {
     @Autowired
     private NetworkStoreService networkStoreService;
 
+    public static Network getNetwork(UUID networkUuid, String variantId, NetworkStoreService networkStoreService) {
+        return DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, null);
+    }
+
     private static SubstationLayoutFactory getSubstationLayoutFactory(String substationLayout) {
         SubstationLayoutFactory substationLayoutFactory;
         switch (substationLayout) {
@@ -63,7 +67,7 @@ class SingleLineDiagramService {
     }
 
     Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams) {
-        Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService);
+        Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
         }

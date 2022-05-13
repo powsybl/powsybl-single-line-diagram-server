@@ -25,8 +25,4 @@ public final class DiagramUtils {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
-
-    public static Network getNetwork(UUID networkUuid, String variantId, NetworkStoreService networkStoreService) {
-        return getNetwork(networkUuid, variantId, networkStoreService, null);
-    }
 }
