@@ -41,8 +41,10 @@ class NetworkAreaDiagramService {
         });
 
         try (StringWriter svgWriter = new StringWriter()) {
-            new NetworkAreaDiagram(network, voltageLevelsIds, depth).draw(svgWriter, new SvgParameters().setSvgWidthAndHeightAdded(true));
-
+            new NetworkAreaDiagram(network, voltageLevelsIds, depth).draw(
+                    svgWriter,
+                    new SvgParameters().setSvgWidthAndHeightAdded(true).setTextNodeBackground(false).setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT)
+            );
             return svgWriter.toString();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
