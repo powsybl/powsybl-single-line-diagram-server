@@ -33,7 +33,7 @@ class NetworkAreaDiagramService {
     private NetworkStoreService networkStoreService;
 
     public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
-        Network network = SingleLineDiagramService.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
+        Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         voltageLevelsIds.forEach(voltageLevelId -> {
             if (network.getVoltageLevel(voltageLevelId) == null) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level" + voltageLevelId + " not found");
