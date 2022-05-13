@@ -15,6 +15,7 @@ import com.powsybl.sld.library.ComponentLibrary;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import com.powsybl.sld.util.TopologicalStyleProvider;
+import com.powsybl.sld.utils.DiagramUtils;
 import com.powsybl.sld.utils.SingleLineDiagramParameters;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
