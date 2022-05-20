@@ -14,7 +14,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public class DiagramParameters {
+public class SingleLineDiagramParameters {
     private boolean useName;
     private boolean labelCentered;
     private boolean diagonalLabel;

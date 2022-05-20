@@ -59,6 +59,7 @@
 
         <powsybl-core.version>4.8.0</powsybl-core.version>
         <powsybl-single-line-diagram.version>2.10.0</powsybl-single-line-diagram.version>
+        <powsybl.nad.version>0.3.0</powsybl.nad.version>
         <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
         <powsybl-ws-commons.version>1.1.0</powsybl-ws-commons.version>
     </properties>
@@ -132,6 +133,11 @@
             </dependency>
             <dependency>
                 <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-network-area-diagram</artifactId>
+                <version>${powsybl.nad.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
                 <artifactId>powsybl-network-store-client</artifactId>
                 <version>${powsybl-network-store.version}</version>
             </dependency>
@@ -150,6 +156,10 @@
 
     <dependencies>
         <!-- Compilation dependencies -->
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-network-area-diagram</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-network-store-client</artifactId>

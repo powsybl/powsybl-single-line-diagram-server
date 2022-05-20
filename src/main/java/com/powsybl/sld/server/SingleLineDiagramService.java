@@ -15,7 +15,8 @@ import com.powsybl.sld.library.ComponentLibrary;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import com.powsybl.sld.util.TopologicalStyleProvider;
-import com.powsybl.sld.utils.DiagramParameters;
+import com.powsybl.sld.utils.DiagramUtils;
+import com.powsybl.sld.utils.SingleLineDiagramParameters;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
@@ -46,16 +47,8 @@ class SingleLineDiagramService {
     @Autowired
     private NetworkStoreService networkStoreService;
 
-    private Network getNetwork(UUID networkUuid, String variantId) {
-        try {
-            Network network = networkStoreService.getNetwork(networkUuid);
-            if (variantId != null) {
-                network.getVariantManager().setWorkingVariant(variantId);
-            }
-            return network;
-        } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
+    public static Network getNetwork(UUID networkUuid, String variantId, NetworkStoreService networkStoreService) {
+        return DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, null);
     }
 
     private static SubstationLayoutFactory getSubstationLayoutFactory(String substationLayout) {
@@ -74,8 +67,8 @@ class SingleLineDiagramService {
         return substationLayoutFactory;
     }
 
-    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String id, DiagramParameters diagParams) {
-        Network network = getNetwork(networkUuid, variantId);
+    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams) {
+        Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
         }

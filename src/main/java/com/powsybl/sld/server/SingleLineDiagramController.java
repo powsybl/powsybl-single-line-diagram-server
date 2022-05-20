@@ -9,7 +9,7 @@ package com.powsybl.sld.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
-import com.powsybl.sld.utils.DiagramParameters;
+import com.powsybl.sld.utils.SingleLineDiagramParameters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,7 +25,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
+
+import static com.powsybl.ws.commons.LogUtils.sanitizeParam;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -41,9 +44,13 @@ public class SingleLineDiagramController {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     static final String IMAGE_SVG_PLUS_XML = "image/svg+xml";
+    static final String HORIZONTAL = "horizontal";
 
     @Autowired
     private SingleLineDiagramService singleLineDiagramService;
+
+    @Autowired
+    private NetworkAreaDiagramService networkAeraDiagramService;
 
     // voltage levels
     //
@@ -60,7 +67,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary) {
         LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
-        var parameters = new DiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, "horizontal");
+        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, HORIZONTAL);
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters).getLeft();
     }
 
@@ -78,7 +85,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary) {
         LOGGER.debug("getVoltageLevelMetadata request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
 
-        var parameters = new DiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, "horizontal");
+        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, HORIZONTAL);
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters).getRight();
     }
 
@@ -96,7 +103,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary) throws JsonProcessingException {
         LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
 
-        var parameters = new DiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, "horizontal");
+        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, HORIZONTAL);
         Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters);
         String svg = svgAndMetadata.getLeft();
         String metadata = svgAndMetadata.getRight();
@@ -119,11 +126,11 @@ public class SingleLineDiagramController {
             @Parameter(description = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
             @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
-            @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout,
+            @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = HORIZONTAL) String substationLayout,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary) {
         LOGGER.debug("getSubstationSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
 
-        var parameters = new DiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, substationLayout);
+        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, substationLayout);
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters).getLeft();
     }
 
@@ -138,11 +145,11 @@ public class SingleLineDiagramController {
             @Parameter(description = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
             @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
-            @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout,
+            @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = HORIZONTAL) String substationLayout,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary) {
         LOGGER.debug("getSubstationMetadata request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
 
-        var parameters = new DiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, substationLayout);
+        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, substationLayout);
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters).getRight();
     }
 
@@ -157,11 +164,11 @@ public class SingleLineDiagramController {
             @Parameter(description = "centerLabel") @RequestParam(name = "centerLabel", defaultValue = "false") boolean centerLabel,
             @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
-            @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = "horizontal") String substationLayout,
+            @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = HORIZONTAL) String substationLayout,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary) throws JsonProcessingException {
         LOGGER.debug("getSubstationFullSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
 
-        var parameters = new DiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, substationLayout);
+        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, substationLayout);
         Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters);
         String svg = svgAndMetadata.getLeft();
         String metadata = svgAndMetadata.getRight();
@@ -178,5 +185,19 @@ public class SingleLineDiagramController {
         LOGGER.debug("getAvailableSvgComponentLibraries ...");
         Collection<String> libraries = singleLineDiagramService.getAvailableSvgComponentLibraries();
         return ResponseEntity.ok().body(libraries);
+    }
+
+    // network area diagram
+    @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = IMAGE_SVG_PLUS_XML)
+    @Operation(summary = "Get network area diagram image")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
+    public @ResponseBody String getNetworkAreaDiagramSvg(
+            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @Parameter(description = "Voltage levels ids") @RequestParam(name = "voltageLevelsIds", required = false) List<String> voltageLevelsIds,
+            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
+            @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth) {
+        LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
+
+        return networkAeraDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
     }
 }
