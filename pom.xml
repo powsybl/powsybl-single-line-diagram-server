@@ -52,16 +52,13 @@
 
         <java.version>11</java.version>
 
-        <jaxb-runtime.version>2.4.0-b180830.0438</jaxb-runtime.version>
         <springboot.version>2.6.6</springboot.version>
         <springdoc-openapi.version>1.5.13</springdoc-openapi.version>
         <jackson.version>2.13.2.20220328</jackson.version>
 
-        <powsybl-core.version>4.8.0</powsybl-core.version>
-        <powsybl-single-line-diagram.version>2.10.0</powsybl-single-line-diagram.version>
-        <powsybl.nad.version>0.3.0</powsybl.nad.version>
+        <powsybl-dependencies.version>1.2.0</powsybl-dependencies.version>
         <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
-        <powsybl-ws-commons.version>1.1.0</powsybl-ws-commons.version>
+        <powsybl-ws-commons.version>1.2.0</powsybl-ws-commons.version>
     </properties>
 
     <build>
@@ -112,8 +109,8 @@
             <!-- imports -->
             <dependency>
                 <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-core</artifactId>
-                <version>${powsybl-core.version}</version>
+                <artifactId>powsybl-dependencies</artifactId>
+                <version>${powsybl-dependencies.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -133,18 +130,8 @@
             </dependency>
             <dependency>
                 <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-network-area-diagram</artifactId>
-                <version>${powsybl.nad.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.powsybl</groupId>
                 <artifactId>powsybl-network-store-client</artifactId>
                 <version>${powsybl-network-store.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-single-line-diagram-core</artifactId>
-                <version>${powsybl-single-line-diagram.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.powsybl</groupId>
@@ -182,12 +169,6 @@
         </dependency>
 
         <!-- Runtime dependencies -->
-        <dependency>
-            <groupId>org.glassfish.jaxb</groupId>
-            <artifactId>jaxb-runtime</artifactId>
-            <version>${jaxb-runtime.version}</version>
-            <scope>runtime</scope>
-        </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-config-classic</artifactId>

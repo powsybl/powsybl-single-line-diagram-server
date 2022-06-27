@@ -9,7 +9,7 @@ package com.powsybl.sld.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
-import com.powsybl.sld.utils.SingleLineDiagramParameters;
+import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

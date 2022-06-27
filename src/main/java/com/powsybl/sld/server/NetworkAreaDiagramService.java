@@ -11,7 +11,7 @@ import com.powsybl.nad.NetworkAreaDiagram;
 import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.sld.utils.DiagramUtils;
+import com.powsybl.sld.server.utils.DiagramUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
