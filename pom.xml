@@ -52,7 +52,7 @@
 
         <java.version>11</java.version>
 
-        <springboot.version>2.6.6</springboot.version>
+        <springboot.version>2.7.3</springboot.version>
         <springdoc-openapi.version>1.5.13</springdoc-openapi.version>
         <jackson.version>2.13.2.20220328</jackson.version>
 
