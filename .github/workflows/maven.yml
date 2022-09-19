@@ -2,6 +2,10 @@ name: CI
 
 on:
   push:
+    branches:
+      - 'main'
+      - 'release-v**'
+  pull_request:
   repository_dispatch:
     types:
       - network_store_updated
