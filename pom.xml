@@ -52,13 +52,7 @@
 
         <java.version>11</java.version>
 
-        <springboot.version>2.6.6</springboot.version>
-        <springdoc-openapi.version>1.5.13</springdoc-openapi.version>
-        <jackson.version>2.13.2.20220328</jackson.version>
-
-        <powsybl-dependencies.version>1.2.0</powsybl-dependencies.version>
-        <powsybl-network-store.version>1.0.0-SNAPSHOT</powsybl-network-store.version>
-        <powsybl-ws-commons.version>1.2.0</powsybl-ws-commons.version>
+        <powsybl-ws-dependencies.version>1.0.0</powsybl-ws-dependencies.version>
     </properties>
 
     <build>
@@ -95,48 +89,13 @@
         <dependencies>
             <!-- overrides of imports -->
 
-            <!-- The version 2.10 put by Powsybl cause a problem. spring boot 2.6 needs at least 2.13: https://github.com/FasterXML/jackson-databind/issues/2683 -->
-            <!-- java.lang.NoSuchMethodError: 'boolean com.fasterxml.jackson.databind.SerializationConfig.hasExplicitTimeZone()' -->
-            <!-- Use the version from spring boot 2.6.6 which contains the fix for the  spring 4 shell CVE -->
-            <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
-                <artifactId>jackson-bom</artifactId>
-                <version>${jackson.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
             <!-- imports -->
             <dependency>
                 <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-dependencies</artifactId>
-                <version>${powsybl-dependencies.version}</version>
+                <artifactId>powsybl-ws-dependencies</artifactId>
+                <version>${powsybl-ws-dependencies.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${springboot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <!-- project specific dependencies (also overrides imports, but separate for clarity) -->
-            <dependency>
-                <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-ui</artifactId>
-                <version>${springdoc-openapi.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-network-store-client</artifactId>
-                <version>${powsybl-network-store.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-ws-commons</artifactId>
-                <version>${powsybl-ws-commons.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
