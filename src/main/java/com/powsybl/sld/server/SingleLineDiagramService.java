@@ -77,16 +77,16 @@ class SingleLineDiagramService {
              StringWriter metadataWriter = new StringWriter()) {
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
             layoutParameters.setLabelCentered(diagParams.isLabelCentered());
-            layoutParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
+            layoutParameters.setLabelDiagonal(diagParams.isUseFeederPositions() || diagParams.isDiagonalLabel());
             layoutParameters.setUseName(diagParams.isUseName());
             layoutParameters.setAddNodesInfos(true); // only used for voltage level diagrams
-
             ComponentLibrary compLibrary = ComponentLibrary.find(diagParams.getComponentLibrary())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found"));
 
             var defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new TopologicalStyleProvider(network)
                                                                                  : new NominalVoltageDiagramStyleProvider(network);
-            var labelProvider = new DefaultDiagramLabelProvider(network, compLibrary, layoutParameters);
+            var labelProvider = diagParams.isUseFeederPositions() ? new PositionDiagramLabelProvider(network, compLibrary, layoutParameters, id)
+                    : new DefaultDiagramLabelProvider(network, compLibrary, layoutParameters);
 
             var voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
             var substationLayoutFactory = getSubstationLayoutFactory(diagParams.getSubstationLayout());
