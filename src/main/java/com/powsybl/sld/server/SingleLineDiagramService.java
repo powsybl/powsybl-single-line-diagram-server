@@ -12,6 +12,7 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.ComponentLibrary;
+import com.powsybl.sld.server.utils.DisplayMode;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import com.powsybl.sld.util.TopologicalStyleProvider;
@@ -73,23 +74,27 @@ class SingleLineDiagramService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
         }
 
-        try (StringWriter svgWriter = new StringWriter();
-             StringWriter metadataWriter = new StringWriter()) {
-            LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
-            layoutParameters.setLabelCentered(diagParams.isLabelCentered());
-            layoutParameters.setLabelDiagonal(diagParams.isUseFeederPositions() || diagParams.isDiagonalLabel());
-            layoutParameters.setUseName(diagParams.isUseName());
-            layoutParameters.setAddNodesInfos(true); // only used for voltage level diagrams
+        try (var svgWriter = new StringWriter();
+             var metadataWriter = new StringWriter()) {
+
             ComponentLibrary compLibrary = ComponentLibrary.find(diagParams.getComponentLibrary())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found"));
 
             var defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new TopologicalStyleProvider(network)
                                                                                  : new NominalVoltageDiagramStyleProvider(network);
-            var labelProvider = diagParams.isUseFeederPositions() ? new PositionDiagramLabelProvider(network, compLibrary, layoutParameters, id)
-                    : new DefaultDiagramLabelProvider(network, compLibrary, layoutParameters);
+            LayoutParameters layoutParameters = null;
+            DefaultDiagramLabelProvider labelProvider = null;
+            if (diagParams.getDisplayMode() == DisplayMode.FEEDER_POSITION) {
+                layoutParameters = fillLayoutParameters(diagParams, false, true);
+                labelProvider = new PositionDiagramLabelProvider(network, compLibrary, layoutParameters, id);
+            } else if (diagParams.getDisplayMode() == DisplayMode.DEFAULT) {
+                layoutParameters = fillLayoutParameters(diagParams, true, false);
+                labelProvider = new DefaultDiagramLabelProvider(network, compLibrary, layoutParameters);
+            }
 
             var voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
             var substationLayoutFactory = getSubstationLayoutFactory(diagParams.getSubstationLayout());
+            assert labelProvider != null;
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, layoutParameters, compLibrary,
                     substationLayoutFactory, voltageLevelLayoutFactory, labelProvider, defaultDiagramStyleProvider, "");
 
@@ -97,6 +102,15 @@ class SingleLineDiagramService {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private LayoutParameters fillLayoutParameters(SingleLineDiagramParameters diagParams, boolean withNodeInfos, boolean isLabelDiagonal) {
+        LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
+        layoutParameters.setLabelCentered(diagParams.isLabelCentered());
+        layoutParameters.setUseName(diagParams.isUseName());
+        layoutParameters.setAddNodesInfos(withNodeInfos);
+        layoutParameters.setLabelDiagonal(isLabelDiagonal);
+        return layoutParameters;
     }
 
     Collection<String> getAvailableSvgComponentLibraries() {

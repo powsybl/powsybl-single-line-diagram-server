@@ -126,10 +126,6 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.powsybl</groupId>
-            <artifactId>powsybl-iidm-modification</artifactId>
-        </dependency>
 
         <!-- Runtime dependencies -->
         <dependency>

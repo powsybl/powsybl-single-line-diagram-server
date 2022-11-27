@@ -10,6 +10,11 @@ import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
+import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
+import com.powsybl.sld.SingleLineDiagram;
+import com.powsybl.sld.layout.LayoutParameters;
+import com.powsybl.sld.library.ConvergenceComponentLibrary;
+import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,9 +28,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -42,6 +52,9 @@ public class SingleLineDiagramTest {
 
     @Autowired
     private MockMvc mvc;
+
+    @MockBean
+    private PositionDiagramLabelProvider positionDiagramLabelProvider;
 
     @MockBean
     private  NetworkStoreService networkStoreService;
@@ -330,5 +343,19 @@ public class SingleLineDiagramTest {
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
 
         return network;
+    }
+
+    @Test
+    public void testPosisionDiagramLabelProvider() throws IOException {
+        var testNetwork = new NetworkFactoryImpl().createNetwork("testNetwork", "test");
+        var s1 = testNetwork.newSubstation().setId("s1").setName("s1").setCountry(Country.FR).add();
+        s1.newVoltageLevel().setId("v1").setName("v1").setTopologyKind(TopologyKind.NODE_BREAKER).setNominalV(380.).add();
+        var layoutParameters = new LayoutParameters();
+        var componentLibrary = new ConvergenceComponentLibrary();
+        var diagramLabelProvider = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "v1");
+        var diagramStyleProvider = new NominalVoltageDiagramStyleProvider(testNetwork);
+        SingleLineDiagram.draw(testNetwork, "v1", Path.of("/tmp/test.svg"), layoutParameters, componentLibrary, diagramLabelProvider, diagramStyleProvider, "");
+        var line = new BufferedReader(new FileReader("/tmp/test.svg")).readLine();
+        assertNotNull(line);
     }
 }
