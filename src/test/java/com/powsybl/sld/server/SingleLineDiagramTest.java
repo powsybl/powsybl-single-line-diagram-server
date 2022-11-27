@@ -7,14 +7,19 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.extensions.Extendable;
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.BusbarSectionPositionAdder;
+import com.powsybl.iidm.network.extensions.ConnectablePosition;
+import com.powsybl.iidm.network.extensions.ConnectablePositionAdder;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.network.store.iidm.impl.NetworkFactoryImpl;
-import com.powsybl.sld.SingleLineDiagram;
+import com.powsybl.sld.builders.NetworkGraphBuilder;
 import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ConvergenceComponentLibrary;
-import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
+import com.powsybl.sld.model.graphs.VoltageLevelGraph;
+import com.powsybl.sld.model.nodes.FeederNode;
+import com.powsybl.sld.svg.FeederInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,14 +33,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Path;
+import java.util.List;
 import java.util.UUID;
 
+import static com.powsybl.sld.library.ComponentTypeName.ARROW_ACTIVE;
+import static com.powsybl.sld.library.ComponentTypeName.ARROW_REACTIVE;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -133,6 +138,10 @@ public class SingleLineDiagramTest {
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?displayMode=FEEDER_POSITION&variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         //voltage level not existing
         mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}/", testNetworkId, "NotFound"))
@@ -346,16 +355,95 @@ public class SingleLineDiagramTest {
     }
 
     @Test
-    public void testPosisionDiagramLabelProvider() throws IOException {
-        var testNetwork = new NetworkFactoryImpl().createNetwork("testNetwork", "test");
-        var s1 = testNetwork.newSubstation().setId("s1").setName("s1").setCountry(Country.FR).add();
-        s1.newVoltageLevel().setId("v1").setName("v1").setTopologyKind(TopologyKind.NODE_BREAKER).setNominalV(380.).add();
+    public void testPosisionDiagramLabelProvider() {
+        var testNetwork = createNetworkWithOneInjection();
         var layoutParameters = new LayoutParameters();
         var componentLibrary = new ConvergenceComponentLibrary();
-        var diagramLabelProvider = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "v1");
-        var diagramStyleProvider = new NominalVoltageDiagramStyleProvider(testNetwork);
-        SingleLineDiagram.draw(testNetwork, "v1", Path.of("/tmp/test.svg"), layoutParameters, componentLibrary, diagramLabelProvider, diagramStyleProvider, "");
-        var line = new BufferedReader(new FileReader("/tmp/test.svg")).readLine();
-        assertNotNull(line);
+        var graphBuilder = new NetworkGraphBuilder(testNetwork);
+        VoltageLevelGraph g = graphBuilder.buildVoltageLevelGraph("vl1");
+        PositionDiagramLabelProvider labelProvider = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "vl1");
+        List<FeederInfo> feederInfos1 = labelProvider.getFeederInfos((FeederNode) g.getNode("loadA"));
+        assertEquals(2, feederInfos1.size());
+        assertEquals(ARROW_ACTIVE, feederInfos1.get(0).getComponentType());
+        assertEquals(ARROW_REACTIVE, feederInfos1.get(1).getComponentType());
+        assertTrue(feederInfos1.get(0).getRightLabel().isPresent());
+        assertTrue(feederInfos1.get(1).getRightLabel().isPresent());
+        assertFalse(feederInfos1.get(0).getLeftLabel().isPresent());
+        assertFalse(feederInfos1.get(1).getLeftLabel().isPresent());
+    }
+
+    public Network createNetworkWithOneInjection() {
+        Network network = Network.create("TestSingleLineDiagramClass", "test");
+        Substation substation = createSubstation(network, "s", "s", Country.FR);
+        VoltageLevel vl = createVoltageLevel(substation, "vl1", "vl1", TopologyKind.NODE_BREAKER, 380, 10);
+        createBusBarSection(vl, "bbs22", "bbs22", 2, 2, 2);
+        createSwitch(vl, "bA", "bA", SwitchKind.BREAKER, false, false, false, 3, 4);
+        createLoad(vl, "loadA", "loadA", "loadA", null, ConnectablePosition.Direction.TOP, 4, 10, 10);
+        return network;
+    }
+
+    private Substation createSubstation(Network n, String id, String name, Country country) {
+        return n.newSubstation()
+                .setId(id)
+                .setName(name)
+                .setCountry(country)
+                .add();
+    }
+
+    private VoltageLevel createVoltageLevel(Substation s, String id, String name,
+                                                     TopologyKind topology, double vNom, int nodeCount) {
+        VoltageLevel vl = s.newVoltageLevel()
+                .setId(id)
+                .setName(name)
+                .setTopologyKind(topology)
+                .setNominalV(vNom)
+                .add();
+        return vl;
+    }
+
+    private void createLoad(VoltageLevel vl, String id, String name, String feederName, Integer feederOrder,
+                                     ConnectablePosition.Direction direction, int node, double p0, double q0) {
+        Load load = vl.newLoad()
+                .setId(id)
+                .setName(name)
+                .setNode(node)
+                .setP0(p0)
+                .setQ0(q0)
+                .add();
+        addFeederPosition(load, feederName, feederOrder, direction);
+    }
+
+    private void createSwitch(VoltageLevel vl, String id, String name, SwitchKind kind, boolean retained, boolean open, boolean fictitious, int node1, int node2) {
+        vl.getNodeBreakerView().newSwitch()
+                .setId(id)
+                .setName(name)
+                .setKind(kind)
+                .setRetained(retained)
+                .setOpen(open)
+                .setFictitious(fictitious)
+                .setNode1(node1)
+                .setNode2(node2)
+                .add();
+    }
+
+    private void createBusBarSection(VoltageLevel vl, String id, String name, int node, int busbarIndex, int sectionIndex) {
+        BusbarSection bbs = vl.getNodeBreakerView().newBusbarSection()
+                .setId(id)
+                .setName(name)
+                .setNode(node)
+                .add();
+        bbs.newExtension(BusbarSectionPositionAdder.class)
+                .withBusbarIndex(busbarIndex)
+                .withSectionIndex(sectionIndex)
+                .add();
+    }
+
+    private void addFeederPosition(Extendable<?> extendable, String feederName, Integer feederOrder, ConnectablePosition.Direction direction) {
+        ConnectablePositionAdder.FeederAdder feederAdder = extendable.newExtension(ConnectablePositionAdder.class).newFeeder();
+        if (feederOrder != null) {
+            feederAdder.withOrder(feederOrder);
+        }
+        feederAdder.withDirection(direction).withName(feederName).add()
+                .add();
     }
 }

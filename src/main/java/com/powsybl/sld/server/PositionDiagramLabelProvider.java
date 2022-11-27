@@ -18,16 +18,11 @@ import com.powsybl.iidm.network.extensions.ConnectablePosition;
 import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ComponentLibrary;
 import com.powsybl.sld.model.coordinate.Direction;
-import com.powsybl.sld.model.coordinate.Side;
-import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.BusNode;
 import com.powsybl.sld.model.nodes.EquipmentNode;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.model.nodes.Node;
-import com.powsybl.sld.svg.BusInfo;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
-import com.powsybl.sld.svg.ElectricalNodeInfo;
-import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.LabelPosition;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
@@ -53,11 +48,6 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
     }
 
     @Override
-    public List<FeederInfo> getFeederInfos(FeederNode node) {
-        return Collections.emptyList();
-    }
-
-    @Override
     public List<NodeLabel> getNodeLabels(Node node, Direction direction) {
         Objects.requireNonNull(node);
         Objects.requireNonNull(direction);
@@ -66,31 +56,6 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
             return getLabelOrNameOrId(node).map(label -> new NodeLabel(label, labelPosition, null)).stream().collect(Collectors.toList());
         }
         return Collections.emptyList();
-    }
-
-    @Override
-    public String getTooltip(Node node) {
-        return null;
-    }
-
-    @Override
-    public List<NodeDecorator> getNodeDecorators(Node node, Direction direction) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<ElectricalNodeInfo> getElectricalNodesInfos(VoltageLevelGraph graph) {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public Optional<BusInfo> getBusInfo(BusNode node) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Map<String, Side> getBusInfoSides(VoltageLevelGraph graph) {
-        return Collections.emptyMap();
     }
 
     private Optional<String> getLabelOrNameOrId(Node node) {
