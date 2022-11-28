@@ -369,6 +369,8 @@ public class SingleLineDiagramTest {
         var graphBuilder = new NetworkGraphBuilder(testNetwork);
         VoltageLevelGraph g = graphBuilder.buildVoltageLevelGraph("vl1");
         PositionDiagramLabelProvider labelProvider = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "vl1");
+        PositionDiagramLabelProvider labelProvider2 = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "vl2");
+
         List<FeederInfo> feederInfos1 = labelProvider.getFeederInfos((FeederNode) g.getNode("loadA"));
         assertEquals(2, feederInfos1.size());
         assertEquals(ARROW_ACTIVE, feederInfos1.get(0).getComponentType());
@@ -383,6 +385,8 @@ public class SingleLineDiagramTest {
         assertTrue(strExistInSvgFile("/tmp/test.svg", "loadA pos [0]"));
         assertTrue(strExistInSvgFile("/tmp/test.svg", "trf1 pos [1]"));
         assertTrue(strExistInSvgFile("/tmp/test.svg", "trf73 pos [3]"));
+        SingleLineDiagram.draw(testNetwork, "vl3", Path.of("/tmp/test2.svg"), layoutParameters, componentLibrary, labelProvider2, diagramStyleProvider, "");
+        assertTrue(strExistInSvgFile("/tmp/test2.svg", "trf71 pos [4]"));
     }
 
     private boolean strExistInSvgFile(String fileName, String searchStr) throws FileNotFoundException {
