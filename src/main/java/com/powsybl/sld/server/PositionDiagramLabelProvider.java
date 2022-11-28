@@ -88,13 +88,13 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
         return null;
     }
 
-    private List<Integer> getInjectionOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Injection<?> injection, boolean throwException, Reporter reporter) {
+    static List<Integer> getInjectionOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Injection<?> injection, boolean throwException, Reporter reporter) {
         List<Integer> singleOrder = position.getFeeder().getOrder().map(List::of).orElse(Collections.emptyList());
         checkConnectableInVoltageLevel(singleOrder, voltageLevel, injection, throwException, reporter);
         return singleOrder;
     }
 
-    private List<Integer> getBranchOrders(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch, boolean throwException, Reporter reporter) {
+    static List<Integer> getBranchOrders(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch, boolean throwException, Reporter reporter) {
         List<Integer> orders = new ArrayList<>();
         if (branch.getTerminal1().getVoltageLevel() == voltageLevel) {
             position.getFeeder1().getOrder().ifPresent(orders::add);
@@ -107,7 +107,7 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
         return orders;
     }
 
-    private List<Integer> get3wtOrders(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException, Reporter reporter) {
+    static List<Integer> get3wtOrders(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException, Reporter reporter) {
         List<Integer> orders = new ArrayList<>();
         if (twt.getLeg1().getTerminal().getVoltageLevel() == voltageLevel) {
             position.getFeeder1().getOrder().ifPresent(orders::add);
@@ -123,7 +123,7 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
         return orders;
     }
 
-    private List<Integer> getOrderPositions(ConnectablePosition<?> position, VoltageLevel voltageLevel, Identifiable<?> identifiable, boolean throwException, Reporter reporter) {
+    static List<Integer> getOrderPositions(ConnectablePosition<?> position, VoltageLevel voltageLevel, Identifiable<?> identifiable, boolean throwException, Reporter reporter) {
         if (identifiable instanceof Injection) {
             return getInjectionOrder(position, voltageLevel, (Injection<?>) identifiable, throwException, reporter);
         } else if (identifiable instanceof Branch) {
@@ -139,7 +139,7 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
         return Collections.emptyList();
     }
 
-    private void checkConnectableInVoltageLevel(List<Integer> orders, VoltageLevel voltageLevel, Connectable<?> connectable, boolean throwException, Reporter reporter) {
+    static void checkConnectableInVoltageLevel(List<Integer> orders, VoltageLevel voltageLevel, Connectable<?> connectable, boolean throwException, Reporter reporter) {
         if (orders.isEmpty()) {
             LOGGER.error("Given connectable {} not in voltageLevel {}", connectable.getId(), voltageLevel.getId());
             if (throwException) {
