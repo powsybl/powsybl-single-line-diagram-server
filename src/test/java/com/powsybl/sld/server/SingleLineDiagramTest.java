@@ -373,7 +373,7 @@ public class SingleLineDiagramTest {
     }
 
     public Network createNetworkWithOneInjection() {
-        Network network = Network.create("TestSingleLineDiagramClass", "test");
+        Network network = Network.create("TestSingleLineDiagram", "test");
         Substation substation = createSubstation(network, "s", "s", Country.FR);
         VoltageLevel vl = createVoltageLevel(substation, "vl1", "vl1", TopologyKind.NODE_BREAKER, 380, 10);
         createBusBarSection(vl, "bbs22", "bbs22", 2, 2, 2);
