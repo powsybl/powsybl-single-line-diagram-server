@@ -14,12 +14,15 @@ import com.powsybl.iidm.network.extensions.ConnectablePosition;
 import com.powsybl.iidm.network.extensions.ConnectablePositionAdder;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
+import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.builders.NetworkGraphBuilder;
 import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ConvergenceComponentLibrary;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
+import com.powsybl.sld.svg.DiagramStyleProvider;
 import com.powsybl.sld.svg.FeederInfo;
+import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +36,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Scanner;
 import java.util.UUID;
 
 import static com.powsybl.sld.library.ComponentTypeName.ARROW_ACTIVE;
@@ -355,7 +362,7 @@ public class SingleLineDiagramTest {
     }
 
     @Test
-    public void testPosisionDiagramLabelProvider() {
+    public void testPosisionDiagramLabelProvider() throws FileNotFoundException {
         var testNetwork = createNetworkWithOneInjection();
         var layoutParameters = new LayoutParameters();
         var componentLibrary = new ConvergenceComponentLibrary();
@@ -370,15 +377,54 @@ public class SingleLineDiagramTest {
         assertTrue(feederInfos1.get(1).getRightLabel().isPresent());
         assertFalse(feederInfos1.get(0).getLeftLabel().isPresent());
         assertFalse(feederInfos1.get(1).getLeftLabel().isPresent());
+        // test if position label successfully added to svg
+        DiagramStyleProvider diagramStyleProvider = new NominalVoltageDiagramStyleProvider(testNetwork);
+        SingleLineDiagram.draw(testNetwork, "vl1", Path.of("/tmp/test.svg"), layoutParameters, componentLibrary, labelProvider, diagramStyleProvider, "");
+        assertTrue(strExistInSvgFile("/tmp/test.svg", "loadA pos [0]"));
+        assertTrue(strExistInSvgFile("/tmp/test.svg", "trf1 pos [1]"));
+        assertTrue(strExistInSvgFile("/tmp/test.svg", "trf73 pos [3]"));
+    }
+
+    private boolean strExistInSvgFile(String fileName, String searchStr) throws FileNotFoundException {
+        Scanner scan = new Scanner(new File(fileName));
+        while (scan.hasNext()) {
+            String line = scan.nextLine();
+            if (line.contains(searchStr)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Network createNetworkWithOneInjection() {
         Network network = Network.create("TestSingleLineDiagram", "test");
         Substation substation = createSubstation(network, "s", "s", Country.FR);
-        VoltageLevel vl = createVoltageLevel(substation, "vl1", "vl1", TopologyKind.NODE_BREAKER, 380, 10);
-        createBusBarSection(vl, "bbs22", "bbs22", 2, 2, 2);
-        createSwitch(vl, "bA", "bA", SwitchKind.BREAKER, false, false, false, 3, 4);
-        createLoad(vl, "loadA", "loadA", "loadA", null, ConnectablePosition.Direction.TOP, 4, 10, 10);
+        VoltageLevel vl1 = createVoltageLevel(substation, "vl1", "vl1", TopologyKind.NODE_BREAKER, 380, 10);
+        VoltageLevel vl2 = createVoltageLevel(substation, "vl2", "vl2", TopologyKind.NODE_BREAKER, 225, 30);
+        VoltageLevel vl3 = createVoltageLevel(substation, "vl3", "vl3", TopologyKind.NODE_BREAKER, 225, 30);
+
+        createBusBarSection(vl1, "bbs11", "bbs11", 2, 2, 2);
+        createLoad(vl1, "loadA", "loadA", "loadA", null, ConnectablePosition.Direction.TOP, 4, 10, 10);
+        createSwitch(vl1, "bA", "bA", SwitchKind.BREAKER, false, false, false, 3, 4);
+
+        createBusBarSection(vl2, "bbs22", "bbs22", 5, 5, 5);
+        createSwitch(vl1, "bA1", "bA1", SwitchKind.BREAKER, false, false, false, 6, 7);
+        createSwitch(vl2, "bA11", "bA11", SwitchKind.BREAKER, false, false, false, 7, 8);
+        createTwoWindingsTransformer(substation, "trf1", "trf1", 2.0, 14.745, 0.0, 3.2E-5, 400.0, 225.0,
+                7, 8, vl1.getId(), vl2.getId(),
+                "trf1", 1, ConnectablePosition.Direction.TOP,
+                "trf1", 1, ConnectablePosition.Direction.TOP);
+        createBusBarSection(vl3, "bbs33", "bbs33", 8, 8, 8);
+        createSwitch(vl1, "bA33", "bA33", SwitchKind.BREAKER, false, false, false, 9, 10);
+        createSwitch(vl2, "bA44", "bA44", SwitchKind.BREAKER, false, false, false, 11, 12);
+        createSwitch(vl3, "bA55", "bA55", SwitchKind.BREAKER, false, false, false, 13, 14);
+        createThreeWindingsTransformer(substation, "trf2", "trf2", "vl1", "vl2", "vl3",
+                0.5, 0.5, 0.5, 1., 1., 1., 0.1, 0.1,
+                50., 225., 400.,
+                10, 12, 14,
+                "trf73", 3, ConnectablePosition.Direction.BOTTOM,
+                "trf72", 4, ConnectablePosition.Direction.TOP,
+                "trf71", 6, ConnectablePosition.Direction.BOTTOM);
         return network;
     }
 
@@ -436,6 +482,111 @@ public class SingleLineDiagramTest {
                 .withBusbarIndex(busbarIndex)
                 .withSectionIndex(sectionIndex)
                 .add();
+    }
+
+    private void createTwoWindingsTransformer(Substation s, String id, String name,
+                                                       double r, double x, double g, double b,
+                                                       double ratedU1, double ratedU2,
+                                                       int node1, int node2,
+                                                       String idVoltageLevel1, String idVoltageLevel2,
+                                                       String feederName1, Integer feederOrder1, ConnectablePosition.Direction direction1,
+                                                       String feederName2, Integer feederOrder2, ConnectablePosition.Direction direction2) {
+        TwoWindingsTransformer t = s.newTwoWindingsTransformer()
+                .setId(id)
+                .setName(name)
+                .setR(r)
+                .setX(x)
+                .setG(g)
+                .setB(b)
+                .setRatedU1(ratedU1)
+                .setRatedU2(ratedU2)
+                .setNode1(node1)
+                .setVoltageLevel1(idVoltageLevel1)
+                .setNode2(node2)
+                .setVoltageLevel2(idVoltageLevel2)
+                .add();
+        addTwoFeedersPosition(t, feederName1, feederOrder1, direction1, feederName2, feederOrder2, direction2);
+    }
+
+    private void createThreeWindingsTransformer(Substation s, String id, String name,
+                                                         String vl1, String vl2, String vl3,
+                                                         double r1, double r2, double r3,
+                                                         double x1, double x2, double x3,
+                                                         double g1, double b1,
+                                                         double ratedU1, double ratedU2, double ratedU3,
+                                                         int node1, int node2, int node3,
+                                                         String feederName1, Integer feederOrder1, ConnectablePosition.Direction direction1,
+                                                         String feederName2, Integer feederOrder2, ConnectablePosition.Direction direction2,
+                                                         String feederName3, Integer feederOrder3, ConnectablePosition.Direction direction3) {
+        ThreeWindingsTransformer t = s.newThreeWindingsTransformer()
+                .setId(id)
+                .setName(name)
+                .newLeg1()
+                .setR(r1)
+                .setX(x1)
+                .setG(g1)
+                .setB(b1)
+                .setRatedU(ratedU1)
+                .setVoltageLevel(vl1)
+                .setNode(node1)
+                .add()
+                .newLeg2()
+                .setR(r2)
+                .setX(x2)
+                .setRatedU(ratedU2)
+                .setVoltageLevel(vl2)
+                .setNode(node2)
+                .add()
+                .newLeg3()
+                .setR(r3)
+                .setX(x3)
+                .setRatedU(ratedU3)
+                .setVoltageLevel(vl3)
+                .setNode(node3)
+                .add()
+                .add();
+
+        addThreeFeedersPosition(t, feederName1, feederOrder1, direction1, feederName2, feederOrder2, direction2, feederName3, feederOrder3, direction3);
+    }
+
+    private void addTwoFeedersPosition(Extendable<?> extendable,
+                                              String feederName1, Integer feederOrder1, ConnectablePosition.Direction direction1,
+                                              String feederName2, Integer feederOrder2, ConnectablePosition.Direction direction2) {
+        ConnectablePositionAdder extensionAdder = extendable.newExtension(ConnectablePositionAdder.class);
+        ConnectablePositionAdder.FeederAdder feederAdder1 = extensionAdder.newFeeder1();
+        if (feederOrder1 != null) {
+            feederAdder1.withOrder(feederOrder1);
+        }
+        feederAdder1.withName(feederName1).withDirection(direction1).add();
+        ConnectablePositionAdder.FeederAdder feederAdder2 = extensionAdder.newFeeder2();
+        if (feederOrder2 != null) {
+            feederAdder2.withOrder(feederOrder2);
+        }
+        feederAdder2.withName(feederName2).withDirection(direction2).add();
+        extensionAdder.add();
+    }
+
+    private void addThreeFeedersPosition(Extendable<?> extendable,
+                                                String feederName1, Integer feederOrder1, ConnectablePosition.Direction direction1,
+                                                String feederName2, Integer feederOrder2, ConnectablePosition.Direction direction2,
+                                                String feederName3, Integer feederOrder3, ConnectablePosition.Direction direction3) {
+        ConnectablePositionAdder extensionAdder = extendable.newExtension(ConnectablePositionAdder.class);
+        ConnectablePositionAdder.FeederAdder feederAdder1 = extensionAdder.newFeeder1();
+        if (feederOrder1 != null) {
+            feederAdder1.withOrder(feederOrder1);
+        }
+        feederAdder1.withName(feederName1).withDirection(direction1).add();
+        ConnectablePositionAdder.FeederAdder feederAdder2 = extensionAdder.newFeeder2();
+        if (feederOrder2 != null) {
+            feederAdder2.withOrder(feederOrder2);
+        }
+        feederAdder2.withName(feederName2).withDirection(direction2).add();
+        ConnectablePositionAdder.FeederAdder feederAdder3 = extensionAdder.newFeeder3();
+        if (feederOrder3 != null) {
+            feederAdder3.withOrder(feederOrder3);
+        }
+        feederAdder3.withName(feederName3).withDirection(direction3).add();
+        extensionAdder.add();
     }
 
     private void addFeederPosition(Extendable<?> extendable, String feederName, Integer feederOrder, ConnectablePosition.Direction direction) {
