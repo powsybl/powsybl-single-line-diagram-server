@@ -377,8 +377,8 @@ public class SingleLineDiagramTest {
     }
 
     @Test
-    public void testPosisionDiagramLabelProvider() throws IOException {
-        var testNetwork = createNetworkWithOneInjection();
+    public void testPosisionDiagramLabelProvider() {
+        var testNetwork = createNetworkWithTwoInjectionAndOneBranchAndOne3twt();
         var layoutParameters = new LayoutParameters();
         var componentLibrary = new ConvergenceComponentLibrary();
         var graphBuilder = new NetworkGraphBuilder(testNetwork);
@@ -425,7 +425,7 @@ public class SingleLineDiagramTest {
     /*
         #TODO replace it with already configured FourSubstationsNodeBreakerWithExtensionsFactory when migrating to next powsybl release
     */
-    public Network createNetworkWithOneInjection() {
+    public Network createNetworkWithTwoInjectionAndOneBranchAndOne3twt() {
         Network network = Network.create("TestSingleLineDiagram", "test");
         Substation substation = createSubstation(network, "s", "s", Country.FR);
         Substation substation2 = createSubstation(network, "s2", "s2", Country.FR);

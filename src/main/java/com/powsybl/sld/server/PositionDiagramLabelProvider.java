@@ -87,26 +87,26 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
         return null;
     }
 
-    private Integer getInjectionOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Injection<?> injection, boolean throwException) {
+    static Integer getInjectionOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Injection<?> injection, boolean throwException) {
         Integer singleOrder = position.getFeeder().getOrder().orElse(null);
         checkConnectableInVoltageLevel(singleOrder, voltageLevel, injection, throwException);
         return singleOrder;
     }
 
-    private Integer getBranchOrders(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch, boolean throwException) {
+    static Integer getBranchOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch, boolean throwException) {
         Integer order;
         if (branch.getTerminal1().getVoltageLevel() == voltageLevel) {
             order = position.getFeeder1().getOrder().orElse(null);
         } else if (branch.getTerminal2().getVoltageLevel() == voltageLevel) {
             order = position.getFeeder2().getOrder().orElse(null);
         } else {
-            throw new PowsyblException(String.format("Given voltageLevel %s not found in terminal 1 or terminal 2 of branch", voltageLevel.getId()));
+            throw new PowsyblException(String.format("Given voltageLevel %s not found in terminal 1 and terminal 2 of branch", voltageLevel.getId()));
         }
         checkConnectableInVoltageLevel(order, voltageLevel, branch, throwException);
         return order;
     }
 
-    private Integer get3wtOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException) {
+    static Integer get3wtOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException) {
         Integer order;
         if (twt.getLeg1().getTerminal().getVoltageLevel() == voltageLevel) {
             order = position.getFeeder1().getOrder().orElse(null);
@@ -115,17 +115,17 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
         } else if (twt.getLeg3().getTerminal().getVoltageLevel() == voltageLevel) {
             order = position.getFeeder3().getOrder().orElse(null);
         } else {
-            throw new PowsyblException(String.format("Given voltageLevel %s not found in leg 1, leg 2 or leg 3 of ThreeWindingsTransformer", voltageLevel.getId()));
+            throw new PowsyblException(String.format("Given voltageLevel %s not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId()));
         }
         checkConnectableInVoltageLevel(order, voltageLevel, twt, throwException);
         return order;
     }
 
-    private Integer getOrderPositions(ConnectablePosition<?> position, VoltageLevel voltageLevel, Identifiable<?> identifiable, boolean throwException) {
+    static Integer getOrderPositions(ConnectablePosition<?> position, VoltageLevel voltageLevel, Identifiable<?> identifiable, boolean throwException) {
         if (identifiable instanceof Injection) {
             return getInjectionOrder(position, voltageLevel, (Injection<?>) identifiable, throwException);
         } else if (identifiable instanceof Branch) {
-            return getBranchOrders(position, voltageLevel, (Branch<?>) identifiable, throwException);
+            return getBranchOrder(position, voltageLevel, (Branch<?>) identifiable, throwException);
         } else if (identifiable instanceof ThreeWindingsTransformer) {
             return get3wtOrder(position, voltageLevel, (ThreeWindingsTransformer) identifiable, throwException);
         } else {
@@ -137,7 +137,7 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
         return null;
     }
 
-    private void checkConnectableInVoltageLevel(Integer order, VoltageLevel voltageLevel, Connectable<?> connectable, boolean throwException) {
+    static void checkConnectableInVoltageLevel(Integer order, VoltageLevel voltageLevel, Connectable<?> connectable, boolean throwException) {
         if (order == null) {
             LOGGER.error("Given connectable {} not found in voltageLevel {}", connectable.getId(), voltageLevel.getId());
             if (throwException) {
