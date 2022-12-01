@@ -6,8 +6,14 @@
  */
 package com.powsybl.sld.server;
 
+import com.powsybl.commons.PowsyblException;
+import com.powsybl.iidm.network.Branch;
+import com.powsybl.iidm.network.Connectable;
 import com.powsybl.iidm.network.Identifiable;
+import com.powsybl.iidm.network.Injection;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.ThreeWindingsTransformer;
+import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.iidm.network.extensions.ConnectablePosition;
 import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ComponentLibrary;
@@ -23,8 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.powsybl.sld.server.utils.DiagramUtils.getOrderPositions;
 
 /**
  * @author Ben Daamer ahmed<ahmed.bendaamer at rte-france.com>
@@ -62,7 +66,7 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
             if (identifiable != null) {
                 ConnectablePosition<?> connectablePosition = (ConnectablePosition<?>) identifiable.getExtension(ConnectablePosition.class);
                 if (connectablePosition != null) {
-                    Integer order = getOrderPositions(connectablePosition, vl, identifiable, false, LOGGER);
+                    Integer order = getOrderPositions(connectablePosition, vl, identifiable, false);
                     if (order != null) {
                         label += " pos: " + order;
                     }
@@ -81,5 +85,64 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
             return getBusLabelPosition();
         }
         return null;
+    }
+
+    private Integer getInjectionOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Injection<?> injection, boolean throwException) {
+        Integer singleOrder = position.getFeeder().getOrder().orElse(null);
+        checkConnectableInVoltageLevel(singleOrder, voltageLevel, injection, throwException);
+        return singleOrder;
+    }
+
+    private Integer getBranchOrders(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch, boolean throwException) {
+        Integer order;
+        if (branch.getTerminal1().getVoltageLevel() == voltageLevel) {
+            order = position.getFeeder1().getOrder().orElse(null);
+        } else if (branch.getTerminal2().getVoltageLevel() == voltageLevel) {
+            order = position.getFeeder2().getOrder().orElse(null);
+        } else {
+            throw new PowsyblException(String.format("Given voltageLevel %s not found in terminal 1 or terminal 2 of branch", voltageLevel.getId()));
+        }
+        checkConnectableInVoltageLevel(order, voltageLevel, branch, throwException);
+        return order;
+    }
+
+    private Integer get3wtOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException) {
+        Integer order;
+        if (twt.getLeg1().getTerminal().getVoltageLevel() == voltageLevel) {
+            order = position.getFeeder1().getOrder().orElse(null);
+        } else if (twt.getLeg2().getTerminal().getVoltageLevel() == voltageLevel) {
+            order = position.getFeeder2().getOrder().orElse(null);
+        } else if (twt.getLeg3().getTerminal().getVoltageLevel() == voltageLevel) {
+            order = position.getFeeder3().getOrder().orElse(null);
+        } else {
+            throw new PowsyblException(String.format("Given voltageLevel %s not found in leg 1, leg 2 or leg 3 of ThreeWindingsTransformer", voltageLevel.getId()));
+        }
+        checkConnectableInVoltageLevel(order, voltageLevel, twt, throwException);
+        return order;
+    }
+
+    private Integer getOrderPositions(ConnectablePosition<?> position, VoltageLevel voltageLevel, Identifiable<?> identifiable, boolean throwException) {
+        if (identifiable instanceof Injection) {
+            return getInjectionOrder(position, voltageLevel, (Injection<?>) identifiable, throwException);
+        } else if (identifiable instanceof Branch) {
+            return getBranchOrders(position, voltageLevel, (Branch<?>) identifiable, throwException);
+        } else if (identifiable instanceof ThreeWindingsTransformer) {
+            return get3wtOrder(position, voltageLevel, (ThreeWindingsTransformer) identifiable, throwException);
+        } else {
+            LOGGER.error("Given connectable not supported: {}", identifiable.getClass().getName());
+            if (throwException) {
+                throw new PowsyblException(String.format("Given connectable %s not supported: ", identifiable.getClass().getName()));
+            }
+        }
+        return null;
+    }
+
+    private void checkConnectableInVoltageLevel(Integer order, VoltageLevel voltageLevel, Connectable<?> connectable, boolean throwException) {
+        if (order == null) {
+            LOGGER.error("Given connectable {} not found in voltageLevel {}", connectable.getId(), voltageLevel.getId());
+            if (throwException) {
+                throw new PowsyblException(String.format("Given connectable %s not found in voltageLevel %s ", connectable.getId(), voltageLevel.getId()));
+            }
+        }
     }
 }

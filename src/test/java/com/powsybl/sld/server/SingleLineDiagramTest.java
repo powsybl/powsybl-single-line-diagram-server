@@ -385,6 +385,7 @@ public class SingleLineDiagramTest {
         VoltageLevelGraph g = graphBuilder.buildVoltageLevelGraph("vl1");
         PositionDiagramLabelProvider labelProvider = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "vl1");
         PositionDiagramLabelProvider labelProvider2 = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "vl2");
+        PositionDiagramLabelProvider labelProvider3 = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "vl3");
 
         List<FeederInfo> feederInfos1 = labelProvider.getFeederInfos((FeederNode) g.getNode("loadA"));
         assertEquals(2, feederInfos1.size());
@@ -398,12 +399,16 @@ public class SingleLineDiagramTest {
         DiagramStyleProvider diagramStyleProvider = new NominalVoltageDiagramStyleProvider(testNetwork);
         Path outPath = tmpDir.resolve("sld.svg");
         Path outPath2 = tmpDir.resolve("sld2.svg");
+        Path outPath3 = tmpDir.resolve("sld3.svg");
+
         SingleLineDiagram.draw(testNetwork, "vl1", outPath, layoutParameters, componentLibrary, labelProvider, diagramStyleProvider, "");
         assertTrue(toString(outPath).contains("loadA pos: 0"));
         assertTrue(toString(outPath).contains("trf1 pos: 1"));
         assertTrue(toString(outPath).contains("trf73 pos: 3"));
-        SingleLineDiagram.draw(testNetwork, "vl3", outPath2, layoutParameters, componentLibrary, labelProvider2, diagramStyleProvider, "");
-        assertTrue(toString(outPath2).contains("trf71 pos: 4"));
+        SingleLineDiagram.draw(testNetwork, "vl2", outPath2, layoutParameters, componentLibrary, labelProvider2, diagramStyleProvider, "");
+        assertTrue(toString(outPath2).contains("trf1 pos: 1"));
+        SingleLineDiagram.draw(testNetwork, "vl3", outPath3, layoutParameters, componentLibrary, labelProvider3, diagramStyleProvider, "");
+        assertTrue(toString(outPath3).contains("trf71 pos: 6"));
     }
 
     public static String toString(Path outPath) {
@@ -423,9 +428,11 @@ public class SingleLineDiagramTest {
     public Network createNetworkWithOneInjection() {
         Network network = Network.create("TestSingleLineDiagram", "test");
         Substation substation = createSubstation(network, "s", "s", Country.FR);
+        Substation substation2 = createSubstation(network, "s2", "s2", Country.FR);
         VoltageLevel vl1 = createVoltageLevel(substation, "vl1", "vl1", TopologyKind.NODE_BREAKER, 380, 10);
         VoltageLevel vl2 = createVoltageLevel(substation, "vl2", "vl2", TopologyKind.NODE_BREAKER, 225, 30);
         VoltageLevel vl3 = createVoltageLevel(substation, "vl3", "vl3", TopologyKind.NODE_BREAKER, 225, 30);
+        VoltageLevel vl4 = createVoltageLevel(substation2, "vl4", "vl4", TopologyKind.NODE_BREAKER, 220, 20);
 
         createBusBarSection(vl1, "bbs11", "bbs11", 2, 2, 2);
         createLoad(vl1, "loadA", "loadA", "loadA", null, ConnectablePosition.Direction.TOP, 4, 10, 10);
@@ -449,6 +456,9 @@ public class SingleLineDiagramTest {
                 "trf73", 3, ConnectablePosition.Direction.BOTTOM,
                 "trf72", 4, ConnectablePosition.Direction.TOP,
                 "trf71", 6, ConnectablePosition.Direction.BOTTOM);
+        createBusBarSection(vl4, "bbs66", "bbs66", 2, 2, 2);
+        createLoad(vl4, "loadB", "loadB", "loadB", null, ConnectablePosition.Direction.TOP, 4, 10, 10);
+        createSwitch(vl4, "bB", "bB", SwitchKind.BREAKER, false, false, false, 3, 4);
         return network;
     }
 

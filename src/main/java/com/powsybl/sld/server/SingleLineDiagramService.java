@@ -97,7 +97,7 @@ class SingleLineDiagramService {
                 layoutParameters.setLabelDiagonal(false);
                 labelProvider = new DefaultDiagramLabelProvider(network, compLibrary, layoutParameters);
             } else {
-                throw new SldException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
+                throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
             }
 
             var voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
