@@ -6,6 +6,8 @@
  */
 package com.powsybl.sld.server;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.extensions.Extendable;
 import com.powsybl.iidm.network.*;
@@ -23,6 +25,7 @@ import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.svg.DiagramStyleProvider;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,11 +39,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Scanner;
 import java.util.UUID;
 
 import static com.powsybl.sld.library.ComponentTypeName.ARROW_ACTIVE;
@@ -74,10 +79,19 @@ public class SingleLineDiagramTest {
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_NOT_FOUND_ID = "variant_notFound";
+    private FileSystem fileSystem;
+    private Path tmpDir;
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException {
         MockitoAnnotations.initMocks(this);
+        fileSystem = Jimfs.newFileSystem(Configuration.unix());
+        tmpDir = Files.createDirectory(fileSystem.getPath("tmp"));
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        fileSystem.close();
     }
 
     @Test
@@ -362,7 +376,7 @@ public class SingleLineDiagramTest {
     }
 
     @Test
-    public void testPosisionDiagramLabelProvider() throws FileNotFoundException {
+    public void testPosisionDiagramLabelProvider() throws IOException {
         var testNetwork = createNetworkWithOneInjection();
         var layoutParameters = new LayoutParameters();
         var componentLibrary = new ConvergenceComponentLibrary();
@@ -381,23 +395,25 @@ public class SingleLineDiagramTest {
         assertFalse(feederInfos1.get(1).getLeftLabel().isPresent());
         // test if position label successfully added to svg
         DiagramStyleProvider diagramStyleProvider = new NominalVoltageDiagramStyleProvider(testNetwork);
-        SingleLineDiagram.draw(testNetwork, "vl1", Path.of("/tmp/test.svg"), layoutParameters, componentLibrary, labelProvider, diagramStyleProvider, "");
-        assertTrue(strExistInSvgFile("/tmp/test.svg", "loadA pos [0]"));
-        assertTrue(strExistInSvgFile("/tmp/test.svg", "trf1 pos [1]"));
-        assertTrue(strExistInSvgFile("/tmp/test.svg", "trf73 pos [3]"));
-        SingleLineDiagram.draw(testNetwork, "vl3", Path.of("/tmp/test2.svg"), layoutParameters, componentLibrary, labelProvider2, diagramStyleProvider, "");
-        assertTrue(strExistInSvgFile("/tmp/test2.svg", "trf71 pos [4]"));
+        Path outPath = tmpDir.resolve("sld.svg");
+        Path outPath2 = tmpDir.resolve("sld2.svg");
+        SingleLineDiagram.draw(testNetwork, "vl1", outPath, layoutParameters, componentLibrary, labelProvider, diagramStyleProvider, "");
+        assertTrue(toString(outPath).contains("loadA pos [0]"));
+        assertTrue(toString(outPath).contains("trf1 pos [1]"));
+        assertTrue(toString(outPath).contains("trf73 pos [3]"));
+        SingleLineDiagram.draw(testNetwork, "vl3", outPath2, layoutParameters, componentLibrary, labelProvider2, diagramStyleProvider, "");
+        assertTrue(toString(outPath2).contains("trf71 pos [4]"));
     }
 
-    private boolean strExistInSvgFile(String fileName, String searchStr) throws FileNotFoundException {
-        Scanner scan = new Scanner(new File(fileName));
-        while (scan.hasNext()) {
-            String line = scan.nextLine();
-            if (line.contains(searchStr)) {
-                return true;
-            }
+    private String toString(Path outPath) {
+        String content;
+        try {
+            byte[] encoded = Files.readAllBytes(outPath);
+            content = new String(encoded, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        return false;
+        return content;
     }
 
     public Network createNetworkWithOneInjection() {
