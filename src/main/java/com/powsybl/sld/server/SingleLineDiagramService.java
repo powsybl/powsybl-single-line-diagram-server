@@ -82,19 +82,26 @@ class SingleLineDiagramService {
 
             var defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new TopologicalStyleProvider(network)
                                                                                  : new NominalVoltageDiagramStyleProvider(network);
-            LayoutParameters layoutParameters = null;
             DefaultDiagramLabelProvider labelProvider = null;
+            LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
+            layoutParameters.setLabelCentered(diagParams.isLabelCentered());
+            layoutParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
+            layoutParameters.setUseName(diagParams.isUseName());
+
             if (diagParams.getSldDisplayMode() == SldDisplayMode.FEEDER_POSITION) {
-                layoutParameters = fillLayoutParameters(diagParams, false, true);
+                layoutParameters.setAddNodesInfos(false);
+                layoutParameters.setLabelDiagonal(true);
                 labelProvider = new PositionDiagramLabelProvider(network, compLibrary, layoutParameters, id);
-            } else if (diagParams.getSldDisplayMode() == SldDisplayMode.DEFAULT) {
-                layoutParameters = fillLayoutParameters(diagParams, true, false);
+            } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
+                layoutParameters.setAddNodesInfos(true);
+                layoutParameters.setLabelDiagonal(false);
                 labelProvider = new DefaultDiagramLabelProvider(network, compLibrary, layoutParameters);
+            } else {
+                throw new SldException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
             }
 
             var voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
             var substationLayoutFactory = getSubstationLayoutFactory(diagParams.getSubstationLayout());
-            assert labelProvider != null;
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, layoutParameters, compLibrary,
                     substationLayoutFactory, voltageLevelLayoutFactory, labelProvider, defaultDiagramStyleProvider, "");
 
@@ -102,15 +109,6 @@ class SingleLineDiagramService {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    private LayoutParameters fillLayoutParameters(SingleLineDiagramParameters diagParams, boolean withNodeInfos, boolean isLabelDiagonal) {
-        LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
-        layoutParameters.setLabelCentered(diagParams.isLabelCentered());
-        layoutParameters.setUseName(diagParams.isUseName());
-        layoutParameters.setAddNodesInfos(withNodeInfos);
-        layoutParameters.setLabelDiagonal(isLabelDiagonal);
-        return layoutParameters;
     }
 
     Collection<String> getAvailableSvgComponentLibraries() {

@@ -6,14 +6,8 @@
  */
 package com.powsybl.sld.server;
 
-import com.powsybl.commons.reporter.Reporter;
-import com.powsybl.iidm.network.Branch;
-import com.powsybl.iidm.network.Connectable;
 import com.powsybl.iidm.network.Identifiable;
-import com.powsybl.iidm.network.Injection;
 import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.ThreeWindingsTransformer;
-import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.iidm.network.extensions.ConnectablePosition;
 import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ComponentLibrary;
@@ -24,12 +18,13 @@ import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.model.nodes.Node;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
 import com.powsybl.sld.svg.LabelPosition;
-import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.powsybl.sld.server.utils.DiagramUtils.getOrderPositions;
 
 /**
  * @author Ben Daamer ahmed<ahmed.bendaamer at rte-france.com>
@@ -67,9 +62,9 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
             if (identifiable != null) {
                 ConnectablePosition<?> connectablePosition = (ConnectablePosition<?>) identifiable.getExtension(ConnectablePosition.class);
                 if (connectablePosition != null) {
-                    List<Integer> orders = getOrderPositions(connectablePosition, vl, identifiable, false, Reporter.NO_OP);
-                    if (!CollectionUtils.isEmpty(orders)) {
-                        label += " pos " + orders;
+                    Integer order = getOrderPositions(connectablePosition, vl, identifiable, false, LOGGER);
+                    if (order != null) {
+                        label += " pos: " + order;
                     }
                 }
             }
@@ -87,65 +82,4 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
         }
         return null;
     }
-
-    static List<Integer> getInjectionOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Injection<?> injection, boolean throwException, Reporter reporter) {
-        List<Integer> singleOrder = position.getFeeder().getOrder().map(List::of).orElse(Collections.emptyList());
-        checkConnectableInVoltageLevel(singleOrder, voltageLevel, injection, throwException, reporter);
-        return singleOrder;
-    }
-
-    static List<Integer> getBranchOrders(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch, boolean throwException, Reporter reporter) {
-        List<Integer> orders = new ArrayList<>();
-        if (branch.getTerminal1().getVoltageLevel() == voltageLevel) {
-            position.getFeeder1().getOrder().ifPresent(orders::add);
-        }
-        if (branch.getTerminal2().getVoltageLevel() == voltageLevel) {
-            position.getFeeder2().getOrder().ifPresent(orders::add);
-        }
-        checkConnectableInVoltageLevel(orders, voltageLevel, branch, throwException, reporter);
-        Collections.sort(orders);
-        return orders;
-    }
-
-    static List<Integer> get3wtOrders(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException, Reporter reporter) {
-        List<Integer> orders = new ArrayList<>();
-        if (twt.getLeg1().getTerminal().getVoltageLevel() == voltageLevel) {
-            position.getFeeder1().getOrder().ifPresent(orders::add);
-        }
-        if (twt.getLeg2().getTerminal().getVoltageLevel() == voltageLevel) {
-            position.getFeeder2().getOrder().ifPresent(orders::add);
-        }
-        if (twt.getLeg3().getTerminal().getVoltageLevel() == voltageLevel) {
-            position.getFeeder3().getOrder().ifPresent(orders::add);
-        }
-        checkConnectableInVoltageLevel(orders, voltageLevel, twt, throwException, reporter);
-        Collections.sort(orders);
-        return orders;
-    }
-
-    static List<Integer> getOrderPositions(ConnectablePosition<?> position, VoltageLevel voltageLevel, Identifiable<?> identifiable, boolean throwException, Reporter reporter) {
-        if (identifiable instanceof Injection) {
-            return getInjectionOrder(position, voltageLevel, (Injection<?>) identifiable, throwException, reporter);
-        } else if (identifiable instanceof Branch) {
-            return getBranchOrders(position, voltageLevel, (Branch<?>) identifiable, throwException, reporter);
-        } else if (identifiable instanceof ThreeWindingsTransformer) {
-            return get3wtOrders(position, voltageLevel, (ThreeWindingsTransformer) identifiable, throwException, reporter);
-        } else {
-            LOGGER.error("Given connectable not supported: {}", identifiable.getClass().getName());
-            if (throwException) {
-                throw new AssertionError("Given connectable not supported: " + identifiable.getClass().getName());
-            }
-        }
-        return Collections.emptyList();
-    }
-
-    static void checkConnectableInVoltageLevel(List<Integer> orders, VoltageLevel voltageLevel, Connectable<?> connectable, boolean throwException, Reporter reporter) {
-        if (orders.isEmpty()) {
-            LOGGER.error("Given connectable {} not in voltageLevel {}", connectable.getId(), voltageLevel.getId());
-            if (throwException) {
-                throw new AssertionError(String.format("Given connectable %s not in voltageLevel %s ", connectable.getId(), voltageLevel.getId()));
-            }
-        }
-    }
-
 }

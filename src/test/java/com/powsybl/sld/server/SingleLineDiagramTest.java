@@ -22,6 +22,7 @@ import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ConvergenceComponentLibrary;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
+import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.DiagramStyleProvider;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
@@ -160,7 +161,7 @@ public class SingleLineDiagramTest {
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
-        mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?sldDisplayMode=FEEDER_POSITION&variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
+        mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?sldDisplayMode=" + SldDisplayMode.FEEDER_POSITION.name() + "&variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
@@ -398,14 +399,14 @@ public class SingleLineDiagramTest {
         Path outPath = tmpDir.resolve("sld.svg");
         Path outPath2 = tmpDir.resolve("sld2.svg");
         SingleLineDiagram.draw(testNetwork, "vl1", outPath, layoutParameters, componentLibrary, labelProvider, diagramStyleProvider, "");
-        assertTrue(toString(outPath).contains("loadA pos [0]"));
-        assertTrue(toString(outPath).contains("trf1 pos [1]"));
-        assertTrue(toString(outPath).contains("trf73 pos [3]"));
+        assertTrue(toString(outPath).contains("loadA pos: 0"));
+        assertTrue(toString(outPath).contains("trf1 pos: 1"));
+        assertTrue(toString(outPath).contains("trf73 pos: 3"));
         SingleLineDiagram.draw(testNetwork, "vl3", outPath2, layoutParameters, componentLibrary, labelProvider2, diagramStyleProvider, "");
-        assertTrue(toString(outPath2).contains("trf71 pos [4]"));
+        assertTrue(toString(outPath2).contains("trf71 pos: 4"));
     }
 
-    private String toString(Path outPath) {
+    public static String toString(Path outPath) {
         String content;
         try {
             byte[] encoded = Files.readAllBytes(outPath);
@@ -416,6 +417,9 @@ public class SingleLineDiagramTest {
         return content;
     }
 
+    /*
+        #TODO replace it with already configured FourSubstationsNodeBreakerWithExtensionsFactory when migrating to next powsybl release
+    */
     public Network createNetworkWithOneInjection() {
         Network network = Network.create("TestSingleLineDiagram", "test");
         Substation substation = createSubstation(network, "s", "s", Country.FR);
