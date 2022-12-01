@@ -146,7 +146,7 @@ public class SingleLineDiagramTest {
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
-        mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?displayMode=FEEDER_POSITION&variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
+        mvc.perform(get("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?sldDisplayMode=FEEDER_POSITION&variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 

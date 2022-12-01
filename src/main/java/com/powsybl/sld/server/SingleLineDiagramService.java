@@ -12,7 +12,7 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.ComponentLibrary;
-import com.powsybl.sld.server.utils.DisplayMode;
+import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
 import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
 import com.powsybl.sld.util.TopologicalStyleProvider;
@@ -84,10 +84,10 @@ class SingleLineDiagramService {
                                                                                  : new NominalVoltageDiagramStyleProvider(network);
             LayoutParameters layoutParameters = null;
             DefaultDiagramLabelProvider labelProvider = null;
-            if (diagParams.getDisplayMode() == DisplayMode.FEEDER_POSITION) {
+            if (diagParams.getSldDisplayMode() == SldDisplayMode.FEEDER_POSITION) {
                 layoutParameters = fillLayoutParameters(diagParams, false, true);
                 labelProvider = new PositionDiagramLabelProvider(network, compLibrary, layoutParameters, id);
-            } else if (diagParams.getDisplayMode() == DisplayMode.DEFAULT) {
+            } else if (diagParams.getSldDisplayMode() == SldDisplayMode.DEFAULT) {
                 layoutParameters = fillLayoutParameters(diagParams, true, false);
                 labelProvider = new DefaultDiagramLabelProvider(network, compLibrary, layoutParameters);
             }

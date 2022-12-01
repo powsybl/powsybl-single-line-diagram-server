@@ -9,7 +9,7 @@ package com.powsybl.sld.server.utils;
 /**
  * @author Ben Daamer ahmed<ahmed.bendaamer at rte-france.com>
  */
-public enum DisplayMode {
+public enum SldDisplayMode {
     FEEDER_POSITION,
     DEFAULT;
 }

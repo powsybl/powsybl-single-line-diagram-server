@@ -21,5 +21,5 @@ public class SingleLineDiagramParameters {
     private boolean topologicalColoring;
     private String  componentLibrary;
     private String substationLayout;
-    private DisplayMode displayMode;
+    private SldDisplayMode sldDisplayMode;
 }
