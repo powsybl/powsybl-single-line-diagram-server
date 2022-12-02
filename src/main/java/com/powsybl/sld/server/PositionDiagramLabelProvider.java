@@ -8,7 +8,6 @@ package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Branch;
-import com.powsybl.iidm.network.Connectable;
 import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Injection;
 import com.powsybl.iidm.network.Network;
@@ -87,27 +86,27 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
         return null;
     }
 
-    static Integer getInjectionOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Injection<?> injection, boolean throwException) {
-        Integer singleOrder = position.getFeeder().getOrder().orElse(null);
-        checkConnectableInVoltageLevel(singleOrder, voltageLevel, injection, throwException);
-        return singleOrder;
+    static Integer getInjectionOrder(ConnectablePosition<?> position) {
+        return position.getFeeder().getOrder().orElse(null);
     }
 
     static Integer getBranchOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch, boolean throwException) {
-        Integer order;
+        Integer order = null;
         if (branch.getTerminal1().getVoltageLevel() == voltageLevel) {
             order = position.getFeeder1().getOrder().orElse(null);
         } else if (branch.getTerminal2().getVoltageLevel() == voltageLevel) {
             order = position.getFeeder2().getOrder().orElse(null);
         } else {
-            throw new PowsyblException(String.format("Given voltageLevel %s not found in terminal 1 and terminal 2 of branch", voltageLevel.getId()));
+            LOGGER.error("Given voltageLevel {} not found in terminal 1 and terminal 2 of branch", voltageLevel.getId());
+            if (throwException) {
+                throw new PowsyblException(String.format("Given voltageLevel %s not found in terminal 1 and terminal 2 of branch", voltageLevel.getId()));
+            }
         }
-        checkConnectableInVoltageLevel(order, voltageLevel, branch, throwException);
         return order;
     }
 
     static Integer get3wtOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException) {
-        Integer order;
+        Integer order = null;
         if (twt.getLeg1().getTerminal().getVoltageLevel() == voltageLevel) {
             order = position.getFeeder1().getOrder().orElse(null);
         } else if (twt.getLeg2().getTerminal().getVoltageLevel() == voltageLevel) {
@@ -115,15 +114,17 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
         } else if (twt.getLeg3().getTerminal().getVoltageLevel() == voltageLevel) {
             order = position.getFeeder3().getOrder().orElse(null);
         } else {
-            throw new PowsyblException(String.format("Given voltageLevel %s not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId()));
+            LOGGER.error("Given voltageLevel {} not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId());
+            if (throwException) {
+                throw new PowsyblException(String.format("Given voltageLevel %s not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId()));
+            }
         }
-        checkConnectableInVoltageLevel(order, voltageLevel, twt, throwException);
         return order;
     }
 
     static Integer getOrderPositions(ConnectablePosition<?> position, VoltageLevel voltageLevel, Identifiable<?> identifiable, boolean throwException) {
         if (identifiable instanceof Injection) {
-            return getInjectionOrder(position, voltageLevel, (Injection<?>) identifiable, throwException);
+            return getInjectionOrder(position);
         } else if (identifiable instanceof Branch) {
             return getBranchOrder(position, voltageLevel, (Branch<?>) identifiable, throwException);
         } else if (identifiable instanceof ThreeWindingsTransformer) {
@@ -135,14 +136,5 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
             }
         }
         return null;
-    }
-
-    static void checkConnectableInVoltageLevel(Integer order, VoltageLevel voltageLevel, Connectable<?> connectable, boolean throwException) {
-        if (order == null) {
-            LOGGER.error("Given connectable {} not found in voltageLevel {}", connectable.getId(), voltageLevel.getId());
-            if (throwException) {
-                throw new PowsyblException(String.format("Given connectable %s not found in voltageLevel %s ", connectable.getId(), voltageLevel.getId()));
-            }
-        }
     }
 }
