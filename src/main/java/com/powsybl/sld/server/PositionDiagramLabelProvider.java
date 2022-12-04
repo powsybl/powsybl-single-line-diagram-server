@@ -67,7 +67,7 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
                 if (connectablePosition != null) {
                     Integer order = getOrderPositions(connectablePosition, vl, identifiable, false);
                     if (order != null) {
-                        label += " pos: " + order;
+                        label += " (pos: " + order + ")";
                     }
                 }
             }
