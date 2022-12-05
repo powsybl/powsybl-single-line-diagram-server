@@ -402,13 +402,13 @@ public class SingleLineDiagramTest {
         Path outPath3 = tmpDir.resolve("sld3.svg");
 
         SingleLineDiagram.draw(testNetwork, "vl1", outPath, layoutParameters, componentLibrary, labelProvider, diagramStyleProvider, "");
-        assertTrue(toString(outPath).contains("loadA pos: 0"));
-        assertTrue(toString(outPath).contains("trf1 pos: 1"));
-        assertTrue(toString(outPath).contains("trf73 pos: 3"));
+        assertTrue(toString(outPath).contains("loadA (pos: 0)"));
+        assertTrue(toString(outPath).contains("trf1 (pos: 1)"));
+        assertTrue(toString(outPath).contains("trf73 (pos: 3)"));
         SingleLineDiagram.draw(testNetwork, "vl2", outPath2, layoutParameters, componentLibrary, labelProvider2, diagramStyleProvider, "");
-        assertTrue(toString(outPath2).contains("trf1 pos: 1"));
+        assertTrue(toString(outPath2).contains("trf1 (pos: 1)"));
         SingleLineDiagram.draw(testNetwork, "vl3", outPath3, layoutParameters, componentLibrary, labelProvider3, diagramStyleProvider, "");
-        assertTrue(toString(outPath3).contains("trf71 pos: 6"));
+        assertTrue(toString(outPath3).contains("trf71 (pos: 6)"));
     }
 
     public static String toString(Path outPath) {
