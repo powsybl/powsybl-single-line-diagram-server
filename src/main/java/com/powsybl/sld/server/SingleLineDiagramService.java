@@ -87,10 +87,7 @@ class SingleLineDiagramService {
             layoutParameters.setLabelCentered(diagParams.isLabelCentered());
             layoutParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
             layoutParameters.setUseName(diagParams.isUseName());
-
-            if (diagParams.getLanguage() != null) {
-                layoutParameters.setLanguageTag(diagParams.getLanguage());
-            }
+            layoutParameters.setLanguageTag(diagParams.getLanguage());
 
             if (diagParams.getSldDisplayMode() == SldDisplayMode.FEEDER_POSITION) {
                 layoutParameters.setAddNodesInfos(false);
