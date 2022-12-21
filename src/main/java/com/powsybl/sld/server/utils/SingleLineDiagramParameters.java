@@ -7,6 +7,7 @@
 package com.powsybl.sld.server.utils;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 /**
@@ -14,6 +15,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
+@Builder
 public class SingleLineDiagramParameters {
     private boolean useName;
     private boolean labelCentered;
@@ -22,4 +24,5 @@ public class SingleLineDiagramParameters {
     private String  componentLibrary;
     private String substationLayout;
     private SldDisplayMode sldDisplayMode;
+    private String language;
 }
