@@ -67,9 +67,19 @@ public class SingleLineDiagramController {
             @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
-            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode) {
+            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String  language) {
         LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
-        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, HORIZONTAL, sldDisplayMode);
+        var parameters =  SingleLineDiagramParameters.builder()
+                .useName(useName)
+                .labelCentered(centerLabel)
+                .diagonalLabel(diagonalLabel)
+                .topologicalColoring(topologicalColoring)
+                .componentLibrary(componentLibrary)
+                .substationLayout(HORIZONTAL)
+                .sldDisplayMode(sldDisplayMode)
+                .language(language)
+                .build();
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters).getLeft();
     }
 
@@ -85,10 +95,20 @@ public class SingleLineDiagramController {
             @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
-            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode) {
+            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String  language) {
         LOGGER.debug("getVoltageLevelMetadata request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
 
-        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, HORIZONTAL, sldDisplayMode);
+        var parameters =  SingleLineDiagramParameters.builder()
+                .useName(useName)
+                .labelCentered(centerLabel)
+                .diagonalLabel(diagonalLabel)
+                .topologicalColoring(topologicalColoring)
+                .componentLibrary(componentLibrary)
+                .substationLayout(HORIZONTAL)
+                .sldDisplayMode(sldDisplayMode)
+                .language(language)
+                .build();
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters).getRight();
     }
 
@@ -104,10 +124,19 @@ public class SingleLineDiagramController {
             @Parameter(description = "diagonalLabel") @RequestParam(name = "diagonalLabel", defaultValue = "false") boolean diagonalLabel,
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
-            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode) throws JsonProcessingException {
+            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String  language) throws JsonProcessingException {
         LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
-
-        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, HORIZONTAL, sldDisplayMode);
+        var parameters =  SingleLineDiagramParameters.builder()
+                .useName(useName)
+                .labelCentered(centerLabel)
+                .diagonalLabel(diagonalLabel)
+                .topologicalColoring(topologicalColoring)
+                .componentLibrary(componentLibrary)
+                .substationLayout(HORIZONTAL)
+                .sldDisplayMode(sldDisplayMode)
+                .language(language)
+                .build();
         Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters);
         String svg = svgAndMetadata.getLeft();
         String metadata = svgAndMetadata.getRight();
@@ -132,10 +161,19 @@ public class SingleLineDiagramController {
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
             @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = HORIZONTAL) String substationLayout,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
-            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode) {
+            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String  language) {
         LOGGER.debug("getSubstationSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
-
-        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, substationLayout, sldDisplayMode);
+        var parameters =  SingleLineDiagramParameters.builder()
+                .useName(useName)
+                .labelCentered(centerLabel)
+                .diagonalLabel(diagonalLabel)
+                .topologicalColoring(topologicalColoring)
+                .componentLibrary(componentLibrary)
+                .substationLayout(substationLayout)
+                .sldDisplayMode(sldDisplayMode)
+                .language(language)
+                .build();
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters).getLeft();
     }
 
@@ -152,10 +190,19 @@ public class SingleLineDiagramController {
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
             @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = HORIZONTAL) String substationLayout,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
-            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode) {
+            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String  language) {
         LOGGER.debug("getSubstationMetadata request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
-
-        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, substationLayout, sldDisplayMode);
+        var parameters =  SingleLineDiagramParameters.builder()
+                .useName(useName)
+                .labelCentered(centerLabel)
+                .diagonalLabel(diagonalLabel)
+                .topologicalColoring(topologicalColoring)
+                .componentLibrary(componentLibrary)
+                .substationLayout(substationLayout)
+                .sldDisplayMode(sldDisplayMode)
+                .language(language)
+                .build();
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters).getRight();
     }
 
@@ -172,10 +219,19 @@ public class SingleLineDiagramController {
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
             @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = HORIZONTAL) String substationLayout,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
-            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode) throws JsonProcessingException {
+            @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String  language) throws JsonProcessingException {
         LOGGER.debug("getSubstationFullSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId);
-
-        var parameters = new SingleLineDiagramParameters(useName, centerLabel, diagonalLabel, topologicalColoring, componentLibrary, substationLayout, sldDisplayMode);
+        var parameters =  SingleLineDiagramParameters.builder()
+                .useName(useName)
+                .labelCentered(centerLabel)
+                .diagonalLabel(diagonalLabel)
+                .topologicalColoring(topologicalColoring)
+                .componentLibrary(componentLibrary)
+                .substationLayout(substationLayout)
+                .sldDisplayMode(sldDisplayMode)
+                .language(language)
+                .build();
         Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters);
         String svg = svgAndMetadata.getLeft();
         String metadata = svgAndMetadata.getRight();

@@ -81,12 +81,13 @@ class SingleLineDiagramService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found"));
 
             var defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new TopologicalStyleProvider(network)
-                                                                                 : new NominalVoltageDiagramStyleProvider(network);
+                    : new NominalVoltageDiagramStyleProvider(network);
             DefaultDiagramLabelProvider labelProvider = null;
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
             layoutParameters.setLabelCentered(diagParams.isLabelCentered());
             layoutParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
             layoutParameters.setUseName(diagParams.isUseName());
+            layoutParameters.setLanguageTag(diagParams.getLanguage());
 
             if (diagParams.getSldDisplayMode() == SldDisplayMode.FEEDER_POSITION) {
                 layoutParameters.setAddNodesInfos(false);
@@ -102,6 +103,7 @@ class SingleLineDiagramService {
 
             var voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
             var substationLayoutFactory = getSubstationLayoutFactory(diagParams.getSubstationLayout());
+
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, layoutParameters, compLibrary,
                     substationLayoutFactory, voltageLevelLayoutFactory, labelProvider, defaultDiagramStyleProvider, "");
 
