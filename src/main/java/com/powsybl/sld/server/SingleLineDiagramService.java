@@ -95,7 +95,6 @@ class SingleLineDiagramService {
                 labelProvider = new PositionDiagramLabelProvider(network, compLibrary, layoutParameters, id);
             } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
                 layoutParameters.setAddNodesInfos(true);
-                layoutParameters.setLabelDiagonal(false);
                 labelProvider = new DefaultDiagramLabelProvider(network, compLibrary, layoutParameters);
             } else {
                 throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
