@@ -278,15 +278,19 @@ public class SingleLineDiagramTest {
 
         MvcResult result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0" + "&voltageLevelsIds=vlFr1A", testNetworkId))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
-        assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
+        String stringResult = result.getResponse().getContentAsString();
+        assertTrue(stringResult.contains("svg"));
+        assertTrue(stringResult.contains("<?xml"));
 
         result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=vlFr1A", testNetworkId))
                 .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
-        assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
+        String stringResult2 = result.getResponse().getContentAsString();
+        assertTrue(stringResult2.contains("svg"));
+        assertTrue(stringResult2.contains("<?xml"));
 
         mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=notFound", testNetworkId))
                 .andExpect(status().isNotFound());

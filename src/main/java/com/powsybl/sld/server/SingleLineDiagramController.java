@@ -46,6 +46,7 @@ public class SingleLineDiagramController {
 
     static final String IMAGE_SVG_PLUS_XML = "image/svg+xml";
     static final String HORIZONTAL = "horizontal";
+    static final String SVG_TAG = "svg";
 
     @Autowired
     private SingleLineDiagramService singleLineDiagramService;
@@ -142,7 +143,7 @@ public class SingleLineDiagramController {
         String metadata = svgAndMetadata.getRight();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
-                    .put("svg", svg)
+                    .put(SVG_TAG, svg)
                     .putRawValue("metadata", new RawValue(metadata)));
     }
 
@@ -237,7 +238,7 @@ public class SingleLineDiagramController {
         String metadata = svgAndMetadata.getRight();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
-                        .put("svg", svg)
+                        .put(SVG_TAG, svg)
                         .putRawValue("metadata", new RawValue(metadata)));
     }
 
@@ -251,16 +252,19 @@ public class SingleLineDiagramController {
     }
 
     // network area diagram
-    @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = IMAGE_SVG_PLUS_XML)
+    @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get network area diagram image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
     public @ResponseBody String getNetworkAreaDiagramSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Voltage levels ids") @RequestParam(name = "voltageLevelsIds", required = false) List<String> voltageLevelsIds,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-            @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth) {
+            @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth) throws JsonProcessingException {
         LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
-
-        return networkAeraDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
+        String svg = networkAeraDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
+        return OBJECT_MAPPER.writeValueAsString(
+                OBJECT_MAPPER.createObjectNode()
+                        .put(SVG_TAG, svg)
+        );
     }
 }
