@@ -47,12 +47,13 @@ public class SingleLineDiagramController {
     static final String IMAGE_SVG_PLUS_XML = "image/svg+xml";
     static final String HORIZONTAL = "horizontal";
     static final String SVG_TAG = "svg";
+    static final String NB_VOLTAGE_LEVELS_TAG = "nbVoltageLevels";
 
     @Autowired
     private SingleLineDiagramService singleLineDiagramService;
 
     @Autowired
-    private NetworkAreaDiagramService networkAeraDiagramService;
+    private NetworkAreaDiagramService networkAreaDiagramService;
 
     // voltage levels
     //
@@ -261,10 +262,11 @@ public class SingleLineDiagramController {
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth) throws JsonProcessingException {
         LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
-        String svg = networkAeraDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
+        Pair<String, Integer> svg = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
-                        .put(SVG_TAG, svg)
+                    .put(SVG_TAG, svg.getLeft())
+                    .putPOJO("metadata", OBJECT_MAPPER.createObjectNode().put(NB_VOLTAGE_LEVELS_TAG, svg.getRight()))
         );
     }
 }

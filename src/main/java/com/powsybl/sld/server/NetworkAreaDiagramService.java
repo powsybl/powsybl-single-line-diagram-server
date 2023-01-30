@@ -15,6 +15,7 @@ import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.utils.DiagramUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -36,7 +37,7 @@ class NetworkAreaDiagramService {
     @Autowired
     private NetworkStoreService networkStoreService;
 
-    public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
+    public Pair<String, Integer> generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         voltageLevelsIds.forEach(voltageLevelId -> {
             if (network.getVoltageLevel(voltageLevelId) == null) {
@@ -50,9 +51,9 @@ class NetworkAreaDiagramService {
                     .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
             LayoutParameters layoutParameters = new LayoutParameters();
             StyleProvider styleProvider = new TopologicalStyleProvider(network);
-            new NetworkAreaDiagram(network, voltageLevelsIds, depth)
-                    .draw(svgWriter, svgParameters, layoutParameters, styleProvider);
-            return svgWriter.toString();
+            NetworkAreaDiagram diagram = new NetworkAreaDiagram(network, voltageLevelsIds, depth);
+            diagram.draw(svgWriter, svgParameters, layoutParameters, styleProvider);
+            return Pair.of(svgWriter.toString(), diagram.getNbVoltageLevels());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
