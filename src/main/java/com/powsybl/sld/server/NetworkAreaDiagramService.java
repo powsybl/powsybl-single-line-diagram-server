@@ -8,6 +8,7 @@ package com.powsybl.sld.server;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.nad.NetworkAreaDiagram;
+import com.powsybl.nad.build.iidm.VoltageLevelFilter;
 import com.powsybl.nad.layout.LayoutParameters;
 import com.powsybl.nad.svg.StyleProvider;
 import com.powsybl.nad.svg.SvgParameters;
@@ -45,15 +46,16 @@ class NetworkAreaDiagramService {
             }
         });
 
+        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
+
         try (StringWriter svgWriter = new StringWriter()) {
             SvgParameters svgParameters = new SvgParameters()
                     .setSvgWidthAndHeightAdded(true)
                     .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
             LayoutParameters layoutParameters = new LayoutParameters();
             StyleProvider styleProvider = new TopologicalStyleProvider(network);
-            NetworkAreaDiagram diagram = new NetworkAreaDiagram(network, voltageLevelsIds, depth);
-            diagram.draw(svgWriter, svgParameters, layoutParameters, styleProvider);
-            return Pair.of(svgWriter.toString(), diagram.getNbVoltageLevels());
+            new NetworkAreaDiagram(network, voltageLevelsIds, depth).draw(svgWriter, svgParameters, layoutParameters, styleProvider);
+            return Pair.of(svgWriter.toString(), vlFilter.getNbVoltageLevels());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
