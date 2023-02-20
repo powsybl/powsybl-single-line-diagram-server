@@ -265,7 +265,7 @@ public class SingleLineDiagramTest {
             .andExpect(status().isOk())
             .andReturn();
 
-        assertEquals("[\"GridSuiteAndConvergence\",\"Convergence\"]", result.getResponse().getContentAsString());
+        assertEquals("[\"GridSuiteAndConvergence\",\"Convergence\",\"FlatDesign\"]", result.getResponse().getContentAsString());
     }
 
     @Test
