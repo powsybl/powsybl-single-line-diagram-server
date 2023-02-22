@@ -48,6 +48,7 @@ public class SingleLineDiagramController {
     static final String HORIZONTAL = "horizontal";
     static final String SVG_TAG = "svg";
     static final String NB_VOLTAGE_LEVELS_TAG = "nbVoltageLevels";
+    static final String METADATA = "metadata";
 
     @Autowired
     private SingleLineDiagramService singleLineDiagramService;
@@ -145,7 +146,7 @@ public class SingleLineDiagramController {
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                     .put(SVG_TAG, svg)
-                    .putRawValue("metadata", new RawValue(metadata)));
+                    .putRawValue(METADATA, new RawValue(metadata)));
     }
 
     // substations
@@ -240,7 +241,7 @@ public class SingleLineDiagramController {
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                         .put(SVG_TAG, svg)
-                        .putRawValue("metadata", new RawValue(metadata)));
+                        .putRawValue(METADATA, new RawValue(metadata)));
     }
 
     @GetMapping(value = "/svg-component-libraries")
@@ -266,7 +267,7 @@ public class SingleLineDiagramController {
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                     .put(SVG_TAG, svg.getLeft())
-                    .putPOJO("metadata", OBJECT_MAPPER.createObjectNode().put(NB_VOLTAGE_LEVELS_TAG, svg.getRight()))
+                    .putPOJO(METADATA, OBJECT_MAPPER.createObjectNode().put(NB_VOLTAGE_LEVELS_TAG, svg.getRight()))
         );
     }
 }
