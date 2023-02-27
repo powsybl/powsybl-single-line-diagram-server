@@ -282,6 +282,7 @@ public class SingleLineDiagramTest {
                 .andReturn();
         String stringResult = result.getResponse().getContentAsString();
         assertTrue(stringResult.contains("svg"));
+        assertTrue(stringResult.contains("metadata"));
         assertTrue(stringResult.contains("<?xml"));
 
         result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=vlFr1A", testNetworkId))
@@ -290,6 +291,7 @@ public class SingleLineDiagramTest {
                 .andReturn();
         String stringResult2 = result.getResponse().getContentAsString();
         assertTrue(stringResult2.contains("svg"));
+        assertTrue(stringResult.contains("metadata"));
         assertTrue(stringResult2.contains("<?xml"));
 
         mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=notFound", testNetworkId))
