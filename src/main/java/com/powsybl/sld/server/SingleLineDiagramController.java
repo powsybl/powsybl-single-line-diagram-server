@@ -48,12 +48,14 @@ public class SingleLineDiagramController {
     static final String IMAGE_SVG_PLUS_XML = "image/svg+xml";
     static final String HORIZONTAL = "horizontal";
     static final String SVG_TAG = "svg";
+    static final String NB_VOLTAGE_LEVELS_TAG = "nbVoltageLevels";
+    static final String METADATA = "metadata";
 
     @Autowired
     private SingleLineDiagramService singleLineDiagramService;
 
     @Autowired
-    private NetworkAreaDiagramService networkAeraDiagramService;
+    private NetworkAreaDiagramService networkAreaDiagramService;
 
     // voltage levels
     //
@@ -146,7 +148,7 @@ public class SingleLineDiagramController {
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                         .put(SVG_TAG, svg)
-                        .putRawValue("metadata", new RawValue(metadata))
+                        .putRawValue(METADATA, new RawValue(metadata))
                         .putPOJO("additionalMetadata", additionalMetadata));
     }
 
@@ -243,7 +245,7 @@ public class SingleLineDiagramController {
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                         .put(SVG_TAG, svg)
-                        .putRawValue("metadata", new RawValue(metadata))
+                        .putRawValue(METADATA, new RawValue(metadata))
                         .putPOJO("additionalMetadata", additionalMetadata));
     }
 
@@ -269,9 +271,11 @@ public class SingleLineDiagramController {
         SvgAndMetadata svgAndMetadata = networkAeraDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
         String svg = svgAndMetadata.getSvg();
         Map additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        Pair<String, Integer> svg = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
-                        .put(SVG_TAG, svg)
+                    .put(SVG_TAG, svg.getLeft())
+                    .putPOJO(METADATA, OBJECT_MAPPER.createObjectNode().put(NB_VOLTAGE_LEVELS_TAG, svg.getRight()))
                         .putPOJO("additionalMetadata", additionalMetadata));
     }
 }

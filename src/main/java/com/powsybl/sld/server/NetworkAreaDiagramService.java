@@ -8,6 +8,7 @@ package com.powsybl.sld.server;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.nad.NetworkAreaDiagram;
+import com.powsybl.nad.build.iidm.VoltageLevelFilter;
 import com.powsybl.nad.layout.LayoutParameters;
 import com.powsybl.nad.svg.StyleProvider;
 import com.powsybl.nad.svg.SvgParameters;
@@ -46,6 +47,8 @@ class NetworkAreaDiagramService {
             }
         });
 
+        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
+
         try (StringWriter svgWriter = new StringWriter()) {
             SvgParameters svgParameters = new SvgParameters()
                     .setSvgWidthAndHeightAdded(true)
@@ -60,6 +63,8 @@ class NetworkAreaDiagramService {
             return SvgAndMetadata.builder()
                     .svg(svgWriter.toString())
                     .additionalMetadata(additionalMetadata).build();
+            new NetworkAreaDiagram(network, voltageLevelsIds, depth).draw(svgWriter, svgParameters, layoutParameters, styleProvider);
+            return Pair.of(svgWriter.toString(), vlFilter.getNbVoltageLevels());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
