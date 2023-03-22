@@ -47,8 +47,6 @@ class NetworkAreaDiagramService {
             }
         });
 
-        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
-
         try (StringWriter svgWriter = new StringWriter()) {
             SvgParameters svgParameters = new SvgParameters()
                     .setSvgWidthAndHeightAdded(true)
@@ -58,19 +56,19 @@ class NetworkAreaDiagramService {
             new NetworkAreaDiagram(network, voltageLevelsIds, depth)
                     .draw(svgWriter, svgParameters, layoutParameters, styleProvider);
 
-            Map additionalMetadata = computeAdditionalMetadata(network, voltageLevelsIds);
+            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, voltageLevelsIds, depth);
 
             return SvgAndMetadata.builder()
                     .svg(svgWriter.toString())
                     .additionalMetadata(additionalMetadata).build();
-            new NetworkAreaDiagram(network, voltageLevelsIds, depth).draw(svgWriter, svgParameters, layoutParameters, styleProvider);
-            return Pair.of(svgWriter.toString(), vlFilter.getNbVoltageLevels());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private Map<String, Object> computeAdditionalMetadata(Network network, List<String> voltageLevelsIds) {
+    private Map<String, Object> computeAdditionalMetadata(Network network, List<String> voltageLevelsIds, int depth) {
+
+        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
 
         // list of [id, name]
         List<Pair<String, String>> voltageLevelsInfos = voltageLevelsIds.stream()
@@ -79,6 +77,7 @@ class NetworkAreaDiagramService {
                 .collect(Collectors.toList());
 
         Map<String, Object> metadata = new HashMap<>();
+        metadata.put("nbVoltageLevels", vlFilter.getNbVoltageLevels());
         metadata.put("voltageLevels", voltageLevelsInfos);
 
         return metadata;
