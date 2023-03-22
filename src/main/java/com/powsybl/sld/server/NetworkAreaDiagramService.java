@@ -14,7 +14,9 @@ import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
+import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.utils.DiagramUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -24,8 +26,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Etienne Homer<etienne.homer at rte-france.com>
@@ -36,7 +38,7 @@ class NetworkAreaDiagramService {
     @Autowired
     private NetworkStoreService networkStoreService;
 
-    public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
+    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         voltageLevelsIds.forEach(voltageLevelId -> {
             if (network.getVoltageLevel(voltageLevelId) == null) {
@@ -52,9 +54,28 @@ class NetworkAreaDiagramService {
             StyleProvider styleProvider = new TopologicalStyleProvider(network);
             new NetworkAreaDiagram(network, voltageLevelsIds, depth)
                     .draw(svgWriter, svgParameters, layoutParameters, styleProvider);
-            return svgWriter.toString();
+
+            Map additionalMetadata = computeAdditionalMetadata(network, voltageLevelsIds);
+
+            return SvgAndMetadata.builder()
+                    .svg(svgWriter.toString())
+                    .additionalMetadata(additionalMetadata).build();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private Map<String, Object> computeAdditionalMetadata(Network network, List<String> voltageLevelsIds) {
+
+        // list of [id, name]
+        List<Pair<String, String>> voltageLevelsInfos = voltageLevelsIds.stream()
+                .map(network::getVoltageLevel)
+                .map(voltageLevel -> Pair.of(voltageLevel.getId(), voltageLevel.getOptionalName().orElse(null)))
+                .collect(Collectors.toList());
+
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("voltageLevels", voltageLevelsInfos);
+
+        return metadata;
     }
 }
