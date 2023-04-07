@@ -17,7 +17,6 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.utils.DiagramUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -70,10 +69,10 @@ class NetworkAreaDiagramService {
 
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
 
-        // list of [id, name]
-        List<Pair<String, String>> voltageLevelsInfos = voltageLevelsIds.stream()
+        // list of {"id": id, "name": name}
+        List<Map<String, String>> voltageLevelsInfos = voltageLevelsIds.stream()
                 .map(network::getVoltageLevel)
-                .map(voltageLevel -> Pair.of(voltageLevel.getId(), voltageLevel.getOptionalName().orElse(null)))
+                .map(voltageLevel -> Map.of("id", voltageLevel.getId(), "name", voltageLevel.getOptionalName().orElse("")))
                 .collect(Collectors.toList());
 
         Map<String, Object> metadata = new HashMap<>();
