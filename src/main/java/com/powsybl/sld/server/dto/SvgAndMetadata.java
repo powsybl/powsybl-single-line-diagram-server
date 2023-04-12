@@ -8,12 +8,12 @@
 package com.powsybl.sld.server.dto;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
 import java.util.Map;
 
 @Builder
-@Data
+@Getter
 public class SvgAndMetadata {
 
     String svg;
