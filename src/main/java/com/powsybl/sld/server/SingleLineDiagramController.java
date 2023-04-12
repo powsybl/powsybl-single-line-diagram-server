@@ -144,7 +144,7 @@ public class SingleLineDiagramController {
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters);
         String svg = svgAndMetadata.getSvg();
         String metadata = svgAndMetadata.getMetadata();
-        Map additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        Map<String, Object> additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                         .put(SVG_TAG, svg)
@@ -241,7 +241,7 @@ public class SingleLineDiagramController {
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters);
         String svg = svgAndMetadata.getSvg();
         String metadata = svgAndMetadata.getMetadata();
-        Map additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        Map<String, Object> additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                         .put(SVG_TAG, svg)
@@ -270,7 +270,7 @@ public class SingleLineDiagramController {
         LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
         SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
         String svg = svgAndMetadata.getSvg();
-        Map additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        Map<String, Object> additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                         .put(SVG_TAG, svg)
