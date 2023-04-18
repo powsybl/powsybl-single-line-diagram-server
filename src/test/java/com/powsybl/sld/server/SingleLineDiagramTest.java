@@ -322,6 +322,7 @@ public class SingleLineDiagramTest {
         assertEquals(1, voltageLevels.size());
         assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
         assertEquals("vlFr1A", voltageLevels.get(0).get("name"));
+        assertEquals("subFr1", voltageLevels.get(0).get("substationId"));
     }
 
     @Test

@@ -69,10 +69,13 @@ class NetworkAreaDiagramService {
 
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
 
-        // list of {"id": id, "name": name}
+        // list of {"id": id, "name": name, "substationId": substationId}
         List<Map<String, String>> voltageLevelsInfos = voltageLevelsIds.stream()
                 .map(network::getVoltageLevel)
-                .map(voltageLevel -> Map.of("id", voltageLevel.getId(), "name", voltageLevel.getOptionalName().orElse("")))
+                .map(voltageLevel -> Map.of(
+                        "id", voltageLevel.getId(),
+                        "name", voltageLevel.getOptionalName().orElse(null),
+                        "substationId", voltageLevel.getSubstation().isPresent() ? voltageLevel.getSubstation().get().getId() : null))
                 .collect(Collectors.toList());
 
         Map<String, Object> metadata = new HashMap<>();
