@@ -52,7 +52,7 @@
 
         <java.version>11</java.version>
 
-        <powsybl-ws-dependencies.version>2.2.0-SNAPSHOT</powsybl-ws-dependencies.version>
+        <powsybl-ws-dependencies.version>2.2.0</powsybl-ws-dependencies.version>
     </properties>
 
     <build>
