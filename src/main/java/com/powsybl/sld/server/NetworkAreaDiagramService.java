@@ -72,10 +72,17 @@ class NetworkAreaDiagramService {
         // list of {"id": id, "name": name, "substationId": substationId}
         List<Map<String, String>> voltageLevelsInfos = voltageLevelsIds.stream()
                 .map(network::getVoltageLevel)
-                .map(voltageLevel -> Map.of(
-                        "id", voltageLevel.getId(),
-                        "name", voltageLevel.getOptionalName().orElse(null),
-                        "substationId", voltageLevel.getSubstation().isPresent() ? voltageLevel.getSubstation().get().getId() : null))
+                .map(voltageLevel -> {
+                    Map<String, String> vlInfos = new HashMap<>();
+                    vlInfos.put("id", voltageLevel.getId());
+                    if (voltageLevel.getOptionalName().isPresent()) {
+                        vlInfos.put("name", voltageLevel.getOptionalName().get());
+                    }
+                    if (voltageLevel.getSubstation().isPresent()) {
+                        vlInfos.put("substationId", voltageLevel.getSubstation().get().getId());
+                    }
+                    return vlInfos;
+                })
                 .collect(Collectors.toList());
 
         Map<String, Object> metadata = new HashMap<>();
