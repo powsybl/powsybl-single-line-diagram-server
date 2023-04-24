@@ -75,7 +75,7 @@ public class SingleLineDiagramTest {
     private PositionDiagramLabelProvider positionDiagramLabelProvider;
 
     @MockBean
-    private  NetworkStoreService networkStoreService;
+    private NetworkStoreService networkStoreService;
 
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
