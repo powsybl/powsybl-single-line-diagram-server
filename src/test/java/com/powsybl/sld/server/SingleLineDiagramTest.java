@@ -23,9 +23,9 @@ import com.powsybl.sld.library.ConvergenceComponentLibrary;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.server.utils.SldDisplayMode;
-import com.powsybl.sld.svg.DiagramStyleProvider;
 import com.powsybl.sld.svg.FeederInfo;
-import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
+import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
+import com.powsybl.sld.svg.styles.StyleProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -402,7 +402,7 @@ public class SingleLineDiagramTest {
         assertFalse(feederInfos1.get(0).getLeftLabel().isPresent());
         assertFalse(feederInfos1.get(1).getLeftLabel().isPresent());
         // test if position label successfully added to svg
-        DiagramStyleProvider diagramStyleProvider = new NominalVoltageDiagramStyleProvider(testNetwork);
+        StyleProvider diagramStyleProvider = new NominalVoltageStyleProvider();
         Path outPath = tmpDir.resolve("sld.svg");
         Path outPath2 = tmpDir.resolve("sld2.svg");
         Path outPath3 = tmpDir.resolve("sld3.svg");
@@ -441,7 +441,7 @@ public class SingleLineDiagramTest {
         VoltageLevel vl4 = createVoltageLevel(substation2, "vl4", "vl4", TopologyKind.NODE_BREAKER, 220, 20);
 
         createBusBarSection(vl1, "bbs11", "bbs11", 2, 2, 2);
-        createLoad(vl1, "loadA", "loadA", "loadA", null, ConnectablePosition.Direction.TOP, 4, 10, 10);
+        createLoad(vl1, "loadA", "loadA", "loadA", 0, ConnectablePosition.Direction.TOP, 4, 10, 10);
         createSwitch(vl1, "bA", "bA", SwitchKind.BREAKER, false, false, false, 3, 4);
 
         createBusBarSection(vl2, "bbs22", "bbs22", 5, 5, 5);

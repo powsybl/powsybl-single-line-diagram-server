@@ -14,8 +14,10 @@ import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.ComponentLibrary;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
-import com.powsybl.sld.util.NominalVoltageDiagramStyleProvider;
-import com.powsybl.sld.util.TopologicalStyleProvider;
+import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
+import com.powsybl.sld.svg.styles.StyleProvidersList;
+import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
+import com.powsybl.sld.svg.styles.iidm.TopologicalStyleProvider;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import org.apache.commons.lang3.tuple.Pair;
@@ -42,7 +44,6 @@ class SingleLineDiagramService {
 
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
             .setAdaptCellHeightToContent(true)
-            .setHighlightLineState(true)
             .setCssLocation(LayoutParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
     @Autowired
@@ -80,8 +81,8 @@ class SingleLineDiagramService {
             ComponentLibrary compLibrary = ComponentLibrary.find(diagParams.getComponentLibrary())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found"));
 
-            var defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new TopologicalStyleProvider(network)
-                    : new NominalVoltageDiagramStyleProvider(network);
+            var defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new StyleProvidersList(new TopologicalStyleProvider(network), new HighlightLineStateStyleProvider(network))
+                    : new StyleProvidersList(new NominalVoltageStyleProvider(), new HighlightLineStateStyleProvider(network));
             DefaultDiagramLabelProvider labelProvider = null;
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
             layoutParameters.setLabelCentered(diagParams.isLabelCentered());
