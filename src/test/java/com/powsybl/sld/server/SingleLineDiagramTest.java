@@ -331,7 +331,7 @@ public class SingleLineDiagramTest {
 
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
 
-        SingleLineDiagramParameters parameters =  SingleLineDiagramParameters.builder()
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
                 .useName(false)
                 .labelCentered(false)
                 .diagonalLabel(false)
@@ -357,7 +357,7 @@ public class SingleLineDiagramTest {
 
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
 
-        SingleLineDiagramParameters parameters =  SingleLineDiagramParameters.builder()
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
                 .useName(false)
                 .labelCentered(false)
                 .diagonalLabel(false)
