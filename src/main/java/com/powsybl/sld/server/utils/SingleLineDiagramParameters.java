@@ -21,7 +21,7 @@ public class SingleLineDiagramParameters {
     private boolean labelCentered;
     private boolean diagonalLabel;
     private boolean topologicalColoring;
-    private String  componentLibrary;
+    private String componentLibrary;
     private String substationLayout;
     private SldDisplayMode sldDisplayMode;
     private String language;
