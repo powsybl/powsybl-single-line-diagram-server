@@ -16,6 +16,7 @@ import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
+import com.powsybl.sld.server.dto.VoltageLevelInfos;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
@@ -69,20 +70,9 @@ class NetworkAreaDiagramService {
 
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
 
-        // list of {"id": id, "name": name, "substationId": substationId}
-        List<Map<String, String>> voltageLevelsInfos = voltageLevelsIds.stream()
+        List<VoltageLevelInfos> voltageLevelsInfos = voltageLevelsIds.stream()
                 .map(network::getVoltageLevel)
-                .map(voltageLevel -> {
-                    Map<String, String> vlInfos = new HashMap<>();
-                    vlInfos.put("id", voltageLevel.getId());
-                    if (voltageLevel.getOptionalName().isPresent()) {
-                        vlInfos.put("name", voltageLevel.getOptionalName().get());
-                    }
-                    if (voltageLevel.getSubstation().isPresent()) {
-                        vlInfos.put("substationId", voltageLevel.getSubstation().get().getId());
-                    }
-                    return vlInfos;
-                })
+                .map(voltageLevel -> new VoltageLevelInfos(voltageLevel))
                 .collect(Collectors.toList());
 
         Map<String, Object> metadata = new HashMap<>();

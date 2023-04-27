@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.powsybl.ws.commons.LogUtils.sanitizeParam;
@@ -144,7 +143,7 @@ public class SingleLineDiagramController {
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters);
         String svg = svgAndMetadata.getSvg();
         String metadata = svgAndMetadata.getMetadata();
-        Map<String, Object> additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                         .put(SVG_TAG, svg)
@@ -241,7 +240,7 @@ public class SingleLineDiagramController {
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters);
         String svg = svgAndMetadata.getSvg();
         String metadata = svgAndMetadata.getMetadata();
-        Map<String, Object> additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                         .put(SVG_TAG, svg)
@@ -270,7 +269,7 @@ public class SingleLineDiagramController {
         LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
         SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
         String svg = svgAndMetadata.getSvg();
-        Map<String, Object> additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                         .put(SVG_TAG, svg)

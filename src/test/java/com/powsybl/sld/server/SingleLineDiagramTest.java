@@ -6,6 +6,8 @@
  */
 package com.powsybl.sld.server;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.commons.PowsyblException;
@@ -83,6 +85,8 @@ public class SingleLineDiagramTest {
 
     @MockBean
     private NetworkStoreService networkStoreService;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
@@ -314,10 +318,13 @@ public class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
 
         SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), 2);
-        Map<String, Object> additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
-        assertEquals(1, additionalMetadata.get("nbVoltageLevels"));
-        List<Map<String, String>> voltageLevels = (List<Map<String, String>>) additionalMetadata.get("voltageLevels");
+        Map<String, Object> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() {
+        });
+        assertEquals(1, convertedMetadata.get("nbVoltageLevels"));
+        List<Map<String, String>> voltageLevels = objectMapper.convertValue(convertedMetadata.get("voltageLevels"), new TypeReference<>() {
+        });
         assertNotNull(voltageLevels);
         assertEquals(1, voltageLevels.size());
         assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
@@ -343,12 +350,14 @@ public class SingleLineDiagramTest {
                 .build();
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "vlFr1A", parameters);
-        Map<String, Object> additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
-        assertEquals("vlFr1A", additionalMetadata.get("id"));
-        assertEquals("vlFr1A", additionalMetadata.get("name"));
-        assertEquals("FRANCE", additionalMetadata.get("countryName"));
-        assertEquals("subFr1", additionalMetadata.get("substationId"));
+        Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() {
+        });
+        assertEquals("vlFr1A", convertedMetadata.get("id"));
+        assertEquals("vlFr1A", convertedMetadata.get("name"));
+        assertEquals("FRANCE", convertedMetadata.get("countryName"));
+        assertEquals("subFr1", convertedMetadata.get("substationId"));
     }
 
     @Test
@@ -369,11 +378,13 @@ public class SingleLineDiagramTest {
                 .build();
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr1", parameters);
-        Map<String, Object> additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
-        assertEquals("subFr1", additionalMetadata.get("id"));
-        assertEquals(null, additionalMetadata.get("name"));
-        assertEquals("FRANCE", additionalMetadata.get("countryName"));
+        Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() {
+        });
+        assertEquals("subFr1", convertedMetadata.get("id"));
+        assertEquals(null, convertedMetadata.get("name"));
+        assertEquals("FRANCE", convertedMetadata.get("countryName"));
     }
 
     public static Network createNetwork() {

@@ -15,7 +15,10 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.ComponentLibrary;
+import com.powsybl.sld.server.dto.EquipmentInfos;
+import com.powsybl.sld.server.dto.SubstationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
+import com.powsybl.sld.server.dto.VoltageLevelInfos;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
@@ -112,7 +115,7 @@ class SingleLineDiagramService {
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, layoutParameters, compLibrary,
                     substationLayoutFactory, voltageLevelLayoutFactory, labelProvider, defaultDiagramStyleProvider, "");
 
-            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, id);
+            EquipmentInfos additionalMetadata = computeAdditionalMetadata(network, id);
 
             return SvgAndMetadata.builder()
                     .svg(svgWriter.toString())
@@ -123,28 +126,18 @@ class SingleLineDiagramService {
         }
     }
 
-    private Map<String, Object> computeAdditionalMetadata(Network network, String id) {
-
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("id", id);
+    private EquipmentInfos computeAdditionalMetadata(Network network, String id) {
 
         Identifiable<?> identifiable = network.getIdentifiable(id);
         if (identifiable.getType() == VOLTAGE_LEVEL) {
             VoltageLevel voltageLevel = network.getVoltageLevel(id);
-            voltageLevel.getOptionalName().ifPresent(name -> metadata.put("name", name));
-            voltageLevel.getSubstation().ifPresent(substation -> {
-                metadata.put("substationId", substation.getId());
-                substation.getCountry().ifPresent(country -> metadata.put("countryName", country.getName()));
-            });
+            return new VoltageLevelInfos(voltageLevel);
         } else if (identifiable.getType() == SUBSTATION) {
             Substation substation = network.getSubstation(id);
-            substation.getOptionalName().ifPresent(name -> metadata.put("name", name));
-            substation.getCountry().ifPresent(country -> metadata.put("countryName", country.getName()));
+            return new SubstationInfos(substation);
         } else {
             throw new PowsyblException("Given id '" + id + "' is not a substation or voltage level id in given network '" + network.getId() + "'");
         }
-
-        return metadata;
     }
 
     Collection<String> getAvailableSvgComponentLibraries() {

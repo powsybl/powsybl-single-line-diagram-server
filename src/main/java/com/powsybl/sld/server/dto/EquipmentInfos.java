@@ -4,19 +4,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-
 package com.powsybl.sld.server.dto;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 
-@Builder
 @Getter
-public class SvgAndMetadata {
+public class EquipmentInfos {
 
-    String svg;
+    protected String id;
 
-    String metadata;
-
-    Object additionalMetadata;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    protected String name;
 }
