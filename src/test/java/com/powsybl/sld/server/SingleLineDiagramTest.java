@@ -6,6 +6,8 @@
  */
 package com.powsybl.sld.server;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.commons.PowsyblException;
@@ -22,6 +24,8 @@ import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ConvergenceComponentLibrary;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
+import com.powsybl.sld.server.dto.SvgAndMetadata;
+import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
@@ -47,13 +51,12 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.powsybl.sld.library.ComponentTypeName.ARROW_ACTIVE;
 import static com.powsybl.sld.library.ComponentTypeName.ARROW_REACTIVE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -71,11 +74,19 @@ public class SingleLineDiagramTest {
     @Autowired
     private MockMvc mvc;
 
+    @Autowired
+    private SingleLineDiagramService singleLineDiagramService;
+
+    @Autowired
+    private NetworkAreaDiagramService networkAreaDiagramService;
+
     @MockBean
     private PositionDiagramLabelProvider positionDiagramLabelProvider;
 
     @MockBean
     private NetworkStoreService networkStoreService;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
@@ -283,6 +294,7 @@ public class SingleLineDiagramTest {
         String stringResult = result.getResponse().getContentAsString();
         assertTrue(stringResult.contains("svg"));
         assertTrue(stringResult.contains("metadata"));
+        assertTrue(stringResult.contains("additionalMetadata"));
         assertTrue(stringResult.contains("<?xml"));
 
         result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=vlFr1A", testNetworkId))
@@ -292,10 +304,87 @@ public class SingleLineDiagramTest {
         String stringResult2 = result.getResponse().getContentAsString();
         assertTrue(stringResult2.contains("svg"));
         assertTrue(stringResult.contains("metadata"));
+        assertTrue(stringResult.contains("additionalMetadata"));
         assertTrue(stringResult2.contains("<?xml"));
 
         mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=notFound", testNetworkId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testNetworkAreaDiagramAdditionalMetadata() {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+
+        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), 2);
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        assertNotNull(additionalMetadata);
+        Map<String, Object> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() {
+        });
+        assertEquals(1, convertedMetadata.get("nbVoltageLevels"));
+        List<Map<String, String>> voltageLevels = objectMapper.convertValue(convertedMetadata.get("voltageLevels"), new TypeReference<>() {
+        });
+        assertNotNull(voltageLevels);
+        assertEquals(1, voltageLevels.size());
+        assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
+        assertEquals("vlFr1A", voltageLevels.get(0).get("name"));
+        assertEquals("subFr1", voltageLevels.get(0).get("substationId"));
+    }
+
+    @Test
+    public void testVoltageLevelSingleLineDiagramAdditionalMetadata() {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
+
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
+                .useName(false)
+                .labelCentered(false)
+                .diagonalLabel(false)
+                .topologicalColoring(false)
+                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
+                .substationLayout("horizontal")
+                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
+                .language("en")
+                .build();
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "vlFr1A", parameters);
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        assertNotNull(additionalMetadata);
+        Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() {
+        });
+        assertEquals("vlFr1A", convertedMetadata.get("id"));
+        assertEquals("vlFr1A", convertedMetadata.get("name"));
+        assertEquals("FRANCE", convertedMetadata.get("countryName"));
+        assertEquals("subFr1", convertedMetadata.get("substationId"));
+    }
+
+    @Test
+    public void testSubstationSingleLineDiagramAdditionalMetadata() {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
+
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
+                .useName(false)
+                .labelCentered(false)
+                .diagonalLabel(false)
+                .topologicalColoring(false)
+                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
+                .substationLayout("horizontal")
+                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
+                .language("en")
+                .build();
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr1", parameters);
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        assertNotNull(additionalMetadata);
+        Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() {
+        });
+        assertEquals("subFr1", convertedMetadata.get("id"));
+        assertEquals(null, convertedMetadata.get("name"));
+        assertEquals("FRANCE", convertedMetadata.get("countryName"));
     }
 
     public static Network createNetwork() {

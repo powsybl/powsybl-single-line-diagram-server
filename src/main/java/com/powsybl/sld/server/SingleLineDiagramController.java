@@ -9,6 +9,7 @@ package com.powsybl.sld.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
+import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,7 +17,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +47,8 @@ public class SingleLineDiagramController {
     static final String IMAGE_SVG_PLUS_XML = "image/svg+xml";
     static final String HORIZONTAL = "horizontal";
     static final String SVG_TAG = "svg";
-    static final String NB_VOLTAGE_LEVELS_TAG = "nbVoltageLevels";
     static final String METADATA = "metadata";
+    static final String ADDITIONAL_METADATA = "additionalMetadata";
 
     @Autowired
     private SingleLineDiagramService singleLineDiagramService;
@@ -83,7 +83,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters).getLeft();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters).getSvg();
     }
 
     @GetMapping(value = "/metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -112,7 +112,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters).getRight();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters).getMetadata();
     }
 
     @GetMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -140,13 +140,15 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters);
-        String svg = svgAndMetadata.getLeft();
-        String metadata = svgAndMetadata.getRight();
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters);
+        String svg = svgAndMetadata.getSvg();
+        String metadata = svgAndMetadata.getMetadata();
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
-                    .put(SVG_TAG, svg)
-                    .putRawValue(METADATA, new RawValue(metadata)));
+                        .put(SVG_TAG, svg)
+                        .putRawValue(METADATA, new RawValue(metadata))
+                        .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
     }
 
     // substations
@@ -177,7 +179,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters).getLeft();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters).getSvg();
     }
 
     @GetMapping(value = "/substation-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -206,7 +208,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters).getRight();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters).getMetadata();
     }
 
     @GetMapping(value = "substation-svg-and-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -235,13 +237,15 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        Pair<String, String> svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters);
-        String svg = svgAndMetadata.getLeft();
-        String metadata = svgAndMetadata.getRight();
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters);
+        String svg = svgAndMetadata.getSvg();
+        String metadata = svgAndMetadata.getMetadata();
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
                         .put(SVG_TAG, svg)
-                        .putRawValue(METADATA, new RawValue(metadata)));
+                        .putRawValue(METADATA, new RawValue(metadata))
+                        .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
     }
 
     @GetMapping(value = "/svg-component-libraries")
@@ -263,11 +267,12 @@ public class SingleLineDiagramController {
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth) throws JsonProcessingException {
         LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
-        Pair<String, Integer> svg = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
+        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
+        String svg = svgAndMetadata.getSvg();
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         return OBJECT_MAPPER.writeValueAsString(
                 OBJECT_MAPPER.createObjectNode()
-                    .put(SVG_TAG, svg.getLeft())
-                    .putPOJO(METADATA, OBJECT_MAPPER.createObjectNode().put(NB_VOLTAGE_LEVELS_TAG, svg.getRight()))
-        );
+                        .put(SVG_TAG, svg)
+                        .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
     }
 }

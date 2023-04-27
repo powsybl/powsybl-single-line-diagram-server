@@ -7,11 +7,18 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.Substation;
+import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.ComponentLibrary;
+import com.powsybl.sld.server.dto.EquipmentInfos;
+import com.powsybl.sld.server.dto.SubstationInfos;
+import com.powsybl.sld.server.dto.SvgAndMetadata;
+import com.powsybl.sld.server.dto.VoltageLevelInfos;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
@@ -20,7 +27,6 @@ import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
 import com.powsybl.sld.svg.styles.iidm.TopologicalStyleProvider;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -30,9 +36,11 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.util.Collection;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.powsybl.iidm.network.IdentifiableType.SUBSTATION;
+import static com.powsybl.iidm.network.IdentifiableType.VOLTAGE_LEVEL;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -69,7 +77,7 @@ class SingleLineDiagramService {
         return substationLayoutFactory;
     }
 
-    Pair<String, String> generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams) {
+    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
@@ -107,9 +115,28 @@ class SingleLineDiagramService {
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, layoutParameters, compLibrary,
                     substationLayoutFactory, voltageLevelLayoutFactory, labelProvider, defaultDiagramStyleProvider, "");
 
-            return Pair.of(svgWriter.toString(), metadataWriter.toString());
+            EquipmentInfos additionalMetadata = computeAdditionalMetadata(network, id);
+
+            return SvgAndMetadata.builder()
+                    .svg(svgWriter.toString())
+                    .metadata(metadataWriter.toString())
+                    .additionalMetadata(additionalMetadata).build();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    private EquipmentInfos computeAdditionalMetadata(Network network, String id) {
+
+        Identifiable<?> identifiable = network.getIdentifiable(id);
+        if (identifiable.getType() == VOLTAGE_LEVEL) {
+            VoltageLevel voltageLevel = network.getVoltageLevel(id);
+            return new VoltageLevelInfos(voltageLevel);
+        } else if (identifiable.getType() == SUBSTATION) {
+            Substation substation = network.getSubstation(id);
+            return new SubstationInfos(substation);
+        } else {
+            throw new PowsyblException("Given id '" + id + "' is not a substation or voltage level id in given network '" + network.getId() + "'");
         }
     }
 
