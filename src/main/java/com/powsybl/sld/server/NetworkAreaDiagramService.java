@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -41,11 +42,18 @@ class NetworkAreaDiagramService {
 
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
-        voltageLevelsIds.forEach(voltageLevelId -> {
+        AtomicInteger numberOfNotExistingVl = new AtomicInteger();
+        List<String> voltageLevelsIdsCopy = new ArrayList<>(voltageLevelsIds);
+        voltageLevelsIdsCopy.forEach(voltageLevelId -> {
             if (network.getVoltageLevel(voltageLevelId) == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level" + voltageLevelId + " not found");
+                numberOfNotExistingVl.getAndIncrement();
+                voltageLevelsIds.remove(voltageLevelId);
             }
         });
+
+        if (numberOfNotExistingVl.get() == voltageLevelsIdsCopy.size()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level" + voltageLevelsIds + " not found");
+        }
 
         try (StringWriter svgWriter = new StringWriter()) {
             SvgParameters svgParameters = new SvgParameters()
