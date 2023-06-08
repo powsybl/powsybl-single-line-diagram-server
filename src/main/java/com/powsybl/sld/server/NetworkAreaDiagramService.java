@@ -80,7 +80,7 @@ class NetworkAreaDiagramService {
 
         List<VoltageLevelInfos> voltageLevelsInfos = voltageLevelsIds.stream()
                 .map(network::getVoltageLevel)
-                .map(voltageLevel -> new VoltageLevelInfos(voltageLevel))
+                .map(VoltageLevelInfos::new)
                 .collect(Collectors.toList());
 
         Map<String, Object> metadata = new HashMap<>();
