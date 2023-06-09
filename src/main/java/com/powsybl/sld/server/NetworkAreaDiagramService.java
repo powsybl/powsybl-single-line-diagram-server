@@ -43,12 +43,12 @@ class NetworkAreaDiagramService {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         Iterator<String> iterator = voltageLevelsIds.iterator();
         while (iterator.hasNext()) {
-            if (network.getVoltageLevel(String.valueOf(iterator.next())) == null) {
+            if (network.getVoltageLevel(iterator.next()) == null) {
                 iterator.remove();
             }
         }
         if (voltageLevelsIds.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
         }
         try (StringWriter svgWriter = new StringWriter()) {
             SvgParameters svgParameters = new SvgParameters()
