@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -42,19 +41,15 @@ class NetworkAreaDiagramService {
 
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
-        AtomicInteger numberOfNotExistingVl = new AtomicInteger();
-        List<String> voltageLevelsIdsCopy = new ArrayList<>(voltageLevelsIds);
-        voltageLevelsIdsCopy.forEach(voltageLevelId -> {
-            if (network.getVoltageLevel(voltageLevelId) == null) {
-                numberOfNotExistingVl.getAndIncrement();
-                voltageLevelsIds.remove(voltageLevelId);
+        Iterator iterator = voltageLevelsIds.iterator();
+        while (iterator.hasNext()) {
+            if (network.getVoltageLevel(String.valueOf(iterator.next())) == null) {
+                iterator.remove();
             }
-        });
-
-        if (numberOfNotExistingVl.get() == voltageLevelsIdsCopy.size()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level" + voltageLevelsIds + " not found");
         }
-
+        if (voltageLevelsIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level not found");
+        }
         try (StringWriter svgWriter = new StringWriter()) {
             SvgParameters svgParameters = new SvgParameters()
                     .setSvgWidthAndHeightAdded(true)
