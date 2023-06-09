@@ -41,7 +41,7 @@ class NetworkAreaDiagramService {
 
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
-        Iterator iterator = voltageLevelsIds.iterator();
+        Iterator<String> iterator = voltageLevelsIds.iterator();
         while (iterator.hasNext()) {
             if (network.getVoltageLevel(String.valueOf(iterator.next())) == null) {
                 iterator.remove();
