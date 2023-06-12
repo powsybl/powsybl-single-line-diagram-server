@@ -507,10 +507,9 @@ public class SingleLineDiagramTest {
     }
 
     @Test
-    public void testNetworkAreaDiagramWithListOfVl() throws Exception {
+    public void testNetworkAreaDiagramWithMissingVoltageLevel() throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
-
         SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A", "vlNotFound1"), 0);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
@@ -519,7 +518,7 @@ public class SingleLineDiagramTest {
         List<Map<String, String>> voltageLevels = objectMapper.convertValue(convertedMetadata.get("voltageLevels"), new TypeReference<>() { });
         assertNotNull(voltageLevels);
         assertEquals(1, voltageLevels.size());
-
+        assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
         mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0" + "&voltageLevelsIds=vlNotFound1,vlNotFound2", testNetworkId))
                 .andExpect(status().isNotFound());
     }
