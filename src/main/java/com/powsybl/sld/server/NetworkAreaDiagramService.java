@@ -41,13 +41,8 @@ class NetworkAreaDiagramService {
 
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
-        Iterator<String> iterator = voltageLevelsIds.iterator();
-        while (iterator.hasNext()) {
-            if (network.getVoltageLevel(iterator.next()) == null) {
-                iterator.remove();
-            }
-        }
-        if (voltageLevelsIds.isEmpty()) {
+        List<String> existingVL = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).collect(Collectors.toList());
+        if (existingVL.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
         }
         try (StringWriter svgWriter = new StringWriter()) {
@@ -56,10 +51,10 @@ class NetworkAreaDiagramService {
                     .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
             LayoutParameters layoutParameters = new LayoutParameters();
             StyleProvider styleProvider = new TopologicalStyleProvider(network);
-            new NetworkAreaDiagram(network, voltageLevelsIds, depth)
+            new NetworkAreaDiagram(network, existingVL, depth)
                     .draw(svgWriter, svgParameters, layoutParameters, styleProvider);
 
-            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, voltageLevelsIds, depth);
+            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVL, depth);
 
             return SvgAndMetadata.builder()
                     .svg(svgWriter.toString())

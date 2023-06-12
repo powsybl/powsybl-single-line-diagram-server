@@ -506,6 +506,24 @@ public class SingleLineDiagramTest {
         assertTrue(toString(outPath3).contains("trf71 (pos: 6)"));
     }
 
+    @Test
+    public void testNetworkAreaDiagramWithListOfVl() throws Exception {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+
+        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A", "vlNotFound1"), 0);
+        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        assertNotNull(additionalMetadata);
+        Map<String, Object> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
+        assertEquals(1, convertedMetadata.get("nbVoltageLevels"));
+        List<Map<String, String>> voltageLevels = objectMapper.convertValue(convertedMetadata.get("voltageLevels"), new TypeReference<>() { });
+        assertNotNull(voltageLevels);
+        assertEquals(1, voltageLevels.size());
+
+        mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0" + "&voltageLevelsIds=vlNotFound1,vlNotFound2", testNetworkId))
+                .andExpect(status().isNotFound());
+    }
+
     public static String toString(Path outPath) {
         String content;
         try {
