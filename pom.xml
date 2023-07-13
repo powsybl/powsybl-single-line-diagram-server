@@ -97,6 +97,13 @@
     </dependencyManagement>
 
     <dependencies>
+        <!-- Annotation processors dependencies -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Compilation dependencies -->
         <dependency>
             <groupId>com.powsybl</groupId>
