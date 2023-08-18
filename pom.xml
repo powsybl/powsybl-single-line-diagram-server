@@ -13,7 +13,7 @@
     <parent>
         <groupId>com.powsybl</groupId>
         <artifactId>powsybl-parent-ws</artifactId>
-        <version>12</version>
+        <version>14</version>
     </parent>
 
     <artifactId>powsybl-single-line-diagram-server</artifactId>
@@ -48,7 +48,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <powsybl-ws-dependencies.version>2.3.0</powsybl-ws-dependencies.version>
+        <powsybl-ws-dependencies.version>2.4.0</powsybl-ws-dependencies.version>
     </properties>
 
     <build>
