@@ -7,10 +7,10 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.iidm.network.Network;
+import com.powsybl.nad.NadParameters;
 import com.powsybl.nad.NetworkAreaDiagram;
 import com.powsybl.nad.build.iidm.VoltageLevelFilter;
 import com.powsybl.nad.layout.LayoutParameters;
-import com.powsybl.nad.svg.StyleProvider;
 import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -50,9 +50,12 @@ class NetworkAreaDiagramService {
                     .setSvgWidthAndHeightAdded(true)
                     .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
             LayoutParameters layoutParameters = new LayoutParameters();
-            StyleProvider styleProvider = new TopologicalStyleProvider(network);
-            new NetworkAreaDiagram(network, existingVLIds, depth)
-                    .draw(svgWriter, svgParameters, layoutParameters, styleProvider);
+            NadParameters nadParameters = new NadParameters();
+            nadParameters.setSvgParameters(svgParameters);
+            nadParameters.setLayoutParameters(layoutParameters);
+            nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
+            var vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
+            NetworkAreaDiagram.draw(network, svgWriter, nadParameters, vlFilter);
 
             Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth);
 
