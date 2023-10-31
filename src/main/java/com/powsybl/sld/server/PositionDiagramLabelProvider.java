@@ -21,8 +21,7 @@ import com.powsybl.sld.model.nodes.BusNode;
 import com.powsybl.sld.model.nodes.EquipmentNode;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.model.nodes.Node;
-import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
-import com.powsybl.sld.svg.LabelPosition;
+import com.powsybl.sld.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,17 +31,21 @@ import java.util.stream.Collectors;
 /**
  * @author Ben Daamer ahmed<ahmed.bendaamer at rte-france.com>
  */
-public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
+public class PositionDiagramLabelProvider extends DefaultLabelProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PositionDiagramLabelProvider.class);
 
     private final Network network;
     private final String voltageLevelId;
 
-    public PositionDiagramLabelProvider(Network network, ComponentLibrary componentLibrary, LayoutParameters layoutParameters, String voltageLevelId) {
-        super(network, componentLibrary, layoutParameters);
+    public PositionDiagramLabelProvider(Network network, ComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters, String voltageLevelId) {
+        super(network, componentLibrary, layoutParameters, svgParameters);
         this.network = network;
         this.voltageLevelId = voltageLevelId;
+    }
+
+    public static LabelProviderFactory newLabelProviderFactory(String voltageLevelId) {
+        return (network, compLibrary, layoutParameters, svgParameters) -> new PositionDiagramLabelProvider(network, compLibrary, layoutParameters, svgParameters, voltageLevelId);
     }
 
     @Override
@@ -59,7 +62,7 @@ public class PositionDiagramLabelProvider extends DefaultDiagramLabelProvider {
     private Optional<String> getLabelOrNameOrId(Node node) {
         if (node instanceof EquipmentNode) {
             EquipmentNode eqNode = (EquipmentNode) node;
-            String label = node.getLabel().orElse(layoutParameters.isUseName() ? Objects.toString(eqNode.getName(), "") : eqNode.getEquipmentId());
+            String label = node.getLabel().orElse(svgParameters.isUseName() ? Objects.toString(eqNode.getName(), "") : eqNode.getEquipmentId());
             Identifiable<?> identifiable = network.getIdentifiable(eqNode.getEquipmentId());
             var vl = network.getVoltageLevel(voltageLevelId);
             if (identifiable != null) {

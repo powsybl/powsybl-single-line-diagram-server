@@ -19,6 +19,7 @@ import com.powsybl.iidm.network.extensions.ConnectablePositionAdder;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.SingleLineDiagram;
+import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.builders.NetworkGraphBuilder;
 import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ConvergenceComponentLibrary;
@@ -28,8 +29,8 @@ import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
+import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
-import com.powsybl.sld.svg.styles.StyleProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +46,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
@@ -472,15 +474,15 @@ public class SingleLineDiagramTest {
     }
 
     @Test
-    public void testPosisionDiagramLabelProvider() {
+    public void testPosisionDiagramLabelProvider() throws IOException {
         var testNetwork = createNetworkWithTwoInjectionAndOneBranchAndOne3twt();
         var layoutParameters = new LayoutParameters();
+        var svgParameters = new SvgParameters();
+        var sldParameters = new SldParameters();
         var componentLibrary = new ConvergenceComponentLibrary();
         var graphBuilder = new NetworkGraphBuilder(testNetwork);
         VoltageLevelGraph g = graphBuilder.buildVoltageLevelGraph("vl1");
-        PositionDiagramLabelProvider labelProvider = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "vl1");
-        PositionDiagramLabelProvider labelProvider2 = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "vl2");
-        PositionDiagramLabelProvider labelProvider3 = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, "vl3");
+        PositionDiagramLabelProvider labelProvider = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, svgParameters, "vl1");
 
         List<FeederInfo> feederInfos1 = labelProvider.getFeederInfos((FeederNode) g.getNode("loadA"));
         assertEquals(2, feederInfos1.size());
@@ -490,20 +492,26 @@ public class SingleLineDiagramTest {
         assertTrue(feederInfos1.get(1).getRightLabel().isPresent());
         assertFalse(feederInfos1.get(0).getLeftLabel().isPresent());
         assertFalse(feederInfos1.get(1).getLeftLabel().isPresent());
-        // test if position label successfully added to svg
-        StyleProvider diagramStyleProvider = new NominalVoltageStyleProvider();
-        Path outPath = tmpDir.resolve("sld.svg");
-        Path outPath2 = tmpDir.resolve("sld2.svg");
-        Path outPath3 = tmpDir.resolve("sld3.svg");
+        sldParameters.setLabelProviderFactory((a, b, c, d) -> new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, svgParameters, "vl1"));
+        sldParameters.setStyleProviderFactory(n -> new NominalVoltageStyleProvider());
+        sldParameters.setComponentLibrary(componentLibrary);
+        sldParameters.setLayoutParameters(layoutParameters);
 
-        SingleLineDiagram.draw(testNetwork, "vl1", outPath, layoutParameters, componentLibrary, labelProvider, diagramStyleProvider, "");
-        assertTrue(toString(outPath).contains("loadA (pos: 0)"));
-        assertTrue(toString(outPath).contains("trf1 (pos: 1)"));
-        assertTrue(toString(outPath).contains("trf73 (pos: 3)"));
-        SingleLineDiagram.draw(testNetwork, "vl2", outPath2, layoutParameters, componentLibrary, labelProvider2, diagramStyleProvider, "");
-        assertTrue(toString(outPath2).contains("trf1 (pos: 1)"));
-        SingleLineDiagram.draw(testNetwork, "vl3", outPath3, layoutParameters, componentLibrary, labelProvider3, diagramStyleProvider, "");
-        assertTrue(toString(outPath3).contains("trf71 (pos: 6)"));
+        // test if position label successfully added to svg
+        try (var svgWriter = new StringWriter();
+             var metadataWriter = new StringWriter()) {
+            SingleLineDiagram.draw(testNetwork, "vl1", svgWriter, metadataWriter, sldParameters);
+            assertTrue(svgWriter.toString().contains("loadA (pos: 0)"));
+            assertTrue(svgWriter.toString().contains("trf1 (pos: 1)"));
+            assertTrue(svgWriter.toString().contains("trf73 (pos: 3)"));
+            sldParameters.setLabelProviderFactory((a, b, c, d) -> new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, svgParameters, "vl2"));
+            SingleLineDiagram.draw(testNetwork, "vl2", svgWriter, metadataWriter, sldParameters);
+            assertTrue(svgWriter.toString().contains("trf1 (pos: 1)"));
+            sldParameters.setLabelProviderFactory((a, b, c, d) -> new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, svgParameters, "vl3"));
+            SingleLineDiagram.draw(testNetwork, "vl3", svgWriter, metadataWriter, sldParameters);
+            assertTrue(svgWriter.toString().contains("trf71 (pos: 6)"));
+        }
+
     }
 
     @Test

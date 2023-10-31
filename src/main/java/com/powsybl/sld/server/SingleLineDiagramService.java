@@ -13,6 +13,7 @@ import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.SingleLineDiagram;
+import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.ComponentLibrary;
 import com.powsybl.sld.server.dto.EquipmentInfos;
@@ -20,7 +21,8 @@ import com.powsybl.sld.server.dto.SubstationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
 import com.powsybl.sld.server.utils.SldDisplayMode;
-import com.powsybl.sld.svg.DefaultDiagramLabelProvider;
+import com.powsybl.sld.svg.DefaultLabelProvider;
+import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
@@ -51,8 +53,10 @@ import static com.powsybl.iidm.network.IdentifiableType.VOLTAGE_LEVEL;
 class SingleLineDiagramService {
 
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
-            .setAdaptCellHeightToContent(true)
-            .setCssLocation(LayoutParameters.CssLocation.EXTERNAL_NO_IMPORT);
+            .setAdaptCellHeightToContent(true);
+
+    private static final SvgParameters SVG_PARAMETERS = new SvgParameters()
+            .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
     @Autowired
     private NetworkStoreService networkStoreService;
@@ -89,31 +93,39 @@ class SingleLineDiagramService {
             ComponentLibrary compLibrary = ComponentLibrary.find(diagParams.getComponentLibrary())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found"));
 
-            var defaultDiagramStyleProvider = diagParams.isTopologicalColoring() ? new StyleProvidersList(new TopologicalStyleProvider(network), new HighlightLineStateStyleProvider(network))
-                    : new StyleProvidersList(new NominalVoltageStyleProvider(), new HighlightLineStateStyleProvider(network));
-            DefaultDiagramLabelProvider labelProvider = null;
+            SvgParameters svgParameters = new SvgParameters(SVG_PARAMETERS);
+            svgParameters.setLabelCentered(diagParams.isLabelCentered());
+            svgParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
+            svgParameters.setUseName(diagParams.isUseName());
+            svgParameters.setLanguageTag(diagParams.getLanguage());
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
-            layoutParameters.setLabelCentered(diagParams.isLabelCentered());
-            layoutParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
-            layoutParameters.setUseName(diagParams.isUseName());
-            layoutParameters.setLanguageTag(diagParams.getLanguage());
+
+            SldParameters sldParameters = new SldParameters();
 
             if (diagParams.getSldDisplayMode() == SldDisplayMode.FEEDER_POSITION) {
-                layoutParameters.setAddNodesInfos(false);
-                layoutParameters.setLabelDiagonal(true);
-                labelProvider = new PositionDiagramLabelProvider(network, compLibrary, layoutParameters, id);
+                svgParameters.setAddNodesInfos(false);
+                svgParameters.setLabelDiagonal(true);
+                sldParameters.setLabelProviderFactory(PositionDiagramLabelProvider.newLabelProviderFactory(id));
             } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
-                layoutParameters.setAddNodesInfos(true);
-                labelProvider = new DefaultDiagramLabelProvider(network, compLibrary, layoutParameters);
+                svgParameters.setAddNodesInfos(true);
+                sldParameters.setLabelProviderFactory(DefaultLabelProvider::new);
             } else {
                 throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
             }
 
-            var voltageLevelLayoutFactory = new SmartVoltageLevelLayoutFactory(network);
+            var voltageLevelLayoutFactory = VoltageLevelLayoutFactoryCreator.newSmartVoltageLevelLayoutFactoryCreator();
             var substationLayoutFactory = getSubstationLayoutFactory(diagParams.getSubstationLayout());
 
-            SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, layoutParameters, compLibrary,
-                    substationLayoutFactory, voltageLevelLayoutFactory, labelProvider, defaultDiagramStyleProvider, "");
+            sldParameters.setSvgParameters(svgParameters);
+            sldParameters.setSubstationLayoutFactory(substationLayoutFactory);
+            sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
+            sldParameters.setLayoutParameters(layoutParameters);
+            sldParameters.setStyleProviderFactory(n -> diagParams.isTopologicalColoring() ?
+                    new StyleProvidersList(new TopologicalStyleProvider(network), new HighlightLineStateStyleProvider(network)) :
+                    new StyleProvidersList(new NominalVoltageStyleProvider(), new HighlightLineStateStyleProvider(network)));
+            sldParameters.setComponentLibrary(compLibrary);
+
+            SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, sldParameters);
 
             EquipmentInfos additionalMetadata = computeAdditionalMetadata(network, id);
 
