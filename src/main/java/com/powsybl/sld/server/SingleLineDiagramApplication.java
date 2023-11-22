@@ -6,7 +6,6 @@
  */
 package com.powsybl.sld.server;
 
-import com.powsybl.ws.commons.Utils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -18,7 +17,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class SingleLineDiagramApplication {
 
     public static void main(String[] args) {
-        Utils.initProperties();
         SpringApplication.run(SingleLineDiagramApplication.class, args);
     }
 }
