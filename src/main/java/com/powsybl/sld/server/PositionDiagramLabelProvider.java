@@ -7,12 +7,7 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.iidm.network.Branch;
-import com.powsybl.iidm.network.Identifiable;
-import com.powsybl.iidm.network.Injection;
-import com.powsybl.iidm.network.Network;
-import com.powsybl.iidm.network.ThreeWindingsTransformer;
-import com.powsybl.iidm.network.VoltageLevel;
+import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.ConnectablePosition;
 import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ComponentLibrary;
@@ -21,11 +16,17 @@ import com.powsybl.sld.model.nodes.BusNode;
 import com.powsybl.sld.model.nodes.EquipmentNode;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.model.nodes.Node;
-import com.powsybl.sld.svg.*;
+import com.powsybl.sld.svg.DefaultLabelProvider;
+import com.powsybl.sld.svg.LabelPosition;
+import com.powsybl.sld.svg.LabelProviderFactory;
+import com.powsybl.sld.svg.SvgParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -52,7 +53,7 @@ public class PositionDiagramLabelProvider extends DefaultLabelProvider {
     public List<NodeLabel> getNodeLabels(Node node, Direction direction) {
         Objects.requireNonNull(node);
         Objects.requireNonNull(direction);
-        var labelPosition = getLabelPosition(node, direction);
+        var labelPosition = getNodeLabelPosition(node, direction);
         if (labelPosition != null) {
             return getLabelOrNameOrId(node).map(label -> new NodeLabel(label, labelPosition, null)).stream().collect(Collectors.toList());
         }
@@ -80,9 +81,9 @@ public class PositionDiagramLabelProvider extends DefaultLabelProvider {
         }
     }
 
-    private LabelPosition getLabelPosition(Node node, Direction direction) {
+    private LabelPosition getNodeLabelPosition(Node node, Direction direction) {
         if (node instanceof FeederNode) {
-            return getFeederLabelPosition(node, direction);
+            return getLabelPosition(node, direction);
         } else if (node instanceof BusNode) {
             return getBusLabelPosition();
         }
