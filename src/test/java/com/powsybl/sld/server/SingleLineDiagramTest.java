@@ -358,7 +358,7 @@ public class SingleLineDiagramTest {
         });
         assertEquals("vlFr1A", convertedMetadata.get("id"));
         assertEquals("vlFr1A", convertedMetadata.get("name"));
-        assertEquals("FRANCE", convertedMetadata.get("countryName"));
+        assertEquals("FR", convertedMetadata.get("country"));
         assertEquals("subFr1", convertedMetadata.get("substationId"));
     }
 
@@ -386,7 +386,7 @@ public class SingleLineDiagramTest {
         });
         assertEquals("subFr1", convertedMetadata.get("id"));
         assertEquals(null, convertedMetadata.get("name"));
-        assertEquals("FRANCE", convertedMetadata.get("countryName"));
+        assertEquals("FR", convertedMetadata.get("country"));
     }
 
     public static Network createNetwork() {

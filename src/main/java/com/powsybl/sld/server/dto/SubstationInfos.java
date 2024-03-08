@@ -7,6 +7,7 @@
 package com.powsybl.sld.server.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.powsybl.iidm.network.Country;
 import com.powsybl.iidm.network.Substation;
 import lombok.Getter;
 
@@ -14,13 +15,13 @@ import lombok.Getter;
 public class SubstationInfos extends EquipmentInfos {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private String countryName;
+    private Country country;
 
     public SubstationInfos(Substation substation) {
         this.id = substation.getId();
         this.name = substation.getOptionalName().orElse(null);
-        substation.getCountry().ifPresent(country -> {
-            this.countryName = country.getName();
+        substation.getCountry().ifPresent(countryValue -> {
+            this.country = countryValue;
         });
     }
 }

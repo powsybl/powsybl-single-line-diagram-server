@@ -7,6 +7,7 @@
 package com.powsybl.sld.server.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.powsybl.iidm.network.Country;
 import com.powsybl.iidm.network.VoltageLevel;
 import lombok.Getter;
 
@@ -17,15 +18,15 @@ public class VoltageLevelInfos extends EquipmentInfos {
     private String substationId;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    private String countryName;
+    private Country country;
 
     public VoltageLevelInfos(VoltageLevel voltageLevel) {
         this.id = voltageLevel.getId();
         this.name = voltageLevel.getOptionalName().orElse(null);
         voltageLevel.getSubstation().ifPresent(substation -> {
             this.substationId = substation.getId();
-            substation.getCountry().ifPresent(country -> {
-                this.countryName = country.getName();
+            substation.getCountry().ifPresent(countryValue -> {
+                this.country = countryValue;
             });
         });
     }
