@@ -25,7 +25,9 @@ public class VoltageLevelInfos extends EquipmentInfos {
         this.name = voltageLevel.getOptionalName().orElse(null);
         voltageLevel.getSubstation().ifPresent(substation -> {
             this.substationId = substation.getId();
-            substation.getCountry().ifPresent(country -> this.country = country);
+            substation.getCountry().ifPresent(countryValue -> {
+                this.country = countryValue;
+            });
         });
     }
 }

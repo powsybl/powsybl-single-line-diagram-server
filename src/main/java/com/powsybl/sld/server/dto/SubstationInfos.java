@@ -20,8 +20,8 @@ public class SubstationInfos extends EquipmentInfos {
     public SubstationInfos(Substation substation) {
         this.id = substation.getId();
         this.name = substation.getOptionalName().orElse(null);
-        substation.getCountry().ifPresent(country -> {
-            this.country = country;
+        substation.getCountry().ifPresent(countryValue -> {
+            this.country = countryValue;
         });
     }
 }
