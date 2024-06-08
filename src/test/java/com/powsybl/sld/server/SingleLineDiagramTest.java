@@ -8,6 +8,7 @@ package com.powsybl.sld.server;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.ByteStreams;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.commons.PowsyblException;
@@ -54,6 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import static com.powsybl.sld.library.ComponentTypeName.ARROW_ACTIVE;
@@ -87,6 +89,8 @@ public class SingleLineDiagramTest {
 
     @MockBean
     private NetworkStoreService networkStoreService;
+    @MockBean
+    private GeoDataService geoDataService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -281,11 +285,17 @@ public class SingleLineDiagramTest {
         assertEquals("[\"GridSuiteAndConvergence\",\"Convergence\",\"FlatDesign\"]", result.getResponse().getContentAsString());
     }
 
+    private static final String GEO_DATA_SUBSTATIONS = "/geo_data_substations.json";
+    private static final String GEO_DATA_LINES = "/geo_data_lines.json";
+
     @Test
     public void testNetworkAreaDiagram() throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         UUID notFoundNetworkId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_SUBSTATIONS));
+        given(geoDataService.getLinesGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_LINES));
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(networkStoreService.getNetwork(notFoundNetworkId, PreloadingStrategy.COLLECTION)).willThrow(new PowsyblException());
 
@@ -318,6 +328,8 @@ public class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
 
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_SUBSTATIONS));
+        given(geoDataService.getLinesGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_LINES));
 
         SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), 2);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
@@ -518,6 +530,9 @@ public class SingleLineDiagramTest {
     public void testNetworkAreaDiagramWithMissingVoltageLevel() throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_SUBSTATIONS));
+        given(geoDataService.getLinesGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_LINES));
+
         SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A", "vlNotFound1"), 0);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
@@ -540,6 +555,14 @@ public class SingleLineDiagramTest {
             throw new UncheckedIOException(e);
         }
         return content;
+    }
+
+    public String toString(String resourceName) {
+        try {
+            return new String(ByteStreams.toByteArray(Objects.requireNonNull(getClass().getResourceAsStream(resourceName))), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /*

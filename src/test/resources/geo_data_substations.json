@@ -1,0 +1,114 @@
+[
+  {
+    "id": "S3",
+    "country": "NL",
+    "coordinate": {
+      "lat": 53.19624,
+      "lon": 6.60964
+    }
+  },
+  {
+    "id": "S4",
+    "country": "DE",
+    "coordinate": {
+      "lat": 52.38668,
+      "lon": 9.74317
+    }
+  },
+  {
+    "id": "S11",
+    "country": "PL",
+    "coordinate": {
+      "lat": 52.10062,
+      "lon": 21.2075
+    }
+  },
+  {
+    "id": "S5",
+    "country": "DE",
+    "coordinate": {
+      "lat": 50.36339,
+      "lon": 8.19889
+    }
+  },
+  {
+    "id": "S10",
+    "country": "DE",
+    "coordinate": {
+      "lat": 49.19199,
+      "lon": 11.90535
+    }
+  },
+  {
+    "id": "S6",
+    "country": "FR",
+    "coordinate": {
+      "lat": 45.34069,
+      "lon": 1.65383
+    }
+  },
+  {
+    "id": "S7",
+    "country": "BE",
+    "coordinate": {
+      "lat": 50.84716,
+      "lon": 4.3508
+    }
+  },
+  {
+    "id": "S8",
+    "country": "FR",
+    "coordinate": {
+      "lat": 48.856,
+      "lon": 2.344
+    }
+  },
+  {
+    "id": "S9",
+    "country": "DE",
+    "coordinate": {
+      "lat": 49.49199,
+      "lon": 10.20535
+    }
+  },
+  {
+    "id": "S1",
+    "country": "FR",
+    "coordinate": {
+      "lat": 49.17863,
+      "lon": 6.16156
+    }
+  },
+  {
+    "id": "S2",
+    "country": "AT",
+    "coordinate": {
+      "lat": 47.43046,
+      "lon": 14.69182
+    }
+  },
+  {
+    "id": "_c49942d6-8b01-4b01-b5e8-f1180f84906c",
+    "country": "NL",
+    "coordinate": {
+      "lat": 52.4047,
+      "lon": 4.84658
+    }
+  },
+  {
+    "id": "_87f7002b-056f-4a6a-a872-1744eea757e3",
+    "country": "BE",
+    "coordinate": {
+      "lat": 51.3251,
+      "lon": 4.25926
+    }
+  },
+  {
+    "id": "_37e14a0f-5e34-4647-a062-8bfd9305fa9d",
+    "country": "BE",
+    "coordinate": {
+      "lat": 50.8038,
+      "lon": 4.30089
+    }
+  }
+]

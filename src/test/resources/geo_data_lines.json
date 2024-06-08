@@ -1,0 +1,333 @@
+[
+  {
+    "id": "_ffbabc27-1ccd-4fdc-b037-e341706c8d29",
+    "country1": "BE",
+    "country2": "BE",
+    "substationStart": "_37e14a0f-5e34-4647-a062-8bfd9305fa9d",
+    "substationEnd": "_87f7002b-056f-4a6a-a872-1744eea757e3",
+    "coordinates": [
+      {
+        "lat": 50.9169,
+        "lon": 4.34509
+      },
+      {
+        "lat": 51.0448,
+        "lon": 4.29565
+      },
+      {
+        "lat": 51.157,
+        "lon": 4.38354
+      }
+    ]
+  },
+  {
+    "id": "_b58bf21a-096a-4dae-9a01-3f03b60c24c7",
+    "country1": "BE",
+    "country2": "BE",
+    "substationStart": "_37e14a0f-5e34-4647-a062-8bfd9305fa9d",
+    "substationEnd": "_87f7002b-056f-4a6a-a872-1744eea757e3",
+    "coordinates": [
+      {
+        "lat": 50.9169,
+        "lon": 4.34509
+      },
+      {
+        "lat": 51.0448,
+        "lon": 4.29565
+      },
+      {
+        "lat": 51.157,
+        "lon": 4.38354
+      }
+    ]
+  },
+  {
+    "id": "L10-11-1",
+    "country1": "DE",
+    "country2": "DE",
+    "substationStart": "S9",
+    "substationEnd": "S10",
+    "coordinates": [
+      {
+        "lat": 49.49199,
+        "lon": 10.20535
+      },
+      {
+        "lat": 49.19199,
+        "lon": 11.90535
+      }
+    ]
+  },
+  {
+    "id": "L13-14-1",
+    "country1": "DE",
+    "country2": "DE",
+    "substationStart": "S4",
+    "substationEnd": "S5",
+    "coordinates": [
+      {
+        "lat": 52.38668,
+        "lon": 9.74317
+      },
+      {
+        "lat": 50.36339,
+        "lon": 8.19889
+      }
+    ]
+  },
+  {
+    "id": "L3-4-1",
+    "country1": "BE",
+    "country2": "FR",
+    "substationStart": "S7",
+    "substationEnd": "S1",
+    "coordinates": [
+      {
+        "lat": 50.84716,
+        "lon": 4.3508
+      },
+      {
+        "lat": 49.17863,
+        "lon": 6.16156
+      }
+    ]
+  },
+  {
+    "id": "L12-13-1",
+    "country1": "PL",
+    "country2": "DE",
+    "substationStart": "S11",
+    "substationEnd": "S4",
+    "coordinates": [
+      {
+        "lat": 52.10062,
+        "lon": 21.2075
+      },
+      {
+        "lat": 52.38668,
+        "lon": 9.74317
+      }
+    ]
+  },
+  {
+    "id": "L9-14-1",
+    "country1": "FR",
+    "country2": "DE",
+    "substationStart": "S1",
+    "substationEnd": "S5",
+    "coordinates": [
+      {
+        "lat": 49.17863,
+        "lon": 6.16156
+      },
+      {
+        "lat": 50.36339,
+        "lon": 8.19889
+      }
+    ]
+  },
+  {
+    "id": "L1-5-1",
+    "country1": "FR",
+    "country2": "AT",
+    "substationStart": "S6",
+    "substationEnd": "S2",
+    "coordinates": [
+      {
+        "lat": 45.34069,
+        "lon": 1.65383
+      },
+      {
+        "lat": 47.43046,
+        "lon": 14.69182
+      }
+    ]
+  },
+  {
+    "id": "L9-10-1",
+    "country1": "FR",
+    "country2": "DE",
+    "substationStart": "S1",
+    "substationEnd": "S9",
+    "coordinates": [
+      {
+        "lat": 49.17863,
+        "lon": 6.16156
+      },
+      {
+        "lat": 49.49199,
+        "lon": 10.20535
+      }
+    ]
+  },
+  {
+    "id": "L2-5-1",
+    "country1": "FR",
+    "country2": "AT",
+    "substationStart": "S8",
+    "substationEnd": "S2",
+    "coordinates": [
+      {
+        "lat": 48.856,
+        "lon": 2.344
+      },
+      {
+        "lat": 47.43046,
+        "lon": 14.69182
+      }
+    ]
+  },
+  {
+    "id": "L1-2-1",
+    "country1": "FR",
+    "country2": "FR",
+    "substationStart": "S6",
+    "substationEnd": "S8",
+    "coordinates": [
+      {
+        "lat": 45.34069,
+        "lon": 1.65383
+      },
+      {
+        "lat": 48.856,
+        "lon": 2.344
+      }
+    ]
+  },
+  {
+    "id": "L2-3-1",
+    "country1": "FR",
+    "country2": "BE",
+    "substationStart": "S8",
+    "substationEnd": "S7",
+    "coordinates": [
+      {
+        "lat": 48.856,
+        "lon": 2.344
+      },
+      {
+        "lat": 50.84716,
+        "lon": 4.3508
+      }
+    ]
+  },
+  {
+    "id": "L4-5-1",
+    "country1": "FR",
+    "country2": "AT",
+    "substationStart": "S1",
+    "substationEnd": "S2",
+    "coordinates": [
+      {
+        "lat": 49.17863,
+        "lon": 6.16156
+      },
+      {
+        "lat": 47.43046,
+        "lon": 14.69182
+      }
+    ]
+  },
+  {
+    "id": "L7-8-1",
+    "country1": "FR",
+    "country2": "NL",
+    "substationStart": "S1",
+    "substationEnd": "S3",
+    "coordinates": [
+      {
+        "lat": 49.17863,
+        "lon": 6.16156
+      },
+      {
+        "lat": 53.19624,
+        "lon": 6.60964
+      }
+    ]
+  },
+  {
+    "id": "L2-4-1",
+    "country1": "FR",
+    "country2": "FR",
+    "substationStart": "S8",
+    "substationEnd": "S1",
+    "coordinates": [
+      {
+        "lat": 48.856,
+        "lon": 2.344
+      },
+      {
+        "lat": 49.17863,
+        "lon": 6.16156
+      }
+    ]
+  },
+  {
+    "id": "L6-11-1",
+    "country1": "AT",
+    "country2": "DE",
+    "substationStart": "S2",
+    "substationEnd": "S10",
+    "coordinates": [
+      {
+        "lat": 47.43046,
+        "lon": 14.69182
+      },
+      {
+        "lat": 49.19199,
+        "lon": 11.90535
+      }
+    ]
+  },
+  {
+    "id": "L7-9-1",
+    "country1": "FR",
+    "country2": "FR",
+    "substationStart": "S1",
+    "substationEnd": "S1",
+    "coordinates": [
+      {
+        "lat": 49.17863,
+        "lon": 6.16156
+      },
+      {
+        "lat": 49.17863,
+        "lon": 6.16156
+      }
+    ]
+  },
+  {
+    "id": "L6-12-1",
+    "country1": "AT",
+    "country2": "PL",
+    "substationStart": "S2",
+    "substationEnd": "S11",
+    "coordinates": [
+      {
+        "lat": 47.43046,
+        "lon": 14.69182
+      },
+      {
+        "lat": 52.10062,
+        "lon": 21.2075
+      }
+    ]
+  },
+  {
+    "id": "L6-13-1",
+    "country1": "AT",
+    "country2": "DE",
+    "substationStart": "S2",
+    "substationEnd": "S4",
+    "coordinates": [
+      {
+        "lat": 47.43046,
+        "lon": 14.69182
+      },
+      {
+        "lat": 52.38668,
+        "lon": 9.74317
+      }
+    ]
+  }
+]
