@@ -478,7 +478,21 @@ public class SingleLineDiagramTest {
                 .setId("busEs1B")
                 .setName("busEs1B")
                 .add();
-
+        Line lineFR = network.newLine()
+                .setId("lineFR")
+                .setVoltageLevel1("vlFr2A")
+                .setBus1("busFr2A")
+                .setConnectableBus1("busFr2A")
+                .setVoltageLevel2("vlFr2A")
+                .setBus2("busFr2A")
+                .setConnectableBus2("busFr2A")
+                .setR(3.0)
+                .setX(33.0)
+                .setG1(0.0)
+                .setB1(386E-6 / 2)
+                .setG2(0.0)
+                .setB2(386E-6 / 2)
+                .add();
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
 
