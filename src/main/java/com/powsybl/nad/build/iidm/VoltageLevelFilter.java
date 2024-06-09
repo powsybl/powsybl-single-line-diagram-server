@@ -46,7 +46,6 @@ public class VoltageLevelFilter implements Predicate<VoltageLevel> {
         return voltageLevels.contains(voltageLevel);
     }
 
-
     public static VoltageLevelFilter createVoltageLevelsDepthFilter(Network network, List<String> voltageLevelIds, int depth) {
         return createVoltageLevelFilterWithPredicate(network, voltageLevelIds, depth, NO_FILTER);
     }
@@ -70,7 +69,6 @@ public class VoltageLevelFilter implements Predicate<VoltageLevel> {
         VoltageLevelFilter.traverseVoltageLevels(startingSet, depth, voltageLevels, voltageLevelPredicate);
         return new VoltageLevelFilter(voltageLevels);
     }
-
 
     public static Collection<VoltageLevel> getNextDepthVoltageLevels(Network network, List<VoltageLevel> voltageLevels) {
         List<String> voltageLevelIds = voltageLevels.stream().map(VoltageLevel::getId).collect(Collectors.toList());
