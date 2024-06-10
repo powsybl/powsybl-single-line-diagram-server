@@ -11,6 +11,18 @@ package com.powsybl.sld.server;
  * @author Maissa SOUISSI <maissa.souissi at rte-france.com>
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.iidm.network.Line;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.iidm.network.Substation;
+import com.powsybl.iidm.network.extensions.LinePosition;
+import com.powsybl.iidm.network.extensions.LinePositionAdder;
+import com.powsybl.iidm.network.extensions.SubstationPosition;
+import com.powsybl.iidm.network.extensions.SubstationPositionAdder;
+import com.powsybl.sld.server.dto.Coordinate;
+import com.powsybl.sld.server.dto.LineGeoData;
+import com.powsybl.sld.server.dto.SubstationGeoData;
+import com.powsybl.sld.server.utils.GeoDataUtils;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +31,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class GeoDataService {
@@ -83,4 +97,43 @@ public class GeoDataService {
 
         return restTemplate.getForObject(path, String.class);
     }
+
+    public void assignSubstationGeoData(Network network, UUID networkUuid, String variantId, List<Substation> substations) {
+
+        List<SubstationGeoData> substationsGeoData = GeoDataUtils.fromStringToSubstationGeoData(getSubstationsGraphics(networkUuid, variantId, null), new ObjectMapper());
+        Map<String, Coordinate> substationGeoDataMap = substationsGeoData.stream()
+                .collect(Collectors.toMap(SubstationGeoData::getId, SubstationGeoData::getCoordinate));
+
+        for (Substation substation : substations) {
+            if (network.getSubstation(substation.getId()).getExtension(SubstationPosition.class) == null) {
+                com.powsybl.sld.server.dto.Coordinate coordinate = substationGeoDataMap.get(substation.getId());
+                if (coordinate != null) {
+                    network.getSubstation(substation.getId())
+                            .newExtension(SubstationPositionAdder.class)
+                            .withCoordinate(new com.powsybl.iidm.network.extensions.Coordinate(coordinate.getLat(), coordinate.getLon()))
+                            .add();
+                }
+            }
+
+        }
+    }
+
+    public void assignLineGeoData(Network network, UUID networkUuid, String variantId, List<Line> lines) {
+        List<LineGeoData> linesGeoData = GeoDataUtils.fromStringToLineGeoData(getLinesGraphics(networkUuid, variantId, null), new ObjectMapper());
+        Map<String, List<com.powsybl.sld.server.dto.Coordinate>> lineGeoDataMap = linesGeoData.stream()
+                .collect(Collectors.toMap(LineGeoData::getId, LineGeoData::getCoordinates));
+        for (Line line : lines) {
+            if (network.getLine(line.getId()).getExtension(LinePosition.class) == null) {
+                List<com.powsybl.sld.server.dto.Coordinate> coordinates = lineGeoDataMap.get(line.getId());
+                if (coordinates != null) {
+                    network.getLine(line.getId())
+                            .newExtension(LinePositionAdder.class)
+                            .withCoordinates(coordinates)
+                            .add();
+                }
+            }
+        }
+    }
 }
+
+

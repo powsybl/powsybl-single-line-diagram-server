@@ -6,12 +6,10 @@
  */
 package com.powsybl.sld.server;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.iidm.network.Line;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.VoltageLevel;
-import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.nad.NadParameters;
 import com.powsybl.nad.NetworkAreaDiagram;
 import com.powsybl.nad.build.iidm.VoltageLevelFilter;
@@ -21,12 +19,9 @@ import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.sld.server.dto.LineGeoData;
-import com.powsybl.sld.server.dto.SubstationGeoData;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
 import com.powsybl.sld.server.utils.DiagramUtils;
-import com.powsybl.sld.server.utils.GeoDataUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -37,7 +32,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
@@ -90,45 +84,8 @@ class NetworkAreaDiagramService {
     private void getGeoDataCoordinates(Network network, UUID networkUuid, String variantId, List<VoltageLevel> voltageLevels) {
         // Geographical Position for lines and substations related to voltageLevels
         List<Substation> substations = getSubstations(voltageLevels);
-        assignSubstationGeoData(network, networkUuid, variantId, substations);
-        assignLineGeoData(network, networkUuid, variantId, getLines(voltageLevels));
-    }
-
-    private void assignSubstationGeoData(Network network, UUID networkUuid, String variantId, List<Substation> substations) {
-
-        List<SubstationGeoData> substationsGeoData = GeoDataUtils.fromStringToSubstationGeoData(geoDataService.getSubstationsGraphics(networkUuid, variantId, null), new ObjectMapper());
-        Map<String, com.powsybl.sld.server.dto.Coordinate> substationGeoDataMap = substationsGeoData.stream()
-                .collect(Collectors.toMap(SubstationGeoData::getId, SubstationGeoData::getCoordinate));
-
-        for (Substation substation : substations) {
-            if (network.getSubstation(substation.getId()).getExtension(SubstationPosition.class) == null) {
-                com.powsybl.sld.server.dto.Coordinate coordinate = substationGeoDataMap.get(substation.getId());
-                if (coordinate != null) {
-                    network.getSubstation(substation.getId())
-                            .newExtension(SubstationPositionAdder.class)
-                            .withCoordinate(new Coordinate(coordinate.getLat(), coordinate.getLon()))
-                            .add();
-                }
-            }
-
-        }
-    }
-
-    private void assignLineGeoData(Network network, UUID networkUuid, String variantId, List<Line> lines) {
-        List<LineGeoData> linesGeoData = GeoDataUtils.fromStringToLineGeoData(geoDataService.getLinesGraphics(networkUuid, variantId, null), new ObjectMapper());
-        Map<String, List<com.powsybl.sld.server.dto.Coordinate>> lineGeoDataMap = linesGeoData.stream()
-                .collect(Collectors.toMap(LineGeoData::getId, LineGeoData::getCoordinates));
-        for (Line line : lines) {
-            if (network.getLine(line.getId()).getExtension(LinePosition.class) == null) {
-                List<com.powsybl.sld.server.dto.Coordinate> coordinates = lineGeoDataMap.get(line.getId());
-                if (coordinates != null) {
-                    network.getLine(line.getId())
-                            .newExtension(LinePositionAdder.class)
-                            .withCoordinates(coordinates)
-                            .add();
-                }
-            }
-        }
+        geoDataService.assignSubstationGeoData(network, networkUuid, variantId, substations);
+        geoDataService.assignLineGeoData(network, networkUuid, variantId, getLines(voltageLevels));
     }
 
     private List<Substation> getSubstations(List<VoltageLevel> voltages) {
