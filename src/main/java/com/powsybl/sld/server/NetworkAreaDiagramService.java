@@ -6,7 +6,6 @@
  */
 package com.powsybl.sld.server;
 
-import com.powsybl.iidm.network.Line;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.VoltageLevel;
@@ -32,7 +31,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.util.*;
-import java.util.stream.StreamSupport;
 
 /**
  * @author Etienne Homer<etienne.homer at rte-france.com>
@@ -85,19 +83,12 @@ class NetworkAreaDiagramService {
         // Geographical Position for lines and substations related to voltageLevels
         List<Substation> substations = getSubstations(voltageLevels);
         geoDataService.assignSubstationGeoData(network, networkUuid, variantId, substations);
-        geoDataService.assignLineGeoData(network, networkUuid, variantId, getLines(voltageLevels));
     }
 
     private List<Substation> getSubstations(List<VoltageLevel> voltages) {
         return voltages.stream()
                 .map(VoltageLevel::getNullableSubstation)
                 .filter(Objects::nonNull)
-                .toList();
-    }
-
-    private List<Line> getLines(List<VoltageLevel> voltages) {
-        return voltages.stream()
-                .flatMap(voltageLevel -> StreamSupport.stream(voltageLevel.getLines().spliterator(), false))
                 .toList();
     }
 

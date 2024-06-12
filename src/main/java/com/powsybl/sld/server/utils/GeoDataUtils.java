@@ -10,7 +10,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.sld.server.dto.LineGeoData;
 import com.powsybl.sld.server.dto.SubstationGeoData;
 
 import java.util.List;
@@ -25,15 +24,6 @@ public final class GeoDataUtils {
     }
 
     public static List<SubstationGeoData> fromStringToSubstationGeoData(String jsonResponse, ObjectMapper objectMapper) {
-        try {
-            return objectMapper.readValue(jsonResponse, new TypeReference<>() {
-            });
-        } catch (JsonProcessingException e) {
-            throw new PowsyblException("Failed to parse JSON response", e);
-        }
-    }
-
-    public static List<LineGeoData> fromStringToLineGeoData(String jsonResponse, ObjectMapper objectMapper) {
         try {
             return objectMapper.readValue(jsonResponse, new TypeReference<>() {
             });

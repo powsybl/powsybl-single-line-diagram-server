@@ -7,14 +7,13 @@ package com.powsybl.sld.server;
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.LinePosition;
 import com.powsybl.iidm.network.extensions.SubstationPosition;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.sld.server.dto.LineGeoData;
-import com.powsybl.sld.server.utils.GeoDataUtils;
+import com.powsybl.sld.server.dto.Coordinate;
+import com.powsybl.sld.server.dto.SubstationGeoData;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
@@ -24,13 +23,10 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 
@@ -94,21 +90,6 @@ public class GeoDataServiceTest {
                 .setId("busFr2A")
                 .setName("busFr2A")
                 .add();
-        Line lineFr1 = network.newLine()
-                .setId("lineFr1")
-                .setVoltageLevel1("vlFr2A")
-                .setBus1("busFr2A")
-                .setConnectableBus1("busFr2A")
-                .setVoltageLevel2("vlFr2A")
-                .setBus2("busFr2A")
-                .setConnectableBus2("busFr2A")
-                .setR(3.0)
-                .setX(33.0)
-                .setG1(0.0)
-                .setB1(386E-6 / 2)
-                .setG2(0.0)
-                .setB2(386E-6 / 2)
-                .add();
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
 
@@ -122,25 +103,10 @@ public class GeoDataServiceTest {
     }
 
     @Test
-    public void testGetLinesGraphics() {
-        UUID networkUuid = UUID.randomUUID();
-        String variantId = "variant1";
-        List<String> linesIds = List.of("line1", "line2");
-
-        String expectedResponse = "Lines graphics data";
-        when(restTemplate.getForObject(ArgumentMatchers.anyString(), ArgumentMatchers.eq(String.class)))
-                .thenReturn(expectedResponse);
-
-        String response = geoDataService.getLinesGraphics(networkUuid, variantId, linesIds);
-
-        assertEquals(expectedResponse, response);
-    }
-
-    @Test
     public void testGetSubstationsGraphics() {
         UUID networkUuid = UUID.randomUUID();
         String variantId = "variant2";
-        List<String> substationsIds = List.of("substation1", "substation2");
+        List<String> substationsIds = List.of("subFr1", "subFr2");
 
         String expectedResponse = "Substations graphics data";
         when(restTemplate.getForObject(ArgumentMatchers.anyString(), ArgumentMatchers.eq(String.class)))
@@ -152,25 +118,14 @@ public class GeoDataServiceTest {
     }
 
     @Test
-    public void testGetLinesGraphicsWithoutVariantId() {
-        UUID networkUuid = UUID.randomUUID();
-        List<String> linesIds = List.of("line1", "line2");
-
-        String expectedResponse = "Lines graphics data without variant";
-        when(restTemplate.getForObject(ArgumentMatchers.anyString(), ArgumentMatchers.eq(String.class)))
-                .thenReturn(expectedResponse);
-
-        String response = geoDataService.getLinesGraphics(networkUuid, null, linesIds);
-
-        assertEquals(expectedResponse, response);
-    }
-
-    @Test
     public void testGetSubstationsGraphicsWithoutVariantId() {
         UUID networkUuid = UUID.randomUUID();
-        List<String> substationsIds = List.of("substation1", "substation2");
-
-        String expectedResponse = "Substations graphics data without variant";
+        List<String> substationsIds = List.of("subFr1");
+        SubstationGeoData substationGeoData = new SubstationGeoData();
+        substationGeoData.setId("subFr1");
+        substationGeoData.setCoordinate(new Coordinate(48.8588443, 2.2943506));
+        substationGeoData.setCountry(Country.FR);
+        String expectedResponse = substationGeoData.toString();
         when(restTemplate.getForObject(ArgumentMatchers.anyString(), ArgumentMatchers.eq(String.class)))
                 .thenReturn(expectedResponse);
 
@@ -184,31 +139,23 @@ public class GeoDataServiceTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         Network network = networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION);
+
         String substationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"lon\":2.2943506}},{\"id\":\"subFr2\",\"coordinate\":{\"lat\":51.507351,\"lon\":1.127758}}]";
         when(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, null)).thenReturn(substationGeoDataJson);
 
         geoDataService.assignSubstationGeoData(network, testNetworkId, VARIANT_1_ID, List.of(network.getSubstation("subFr1")));
         assertEquals(network.getSubstation("subFr1").getExtension(SubstationPosition.class).getCoordinate(), new com.powsybl.iidm.network.extensions.Coordinate(48.8588443, 2.2943506));
         assertEquals(network.getSubstation("subFr2").getExtension(SubstationPosition.class), null);
+
+        String faultSubstationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"long\":2.2943506}}]";
+        when(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, null)).thenReturn(faultSubstationGeoDataJson);
+        PowsyblException exception = assertThrows(PowsyblException.class, () -> {
+            geoDataService.assignSubstationGeoData(network, testNetworkId, VARIANT_1_ID, List.of(network.getSubstation("subFr2")));
+        });
+
+        // Assert the exception message
+        assertEquals("Failed to parse JSON response", exception.getMessage());
+        assertEquals(network.getSubstation("subFr2").getExtension(SubstationPosition.class), null);
     }
 
-    @Test
-    public void testAssignLineGeoData() throws Exception {
-        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
-        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
-        Network network = networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION);
-        String lineGeoDataJson = "[{\"id\":\"lineFr1\",\"coordinates\":[{\"lat\":48.8588443,\"lon\":2.2943506},{\"lat\":48.8588444,\"lon\":2.2943507}]},{\"id\":\"lineFr2\",\"coordinates\":[{\"lat\":51.507351,\"lon\":-0.127758},{\"lat\":51.507352,\"lon\":-0.127759}]}]";
-        when(geoDataService.getLinesGraphics(testNetworkId, VARIANT_1_ID, null)).thenReturn(lineGeoDataJson);
-
-        List<LineGeoData> linesGeoData = GeoDataUtils.fromStringToLineGeoData(lineGeoDataJson, new ObjectMapper());
-        Map<String, List<com.powsybl.sld.server.dto.Coordinate>> lineGeoDataMap = linesGeoData.stream()
-                .collect(Collectors.toMap(LineGeoData::getId, LineGeoData::getCoordinates));
-
-        // Convert Iterable to List
-        List<Line> lines = StreamSupport.stream(network.getLines().spliterator(), false)
-                .collect(Collectors.toList());
-
-        geoDataService.assignLineGeoData(network, testNetworkId, VARIANT_1_ID, lines);
-        assertNotNull("Line position will not be null", network.getLine("lineFr1").getExtension(LinePosition.class));
-    }
 }

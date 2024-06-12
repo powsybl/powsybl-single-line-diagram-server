@@ -12,15 +12,11 @@ package com.powsybl.sld.server;
  */
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.iidm.network.Line;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
-import com.powsybl.iidm.network.extensions.LinePosition;
-import com.powsybl.iidm.network.extensions.LinePositionAdder;
 import com.powsybl.iidm.network.extensions.SubstationPosition;
 import com.powsybl.iidm.network.extensions.SubstationPositionAdder;
 import com.powsybl.sld.server.dto.Coordinate;
-import com.powsybl.sld.server.dto.LineGeoData;
 import com.powsybl.sld.server.dto.SubstationGeoData;
 import com.powsybl.sld.server.utils.GeoDataUtils;
 import lombok.Setter;
@@ -58,25 +54,6 @@ public class GeoDataService {
 
     private String getGeoDataServerURI() {
         return this.geoDataServerBaseUri + DELIMITER + GEO_DATA_API_VERSION + DELIMITER;
-    }
-
-    public String getLinesGraphics(UUID networkUuid, String variantId, List<String> linesIds) {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(getGeoDataServerURI() + LINES)
-                .queryParam(NETWORK_UUID, networkUuid);
-
-        if (!StringUtils.isBlank(variantId)) {
-            uriComponentsBuilder.queryParam(QUERY_PARAM_VARIANT_ID, variantId);
-        }
-
-        if (linesIds != null) {
-            uriComponentsBuilder.queryParam(QUERY_PARAM_LINE_ID, linesIds);
-        }
-
-        var path = uriComponentsBuilder
-                .buildAndExpand()
-                .toUriString();
-
-        return restTemplate.getForObject(path, String.class);
     }
 
     public String getSubstationsGraphics(UUID networkUuid, String variantId, List<String> substationsIds) {
@@ -118,22 +95,6 @@ public class GeoDataService {
         }
     }
 
-    public void assignLineGeoData(Network network, UUID networkUuid, String variantId, List<Line> lines) {
-        List<LineGeoData> linesGeoData = GeoDataUtils.fromStringToLineGeoData(getLinesGraphics(networkUuid, variantId, null), new ObjectMapper());
-        Map<String, List<com.powsybl.sld.server.dto.Coordinate>> lineGeoDataMap = linesGeoData.stream()
-                .collect(Collectors.toMap(LineGeoData::getId, LineGeoData::getCoordinates));
-        for (Line line : lines) {
-            if (network.getLine(line.getId()).getExtension(LinePosition.class) == null) {
-                List<com.powsybl.sld.server.dto.Coordinate> coordinates = lineGeoDataMap.get(line.getId());
-                if (coordinates != null) {
-                    network.getLine(line.getId())
-                            .newExtension(LinePositionAdder.class)
-                            .withCoordinates(coordinates)
-                            .add();
-                }
-            }
-        }
-    }
 }
 
 

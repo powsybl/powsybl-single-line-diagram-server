@@ -286,7 +286,6 @@ public class SingleLineDiagramTest {
     }
 
     private static final String GEO_DATA_SUBSTATIONS = "/geo_data_substations.json";
-    private static final String GEO_DATA_LINES = "/geo_data_lines.json";
 
     @Test
     public void testNetworkAreaDiagram() throws Exception {
@@ -294,7 +293,6 @@ public class SingleLineDiagramTest {
         UUID notFoundNetworkId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_SUBSTATIONS));
-        given(geoDataService.getLinesGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_LINES));
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(networkStoreService.getNetwork(notFoundNetworkId, PreloadingStrategy.COLLECTION)).willThrow(new PowsyblException());
@@ -329,7 +327,6 @@ public class SingleLineDiagramTest {
 
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_SUBSTATIONS));
-        given(geoDataService.getLinesGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_LINES));
 
         SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), 2);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
@@ -545,7 +542,6 @@ public class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_SUBSTATIONS));
-        given(geoDataService.getLinesGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_LINES));
 
         SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A", "vlNotFound1"), 0);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
