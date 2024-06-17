@@ -295,14 +295,14 @@ public class SingleLineDiagramTest {
         Network network = networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION);
 
         String substationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"lon\":2.2943506}},{\"id\":\"subFr2\",\"coordinate\":{\"lat\":51.507351,\"lon\":1.127758}}]";
-        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, null)).willReturn(substationGeoDataJson);
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, List.of("subFr2"))).willReturn(substationGeoDataJson);
 
         networkAreaDiagramService.assignGeoDataCoordinates(network, testNetworkId, VARIANT_1_ID, List.of(network.getVoltageLevel("vlFr2A")));
         assertEquals(network.getSubstation("subFr2").getExtension(SubstationPosition.class).getCoordinate(), new com.powsybl.iidm.network.extensions.Coordinate(51.507351, 1.127758));
         assertEquals(network.getSubstation("subFr1").getExtension(SubstationPosition.class), null);
 
         String faultSubstationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"long\":2.2943506}}]";
-        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, null)).willReturn(faultSubstationGeoDataJson);
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, List.of("subFr1"))).willReturn(faultSubstationGeoDataJson);
         PowsyblException exception = assertThrows(PowsyblException.class, () -> {
             networkAreaDiagramService.assignGeoDataCoordinates(network, testNetworkId, VARIANT_1_ID, List.of(network.getVoltageLevel("vlFr1A")));
         });
@@ -317,7 +317,7 @@ public class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         UUID notFoundNetworkId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
-        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_SUBSTATIONS));
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(networkStoreService.getNetwork(notFoundNetworkId, PreloadingStrategy.COLLECTION)).willThrow(new PowsyblException());
@@ -351,7 +351,7 @@ public class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
 
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
-        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_SUBSTATIONS));
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
 
         SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), 2);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
@@ -552,7 +552,7 @@ public class SingleLineDiagramTest {
     public void testNetworkAreaDiagramWithMissingVoltageLevel() throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
-        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, null)).willReturn(toString(GEO_DATA_SUBSTATIONS));
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
 
         SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A", "vlNotFound1"), 0);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();

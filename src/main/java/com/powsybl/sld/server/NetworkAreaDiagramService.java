@@ -93,7 +93,7 @@ class NetworkAreaDiagramService {
                 .filter(Objects::nonNull)
                 .toList();
 
-        String substationsGeoDataString = geoDataService.getSubstationsGraphics(networkUuid, variantId, null);
+        String substationsGeoDataString = geoDataService.getSubstationsGraphics(networkUuid, variantId, substations.stream().map(Substation::getId).toList());
         List<SubstationGeoData> substationsGeoData = GeoDataUtils.fromStringToSubstationGeoData(substationsGeoDataString, new ObjectMapper());
         Map<String, Coordinate> substationGeoDataMap = substationsGeoData.stream()
                 .collect(Collectors.toMap(SubstationGeoData::getId, SubstationGeoData::getCoordinate));
