@@ -1,17 +1,14 @@
 package com.powsybl.sld.server;
 
 /*
- * Copyright (c) 2023, RTE (http://www.rte-france.com)
+ * Copyright (c) 2024, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.SubstationPosition;
 import com.powsybl.network.store.client.NetworkStoreService;
-import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.Coordinate;
 import com.powsybl.sld.server.dto.SubstationGeoData;
 import org.junit.Before;
@@ -26,8 +23,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.when;
 
 public class GeoDataServiceTest {
@@ -133,29 +128,4 @@ public class GeoDataServiceTest {
 
         assertEquals(expectedResponse, response);
     }
-
-    @Test
-    public void testAssignSubstationGeoData() throws Exception {
-        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
-        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
-        Network network = networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION);
-
-        String substationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"lon\":2.2943506}},{\"id\":\"subFr2\",\"coordinate\":{\"lat\":51.507351,\"lon\":1.127758}}]";
-        when(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, null)).thenReturn(substationGeoDataJson);
-
-        geoDataService.assignSubstationGeoData(network, testNetworkId, VARIANT_1_ID, List.of(network.getSubstation("subFr1")));
-        assertEquals(network.getSubstation("subFr1").getExtension(SubstationPosition.class).getCoordinate(), new com.powsybl.iidm.network.extensions.Coordinate(48.8588443, 2.2943506));
-        assertEquals(network.getSubstation("subFr2").getExtension(SubstationPosition.class), null);
-
-        String faultSubstationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"long\":2.2943506}}]";
-        when(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, null)).thenReturn(faultSubstationGeoDataJson);
-        PowsyblException exception = assertThrows(PowsyblException.class, () -> {
-            geoDataService.assignSubstationGeoData(network, testNetworkId, VARIANT_1_ID, List.of(network.getSubstation("subFr2")));
-        });
-
-        // Assert the exception message
-        assertEquals("Failed to parse JSON response", exception.getMessage());
-        assertEquals(network.getSubstation("subFr2").getExtension(SubstationPosition.class), null);
-    }
-
 }

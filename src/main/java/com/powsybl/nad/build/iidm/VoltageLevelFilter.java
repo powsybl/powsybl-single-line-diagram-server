@@ -15,10 +15,14 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
+   /*
+        # FIXME: to be removed at next powsybl-diagram upgrade
+         copied from https://github.com/powsybl/powsybl-diagram. To be removed when updating powsybl-diagram version
+   */
 /**
  * @author Maissa Souissi {<maissa.souissi at rte-france.com>}
  */
+
 public class VoltageLevelFilter implements Predicate<VoltageLevel> {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(VoltageLevelFilter.class);
