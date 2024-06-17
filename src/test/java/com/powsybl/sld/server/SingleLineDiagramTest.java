@@ -17,6 +17,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.BusbarSectionPositionAdder;
 import com.powsybl.iidm.network.extensions.ConnectablePosition;
 import com.powsybl.iidm.network.extensions.ConnectablePositionAdder;
+import com.powsybl.iidm.network.extensions.SubstationPosition;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.SingleLineDiagram;
@@ -286,6 +287,30 @@ public class SingleLineDiagramTest {
     }
 
     private static final String GEO_DATA_SUBSTATIONS = "/geo_data_substations.json";
+
+    @Test
+    public void testAssignSubstationGeoData() throws Exception {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+        Network network = networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION);
+
+        String substationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"lon\":2.2943506}},{\"id\":\"subFr2\",\"coordinate\":{\"lat\":51.507351,\"lon\":1.127758}}]";
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, null)).willReturn(substationGeoDataJson);
+
+        networkAreaDiagramService.assignGeoDataCoordinates(network, testNetworkId, VARIANT_1_ID, List.of(network.getVoltageLevel("vlFr2A")));
+        assertEquals(network.getSubstation("subFr2").getExtension(SubstationPosition.class).getCoordinate(), new com.powsybl.iidm.network.extensions.Coordinate(51.507351, 1.127758));
+        assertEquals(network.getSubstation("subFr1").getExtension(SubstationPosition.class), null);
+
+        String faultSubstationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"long\":2.2943506}}]";
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, null)).willReturn(faultSubstationGeoDataJson);
+        PowsyblException exception = assertThrows(PowsyblException.class, () -> {
+            networkAreaDiagramService.assignGeoDataCoordinates(network, testNetworkId, VARIANT_1_ID, List.of(network.getVoltageLevel("vlFr1A")));
+        });
+
+        // Assert the exception message
+        assertEquals("Failed to parse JSON response", exception.getMessage());
+        assertEquals(network.getSubstation("subFr1").getExtension(SubstationPosition.class), null);
+    }
 
     @Test
     public void testNetworkAreaDiagram() throws Exception {
