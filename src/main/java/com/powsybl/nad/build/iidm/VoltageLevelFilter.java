@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * @author Maissa Souissi {<maissa.souissi at rte-france.com>}
  */
 
-
+@Generated
 public class VoltageLevelFilter implements Predicate<VoltageLevel> {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(VoltageLevelFilter.class);
