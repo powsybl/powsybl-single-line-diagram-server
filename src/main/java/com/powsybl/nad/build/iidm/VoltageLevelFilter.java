@@ -15,10 +15,10 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-   /*
-        # FIXME: to be removed at next powsybl-diagram upgrade
-         copied from https://github.com/powsybl/powsybl-diagram. To be removed when updating powsybl-diagram version
-   */
+
+// FIXME: to be removed at next powsybl-diagram upgrade.
+// Copied from https://github.com/powsybl/powsybl-diagram.
+
 /**
  * @author Maissa Souissi {<maissa.souissi at rte-france.com>}
  */
