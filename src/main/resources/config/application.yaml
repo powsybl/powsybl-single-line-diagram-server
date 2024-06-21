@@ -1,3 +1,9 @@
 spring:
   application:
     name: single-line-diagram-server
+
+gridsuite:
+  services:
+    -
+      name: geo-data-server
+      base-uri: http://geo-data-server/
