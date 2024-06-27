@@ -9,6 +9,7 @@ package com.powsybl.sld.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
@@ -20,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +30,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 
 import static com.powsybl.ws.commons.LogUtils.sanitizeParam;
 
@@ -55,6 +60,13 @@ public class SingleLineDiagramController {
 
     @Autowired
     private NetworkAreaDiagramService networkAreaDiagramService;
+
+    private final Executor taskExecutor;
+
+    public SingleLineDiagramController(@Qualifier("taskExecutor") Executor taskExecutor) {
+        this.taskExecutor = taskExecutor;
+    }
+
 
     // voltage levels
     //
@@ -265,14 +277,21 @@ public class SingleLineDiagramController {
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Voltage levels ids") @RequestParam(name = "voltageLevelsIds", required = false) List<String> voltageLevelsIds,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-            @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth) throws JsonProcessingException {
-        LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
-        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
-        String svg = svgAndMetadata.getSvg();
-        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
-        return OBJECT_MAPPER.writeValueAsString(
-                OBJECT_MAPPER.createObjectNode()
-                        .put(SVG_TAG, svg)
-                        .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
+            @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth) throws InterruptedException, ExecutionException {
+        CompletableFuture<String> futureNAD = CompletableFuture.supplyAsync(() -> {
+            try {
+                LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
+                SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
+                String svg = svgAndMetadata.getSvg();
+                Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+                return OBJECT_MAPPER.writeValueAsString(
+                        OBJECT_MAPPER.createObjectNode()
+                                .put(SVG_TAG, svg)
+                                .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
+            } catch (JsonProcessingException e) {
+                throw new PowsyblException("Failed to parse JSON response", e);
+            }
+        }, this.taskExecutor);
+        return futureNAD.get();
     }
 }
