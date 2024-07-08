@@ -24,9 +24,9 @@ public class SingleLineDiagramTaskExecutorConfig implements AsyncConfigurer {
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(3);
-        executor.setMaxPoolSize(6);
-        executor.setQueueCapacity(200);
-        executor.setThreadNamePrefix("NAD-Generation-");
+        executor.setMaxPoolSize(3);
+        executor.setQueueCapacity(25);
+        executor.setThreadNamePrefix("NAD-Gen-");
         executor.initialize();
         return executor;
     }
