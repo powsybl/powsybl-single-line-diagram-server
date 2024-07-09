@@ -21,7 +21,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +31,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.powsybl.ws.commons.LogUtils.sanitizeParam;
 
@@ -55,18 +55,14 @@ public class SingleLineDiagramController {
     static final String METADATA = "metadata";
     static final String ADDITIONAL_METADATA = "additionalMetadata";
 
+    // 3 maximum concurrent Network Area Diagram generations for the current configuration
+    private final ExecutorService executorService = Executors.newFixedThreadPool(3);
+
     @Autowired
     private SingleLineDiagramService singleLineDiagramService;
 
     @Autowired
     private NetworkAreaDiagramService networkAreaDiagramService;
-
-    private final Executor taskExecutor;
-
-    public SingleLineDiagramController(@Qualifier("taskExecutor") Executor taskExecutor) {
-        this.taskExecutor = taskExecutor;
-    }
-
 
     // voltage levels
     //
@@ -291,7 +287,7 @@ public class SingleLineDiagramController {
             } catch (JsonProcessingException e) {
                 throw new PowsyblException("Failed to parse JSON response", e);
             }
-        }, this.taskExecutor);
+        }, executorService);
         return futureNAD.get();
     }
 }
