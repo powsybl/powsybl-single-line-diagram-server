@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -55,8 +56,11 @@ public class SingleLineDiagramController {
     static final String METADATA = "metadata";
     static final String ADDITIONAL_METADATA = "additionalMetadata";
 
-    // 3 maximum concurrent Network Area Diagram generations for the current configuration
-    private final ExecutorService executorService = Executors.newFixedThreadPool(3);
+    private final ExecutorService executorService;
+
+    public SingleLineDiagramController(@Value("${max-concurrent-nad-generations}") int maxConcurrentNadGenerations) {
+        this.executorService = Executors.newFixedThreadPool(maxConcurrentNadGenerations);
+    }
 
     @Autowired
     private SingleLineDiagramService singleLineDiagramService;
