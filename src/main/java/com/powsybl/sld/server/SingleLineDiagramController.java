@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -293,5 +294,10 @@ public class SingleLineDiagramController {
             }
         }, executorService);
         return futureNAD.get();
+    }
+
+    @PreDestroy
+    private void preDestroy() {
+        executorService.shutdown();
     }
 }
