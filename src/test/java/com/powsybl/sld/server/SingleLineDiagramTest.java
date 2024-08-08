@@ -353,7 +353,7 @@ public class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
 
-        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), 2);
+        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), 2, false);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, Object> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() {
@@ -554,7 +554,7 @@ public class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
 
-        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A", "vlNotFound1"), 0);
+        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A", "vlNotFound1"), 0, true);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, Object> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
