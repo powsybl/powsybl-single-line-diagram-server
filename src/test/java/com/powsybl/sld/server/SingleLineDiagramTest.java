@@ -62,7 +62,10 @@ import java.util.UUID;
 import static com.powsybl.sld.library.ComponentTypeName.ARROW_ACTIVE;
 import static com.powsybl.sld.library.ComponentTypeName.ARROW_REACTIVE;
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -299,7 +302,7 @@ public class SingleLineDiagramTest {
 
         networkAreaDiagramService.assignGeoDataCoordinates(network, testNetworkId, VARIANT_1_ID, List.of(network.getVoltageLevel("vlFr2A")));
         assertEquals(network.getSubstation("subFr2").getExtension(SubstationPosition.class).getCoordinate(), new com.powsybl.iidm.network.extensions.Coordinate(51.507351, 1.127758));
-        assertEquals(network.getSubstation("subFr1").getExtension(SubstationPosition.class), null);
+        assertNull(network.getSubstation("subFr1").getExtension(SubstationPosition.class));
 
         String faultSubstationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"long\":2.2943506}}]";
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, List.of("subFr1"))).willReturn(faultSubstationGeoDataJson);
@@ -309,7 +312,7 @@ public class SingleLineDiagramTest {
 
         // Assert the exception message
         assertEquals("Failed to parse JSON response", exception.getMessage());
-        assertEquals(network.getSubstation("subFr1").getExtension(SubstationPosition.class), null);
+        assertNull(network.getSubstation("subFr1").getExtension(SubstationPosition.class));
     }
 
     @Test
@@ -344,6 +347,30 @@ public class SingleLineDiagramTest {
 
         mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=notFound", testNetworkId))
                 .andExpect(status().isNotFound());
+    }
+
+    public void testGenerateNadBasedOnGeoData(boolean withGeoData) {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
+        networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), 0, withGeoData);
+        if (withGeoData) {
+            //initialize with geographical data
+            verify(geoDataService, times(1)).getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"));
+        } else {
+            //initialize with geographical data
+            verify(geoDataService, times(0)).getSubstationsGraphics(any(), any(), any());
+        }
+    }
+
+    @Test
+    public void testGenerateNadWithoutGeoData() {
+        testGenerateNadBasedOnGeoData(false);
+    }
+
+    @Test
+    public void testGenerateNadWithGeoData() {
+        testGenerateNadBasedOnGeoData(true);
     }
 
     @Test
