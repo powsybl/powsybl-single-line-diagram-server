@@ -51,7 +51,7 @@ class NetworkAreaDiagramService {
     @Autowired
     private GeoDataService geoDataService;
 
-    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
+    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
         if (existingVLIds.isEmpty()) {
@@ -64,15 +64,20 @@ class NetworkAreaDiagramService {
 
             //List of selected voltageLevels with depth
             VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
-            //get voltage levels' positions on depth+1 to be able to locate lines on depth
-            List<VoltageLevel> voltageLevels = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
-            assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevels);
 
             LayoutParameters layoutParameters = new LayoutParameters();
             NadParameters nadParameters = new NadParameters();
             nadParameters.setSvgParameters(svgParameters);
             nadParameters.setLayoutParameters(layoutParameters);
-            nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network));
+
+            //Initialize with geographical data
+            if (withGeoData) {
+                //get voltage levels' positions on depth+1 to be able to locate lines on depth
+                List<VoltageLevel> voltageLevels = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
+                assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevels);
+                nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network));
+
+            }
             nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
 
             NetworkAreaDiagram.draw(network, svgWriter, nadParameters, vlFilter);
