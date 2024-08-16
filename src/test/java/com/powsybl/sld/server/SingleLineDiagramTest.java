@@ -358,7 +358,7 @@ public class SingleLineDiagramTest {
             //initialize with geographical data
             verify(geoDataService, times(1)).getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"));
         } else {
-            //initialize with geographical data
+            //initialize without geographical data
             verify(geoDataService, times(0)).getSubstationsGraphics(any(), any(), any());
         }
     }
@@ -446,7 +446,7 @@ public class SingleLineDiagramTest {
         Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() {
         });
         assertEquals("subFr1", convertedMetadata.get("id"));
-        assertEquals(null, convertedMetadata.get("name"));
+        assertNull(convertedMetadata.get("name"));
         assertEquals("FR", convertedMetadata.get("country"));
     }
 
@@ -535,7 +535,7 @@ public class SingleLineDiagramTest {
     }
 
     @Test
-    public void testPosisionDiagramLabelProvider() throws IOException {
+    public void testPositionDiagramLabelProvider() throws IOException {
         var testNetwork = createNetworkWithTwoInjectionAndOneBranchAndOne3twt();
         var layoutParameters = new LayoutParameters();
         var svgParameters = new SvgParameters();
