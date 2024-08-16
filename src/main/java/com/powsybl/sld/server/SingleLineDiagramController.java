@@ -279,17 +279,17 @@ public class SingleLineDiagramController {
             @Parameter(description = "Voltage levels ids") @RequestParam(name = "voltageLevelsIds", required = false) List<String> voltageLevelsIds,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth,
-            @Parameter(description = "Initialize NAD with Geographical Data") @RequestParam(name = "withGeoData", defaultValue = "true") boolean withGeoData) throws InterruptedException, ExecutionException {
+            @Parameter(description = "Initialize NAD with Geographical Data") @RequestParam(name = "initGeoData", defaultValue = "true") boolean initGeoData) throws InterruptedException, ExecutionException {
         CompletableFuture<String> futureNAD = CompletableFuture.supplyAsync(() -> {
             try {
                 LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}{}",
                         networkUuid,
                         sanitizeParam(voltageLevelsIds.toString()),
                         depth,
-                        withGeoData ? ", based on geographical data." : ""
+                        initGeoData ? ", based on geographical data." : ""
                 );
 
-                SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
+                SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, initGeoData);
                 String svg = svgAndMetadata.getSvg();
                 Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
                 return OBJECT_MAPPER.writeValueAsString(

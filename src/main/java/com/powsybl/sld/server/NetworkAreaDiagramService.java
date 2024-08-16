@@ -51,7 +51,7 @@ class NetworkAreaDiagramService {
     @Autowired
     private GeoDataService geoDataService;
 
-    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean initGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
         if (existingVLIds.isEmpty()) {
@@ -71,7 +71,7 @@ class NetworkAreaDiagramService {
             nadParameters.setLayoutParameters(layoutParameters);
 
             //Initialize with geographical data
-            if (withGeoData) {
+            if (initGeoData) {
                 //get voltage levels' positions on depth+1 to be able to locate lines on depth
                 List<VoltageLevel> voltageLevels = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
                 assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevels);
