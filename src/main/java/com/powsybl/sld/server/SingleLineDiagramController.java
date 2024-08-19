@@ -85,7 +85,9 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) {
-        LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, sanitizeParam(voltageLevelId));
+
+        String sanitizedVoltageLevelId = voltageLevelId != null ? sanitizeParam(voltageLevelId) : null;
+        LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, sanitizedVoltageLevelId);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
                 .labelCentered(centerLabel)
