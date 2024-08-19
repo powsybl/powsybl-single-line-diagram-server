@@ -85,7 +85,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) {
-        LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", sanitizeParam(networkUuid.toString()), sanitizeParam(voltageLevelId));
+        LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, sanitizeParam(voltageLevelId));
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
                 .labelCentered(centerLabel)
@@ -113,7 +113,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) {
-        LOGGER.debug("getVoltageLevelMetadata request received with parameter networkUuid = {}, voltageLevelID = {}", sanitizeParam(networkUuid.toString()), sanitizeParam(voltageLevelId));
+        LOGGER.debug("getVoltageLevelMetadata request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, sanitizeParam(voltageLevelId));
 
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -142,7 +142,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) throws JsonProcessingException {
-        LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", sanitizeParam(networkUuid.toString()), sanitizeParam(voltageLevelId));
+        LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, sanitizeParam(voltageLevelId));
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
                 .labelCentered(centerLabel)
@@ -181,7 +181,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) {
-        LOGGER.debug("getSubstationSvg request received with parameter networkUuid = {}, substationID = {}", sanitizeParam(networkUuid.toString()), sanitizeParam(substationId));
+        LOGGER.debug("getSubstationSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, sanitizeParam(substationId));
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
                 .labelCentered(centerLabel)
@@ -210,7 +210,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) {
-        LOGGER.debug("getSubstationMetadata request received with parameter networkUuid = {}, substationID = {}", sanitizeParam(networkUuid.toString()), sanitizeParam(substationId));
+        LOGGER.debug("getSubstationMetadata request received with parameter networkUuid = {}, substationID = {}", networkUuid, sanitizeParam(substationId));
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
                 .labelCentered(centerLabel)
@@ -239,7 +239,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) throws JsonProcessingException {
-        LOGGER.debug("getSubstationFullSvg request received with parameter networkUuid = {}, substationID = {}", sanitizeParam(networkUuid.toString()), sanitizeParam(substationId));
+        LOGGER.debug("getSubstationFullSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, sanitizeParam(substationId));
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
                 .labelCentered(centerLabel)
@@ -282,7 +282,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth) throws InterruptedException, ExecutionException {
         CompletableFuture<String> futureNAD = CompletableFuture.supplyAsync(() -> {
             try {
-                LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", sanitizeParam(networkUuid.toString()), sanitizeParam(voltageLevelsIds.toString()), depth);
+                LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
                 SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth);
                 String svg = svgAndMetadata.getSvg();
                 Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
