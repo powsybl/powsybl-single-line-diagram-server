@@ -85,7 +85,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) {
-        LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId);
+        LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", sanitizeData(networkUuid.toString()), sanitizeData(voltageLevelId));
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
                 .labelCentered(centerLabel)
@@ -270,6 +270,7 @@ public class SingleLineDiagramController {
         return ResponseEntity.ok().body(libraries);
     }
 
+
     // network area diagram
     @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get network area diagram image")
@@ -299,5 +300,12 @@ public class SingleLineDiagramController {
     @PreDestroy
     private void preDestroy() {
         executorService.shutdown();
+    }
+
+    private String sanitizeData(String data) {
+        if (data == null || data.isEmpty()) {
+            return null; // Default value for missing or empty data
+        }
+        return data.replaceAll("[^\\w\\s]", "_");
     }
 }
