@@ -98,6 +98,7 @@ class SingleLineDiagramService {
             svgParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
             svgParameters.setUseName(diagParams.isUseName());
             svgParameters.setLanguageTag(diagParams.getLanguage());
+            svgParameters.setUnifyVoltageLevelColors(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
 
             SldParameters sldParameters = new SldParameters();
@@ -120,8 +121,8 @@ class SingleLineDiagramService {
             sldParameters.setSubstationLayoutFactory(substationLayoutFactory);
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
-            sldParameters.setStyleProviderFactory(n -> diagParams.isTopologicalColoring() ?
-                    new StyleProvidersList(new TopologicalStyleProvider(network), new HighlightLineStateStyleProvider(network)) :
+            sldParameters.setStyleProviderFactory((n, s) -> diagParams.isTopologicalColoring() ?
+                    new StyleProvidersList(new TopologicalStyleProvider(network, svgParameters), new HighlightLineStateStyleProvider(network)) :
                     new StyleProvidersList(new NominalVoltageStyleProvider(), new HighlightLineStateStyleProvider(network)));
             sldParameters.setComponentLibrary(compLibrary);
 
