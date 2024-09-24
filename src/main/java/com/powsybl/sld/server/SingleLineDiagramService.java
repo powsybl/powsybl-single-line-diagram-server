@@ -26,6 +26,7 @@ import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
+import com.powsybl.sld.svg.styles.iidm.LimitHighlightStyleProvider;
 import com.powsybl.sld.svg.styles.iidm.TopologicalStyleProvider;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
@@ -121,8 +122,8 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
             sldParameters.setStyleProviderFactory(n -> diagParams.isTopologicalColoring() ?
-                    new StyleProvidersList(new TopologicalStyleProvider(network), new HighlightLineStateStyleProvider(network)) :
-                    new StyleProvidersList(new NominalVoltageStyleProvider(), new HighlightLineStateStyleProvider(network)));
+                    new StyleProvidersList(new TopologicalStyleProvider(network), new HighlightLineStateStyleProvider(network), new LimitHighlightStyleProvider(network)) :
+                    new StyleProvidersList(new NominalVoltageStyleProvider(), new HighlightLineStateStyleProvider(network), new LimitHighlightStyleProvider(network)));
             sldParameters.setComponentLibrary(compLibrary);
 
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, sldParameters);
