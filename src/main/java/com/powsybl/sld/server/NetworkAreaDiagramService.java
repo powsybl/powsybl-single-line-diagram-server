@@ -15,6 +15,7 @@ import com.powsybl.iidm.network.extensions.SubstationPositionAdder;
 import com.powsybl.nad.NadParameters;
 import com.powsybl.nad.NetworkAreaDiagram;
 import com.powsybl.nad.build.iidm.VoltageLevelFilter;
+import com.powsybl.nad.layout.BasicForceLayout;
 import com.powsybl.nad.layout.GeographicalLayoutFactory;
 import com.powsybl.nad.layout.LayoutParameters;
 import com.powsybl.nad.svg.SvgParameters;
@@ -51,6 +52,9 @@ class NetworkAreaDiagramService {
     @Autowired
     private GeoDataService geoDataService;
 
+    private static final int SCALING_FACTOR = 450000;
+    private static final double RADIUS_FACTOR = 300;
+
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
@@ -75,7 +79,7 @@ class NetworkAreaDiagramService {
                 //get voltage levels' positions on depth+1 to be able to locate lines on depth
                 List<VoltageLevel> voltageLevels = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
                 assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevels);
-                nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network));
+                nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, SCALING_FACTOR, RADIUS_FACTOR, BasicForceLayout::new));
 
             }
             nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
