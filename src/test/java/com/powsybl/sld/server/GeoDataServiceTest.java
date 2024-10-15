@@ -7,12 +7,12 @@ package com.powsybl.sld.server;
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.Country;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.server.dto.Coordinate;
 import com.powsybl.sld.server.dto.SubstationGeoData;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -22,83 +22,29 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 public class GeoDataServiceTest {
+    private static final String BASE_URI = "http://geo-data-server/";
 
-    private static final String VARIANT_1_ID = "variant_1";
-    private static final String VARIANT_2_ID = "variant_2";
-    private final String baseUri = "http://geo-data-server/";
     @Mock
     private RestTemplate restTemplate;
+
     @InjectMocks
     private GeoDataService geoDataService;
+
     @Mock
     private NetworkStoreService networkStoreService;
 
-    public static Network createNetwork() {
-        Network network = Network.create("test", "test");
-        Substation substationFr1 = network.newSubstation()
-                .setId("subFr1")
-                .setCountry(Country.FR)
-                .setTso("RTE")
-                .add();
-        VoltageLevel voltageLevelFr1A = substationFr1.newVoltageLevel()
-                .setId("vlFr1A")
-                .setName("vlFr1A")
-                .setNominalV(440.0)
-                .setHighVoltageLimit(400.0)
-                .setLowVoltageLimit(200.0)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        voltageLevelFr1A.getBusBreakerView().newBus()
-                .setId("busFr1A")
-                .setName("busFr1A")
-                .add();
-        VoltageLevel voltageLevelFr1B = substationFr1.newVoltageLevel()
-                .setId("vlFr1B").setName("vlFr1B")
-                .setNominalV(200.0)
-                .setHighVoltageLimit(400.0)
-                .setLowVoltageLimit(200.0)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        voltageLevelFr1B.getBusBreakerView().newBus()
-                .setId("busFr1B")
-                .setName("busFr1B")
-                .add();
-
-        Substation substationFr2 = network.newSubstation()
-                .setId("subFr2")
-                .setCountry(Country.FR)
-                .setTso("RTE")
-                .add();
-        VoltageLevel voltageLevelFr2A = substationFr2.newVoltageLevel()
-                .setId("vlFr2A")
-                .setName("vlFr2A")
-                .setNominalV(440.0)
-                .setHighVoltageLimit(400.0)
-                .setLowVoltageLimit(200.0)
-                .setTopologyKind(TopologyKind.BUS_BREAKER)
-                .add();
-        voltageLevelFr2A.getBusBreakerView().newBus()
-                .setId("busFr2A")
-                .setName("busFr2A")
-                .add();
-        network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);
-        network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_2_ID);
-
-        return network;
-    }
-
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         MockitoAnnotations.initMocks(this);
-        geoDataService.setGeoDataServerBaseUri(baseUri);
+        geoDataService.setGeoDataServerBaseUri(BASE_URI);
     }
 
     @Test
-    public void testGetSubstationsGraphics() {
+    void testGetSubstationsGraphics() {
         UUID networkUuid = UUID.randomUUID();
         String variantId = "variant2";
         List<String> substationsIds = List.of("subFr1", "subFr2");
@@ -113,7 +59,7 @@ public class GeoDataServiceTest {
     }
 
     @Test
-    public void testGetSubstationsGraphicsWithoutVariantId() {
+    void testGetSubstationsGraphicsWithoutVariantId() {
         UUID networkUuid = UUID.randomUUID();
         List<String> substationsIds = List.of("subFr1");
         SubstationGeoData substationGeoData = new SubstationGeoData();
