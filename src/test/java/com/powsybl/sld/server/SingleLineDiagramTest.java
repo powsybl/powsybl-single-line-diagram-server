@@ -50,7 +50,6 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -73,7 +72,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(SingleLineDiagramController.class)
 @ContextConfiguration(classes = {SingleLineDiagramApplication.class})
-public class SingleLineDiagramTest {
+class SingleLineDiagramTest {
 
     @Autowired
     private MockMvc mvc;
@@ -103,7 +102,7 @@ public class SingleLineDiagramTest {
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
-        final Path tmpDir = Files.createDirectory(fileSystem.getPath("tmp"));
+        Files.createDirectory(fileSystem.getPath("tmp"));
     }
 
     @AfterEach
@@ -287,7 +286,7 @@ public class SingleLineDiagramTest {
     private static final String GEO_DATA_SUBSTATIONS = "/geo_data_substations.json";
 
     @Test
-    void testAssignSubstationGeoData() throws Exception {
+    void testAssignSubstationGeoData() {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         Network network = networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION);
@@ -591,14 +590,14 @@ public class SingleLineDiagramTest {
     /*
         #TODO replace it with already configured FourSubstationsNodeBreakerWithExtensionsFactory when migrating to next powsybl release
     */
-    public Network createNetworkWithTwoInjectionAndOneBranchAndOne3twt() {
+    private static Network createNetworkWithTwoInjectionAndOneBranchAndOne3twt() {
         Network network = Network.create("TestSingleLineDiagram", "test");
         Substation substation = createSubstation(network, "s", "s", Country.FR);
         Substation substation2 = createSubstation(network, "s2", "s2", Country.FR);
-        VoltageLevel vl1 = createVoltageLevel(substation, "vl1", "vl1", TopologyKind.NODE_BREAKER, 380, 10);
-        VoltageLevel vl2 = createVoltageLevel(substation, "vl2", "vl2", TopologyKind.NODE_BREAKER, 225, 30);
-        VoltageLevel vl3 = createVoltageLevel(substation, "vl3", "vl3", TopologyKind.NODE_BREAKER, 225, 30);
-        VoltageLevel vl4 = createVoltageLevel(substation2, "vl4", "vl4", TopologyKind.NODE_BREAKER, 220, 20);
+        VoltageLevel vl1 = createVoltageLevel(substation, "vl1", "vl1", TopologyKind.NODE_BREAKER, 380);
+        VoltageLevel vl2 = createVoltageLevel(substation, "vl2", "vl2", TopologyKind.NODE_BREAKER, 225);
+        VoltageLevel vl3 = createVoltageLevel(substation, "vl3", "vl3", TopologyKind.NODE_BREAKER, 225);
+        VoltageLevel vl4 = createVoltageLevel(substation2, "vl4", "vl4", TopologyKind.NODE_BREAKER, 220);
 
         createBusBarSection(vl1, "bbs11", "bbs11", 2, 2, 2);
         createLoad(vl1, "loadA", "loadA", "loadA", 0, ConnectablePosition.Direction.TOP, 4, 10, 10);
@@ -636,14 +635,13 @@ public class SingleLineDiagramTest {
                 .add();
     }
 
-    private static VoltageLevel createVoltageLevel(Substation s, String id, String name, TopologyKind topology, double vNom, int nodeCount) {
-        VoltageLevel vl = s.newVoltageLevel()
+    private static VoltageLevel createVoltageLevel(Substation s, String id, String name, TopologyKind topology, double vNom) {
+        return s.newVoltageLevel()
                 .setId(id)
                 .setName(name)
                 .setTopologyKind(topology)
                 .setNominalV(vNom)
                 .add();
-        return vl;
     }
 
     private static void createLoad(VoltageLevel vl, String id, String name, String feederName, Integer feederOrder,
