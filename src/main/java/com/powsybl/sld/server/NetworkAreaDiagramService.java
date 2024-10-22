@@ -63,6 +63,7 @@ class NetworkAreaDiagramService {
         }
         try (StringWriter svgWriter = new StringWriter()) {
             SvgParameters svgParameters = new SvgParameters()
+                    .setUndefinedValueSymbol("\u2014")
                     .setSvgWidthAndHeightAdded(true)
                     .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
