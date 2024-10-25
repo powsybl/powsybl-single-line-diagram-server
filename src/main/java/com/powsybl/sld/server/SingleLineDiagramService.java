@@ -91,6 +91,7 @@ class SingleLineDiagramService {
             svgParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
             svgParameters.setUseName(diagParams.isUseName());
             svgParameters.setLanguageTag(diagParams.getLanguage());
+            svgParameters.setUnifyVoltageLevelColors(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
 
             SldParameters sldParameters = new SldParameters();
