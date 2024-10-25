@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+
+jobs:
+  build:
+    uses: powsybl/github-ci/.github/workflows/build-generic.yml@baf0d2ed84b70d359132693880d5e530cd93f168
+    with:
+      sonarOrganization: powsybl-ci-github
+      sonarProjectKey: com.powsybl:powsybl-single-line-diagram-server
+      dockerImage: docker.io/powsybl/single-line-diagram-server
+      dockerUsername: powsyblci
+      eventType: single_line_diagram_server_updated
+    secrets:
+      sonar-token: ${{ secrets.SONAR_TOKEN }}
+      docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
+      repo-token: ${{ secrets.REPO_ACCESS_TOKEN }}
