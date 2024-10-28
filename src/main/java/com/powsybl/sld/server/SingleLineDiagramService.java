@@ -104,11 +104,11 @@ class SingleLineDiagramService {
             SldParameters sldParameters = new SldParameters();
 
             if (diagParams.getSldDisplayMode() == SldDisplayMode.FEEDER_POSITION) {
-                svgParameters.setAddNodesInfos(false);
+                svgParameters.setBusesLegendAdded(false);
                 svgParameters.setLabelDiagonal(true);
                 sldParameters.setLabelProviderFactory(PositionDiagramLabelProvider.newLabelProviderFactory(id));
             } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
-                svgParameters.setAddNodesInfos(true);
+                svgParameters.setBusesLegendAdded(true);
                 sldParameters.setLabelProviderFactory(DefaultLabelProvider::new);
             } else {
                 throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
@@ -121,7 +121,7 @@ class SingleLineDiagramService {
             sldParameters.setSubstationLayoutFactory(substationLayoutFactory);
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
-            sldParameters.setStyleProviderFactory(n -> diagParams.isTopologicalColoring() ?
+            sldParameters.setStyleProviderFactory((n, s) -> diagParams.isTopologicalColoring() ?
                     new StyleProvidersList(new TopologicalStyleProvider(network), new HighlightLineStateStyleProvider(network), new LimitHighlightStyleProvider(network)) :
                     new StyleProvidersList(new NominalVoltageStyleProvider(), new HighlightLineStateStyleProvider(network), new LimitHighlightStyleProvider(network)));
             sldParameters.setComponentLibrary(compLibrary);
