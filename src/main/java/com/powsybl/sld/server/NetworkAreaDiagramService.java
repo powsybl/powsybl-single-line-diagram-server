@@ -61,8 +61,9 @@ class NetworkAreaDiagramService {
         if (existingVLIds.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
         }
-        try (StringWriter svgWriter = new StringWriter()) {
+        try (StringWriter svgWriter = new StringWriter(); StringWriter metadataWriter = new StringWriter()) {
             SvgParameters svgParameters = new SvgParameters()
+                    .setUndefinedValueSymbol("\u2014")
                     .setSvgWidthAndHeightAdded(true)
                     .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
@@ -84,11 +85,12 @@ class NetworkAreaDiagramService {
             }
             nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
 
-            NetworkAreaDiagram.draw(network, svgWriter, nadParameters, vlFilter);
+            NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
             Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth);
 
             return SvgAndMetadata.builder()
                     .svg(svgWriter.toString())
+                    .metadata(metadataWriter.toString())
                     .additionalMetadata(additionalMetadata).build();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
