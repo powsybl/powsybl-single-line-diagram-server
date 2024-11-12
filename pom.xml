@@ -48,11 +48,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <powsybl-ws-dependencies.version>2.15.0</powsybl-ws-dependencies.version>
-        <!-- FIXME: powsybl-ws-commons version is overridden. To be removed at next powsybl-ws-dependencies.version upgrade -->
-        <powsybl-ws-commons.version>1.15.0</powsybl-ws-commons.version>
-        <!-- FIXME: powsybl-network-store modules'version is overloaded in the dependencies section.The overloads and this property below have to be removed at next powsybl-ws-dependencies.version upgrade -->
-        <powsybl-network-store.version>1.18.2</powsybl-network-store.version>
+        <powsybl-ws-dependencies.version>2.16.0</powsybl-ws-dependencies.version>
     </properties>
 
     <build>
@@ -87,31 +83,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- overrides of imports -->
-            <!-- FIXME: powsybl-ws-commons version is overridden. To be removed at next powsybl-ws-dependencies.version upgrade -->
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-ws-commons</artifactId>
-                <version>${powsybl-ws-commons.version}</version>
-            </dependency>
-            <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-network-store-iidm-impl</artifactId>
-                <version>${powsybl-network-store.version}</version>
-            </dependency>
-            <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-network-store-client</artifactId>
-                <version>${powsybl-network-store.version}</version>
-            </dependency>
-            <!-- FIXME: to be removed at next powsybl-ws-dependencies upgrade  -->
-            <dependency>
-                <groupId>com.powsybl</groupId>
-                <artifactId>powsybl-network-store-model</artifactId>
-                <version>${powsybl-network-store.version}</version>
-            </dependency>
 
             <!-- imports -->
             <dependency>

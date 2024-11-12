@@ -543,7 +543,7 @@ class SingleLineDiagramTest {
         assertFalse(feederInfos1.get(0).getLeftLabel().isPresent());
         assertFalse(feederInfos1.get(1).getLeftLabel().isPresent());
         sldParameters.setLabelProviderFactory((a, b, c, d) -> new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, svgParameters, "vl1"));
-        sldParameters.setStyleProviderFactory(n -> new NominalVoltageStyleProvider());
+        sldParameters.setStyleProviderFactory((n, p) -> new NominalVoltageStyleProvider());
         sldParameters.setComponentLibrary(componentLibrary);
         sldParameters.setLayoutParameters(layoutParameters);
 
