@@ -26,6 +26,7 @@ import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
+import com.powsybl.sld.svg.styles.iidm.LimitHighlightStyleProvider;
 import com.powsybl.sld.svg.styles.iidm.TopologicalStyleProvider;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
@@ -66,19 +67,11 @@ class SingleLineDiagramService {
     }
 
     private static SubstationLayoutFactory getSubstationLayoutFactory(String substationLayout) {
-        SubstationLayoutFactory substationLayoutFactory;
-        switch (substationLayout) {
-            case "horizontal":
-                substationLayoutFactory = new HorizontalSubstationLayoutFactory();
-                break;
-            case "vertical":
-                substationLayoutFactory = new VerticalSubstationLayoutFactory();
-                break;
-            default:
-                throw new PowsyblException("Substation layout " + substationLayout + " incorrect");
-        }
-
-        return substationLayoutFactory;
+        return switch (substationLayout) {
+            case "horizontal" -> new HorizontalSubstationLayoutFactory();
+            case "vertical" -> new VerticalSubstationLayoutFactory();
+            default -> throw new PowsyblException("Substation layout " + substationLayout + " incorrect");
+        };
     }
 
     SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams) {
@@ -104,11 +97,11 @@ class SingleLineDiagramService {
             SldParameters sldParameters = new SldParameters();
 
             if (diagParams.getSldDisplayMode() == SldDisplayMode.FEEDER_POSITION) {
-                svgParameters.setAddNodesInfos(false);
+                svgParameters.setBusesLegendAdded(false);
                 svgParameters.setLabelDiagonal(true);
                 sldParameters.setLabelProviderFactory(PositionDiagramLabelProvider.newLabelProviderFactory(id));
             } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
-                svgParameters.setAddNodesInfos(true);
+                svgParameters.setBusesLegendAdded(true);
                 sldParameters.setLabelProviderFactory(DefaultLabelProvider::new);
             } else {
                 throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
@@ -121,9 +114,9 @@ class SingleLineDiagramService {
             sldParameters.setSubstationLayoutFactory(substationLayoutFactory);
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
-            sldParameters.setStyleProviderFactory((n, s) -> diagParams.isTopologicalColoring() ?
-                    new StyleProvidersList(new TopologicalStyleProvider(network, svgParameters), new HighlightLineStateStyleProvider(network)) :
-                    new StyleProvidersList(new NominalVoltageStyleProvider(), new HighlightLineStateStyleProvider(network)));
+            sldParameters.setStyleProviderFactory((net, parameters) -> diagParams.isTopologicalColoring() ?
+                    new StyleProvidersList(new TopologicalStyleProvider(network, parameters), new HighlightLineStateStyleProvider(network), new LimitHighlightStyleProvider(network)) :
+                    new StyleProvidersList(new NominalVoltageStyleProvider(), new HighlightLineStateStyleProvider(network), new LimitHighlightStyleProvider(network)));
             sldParameters.setComponentLibrary(compLibrary);
 
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, sldParameters);

@@ -285,10 +285,12 @@ public class SingleLineDiagramController {
                 LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
                 SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
                 String svg = svgAndMetadata.getSvg();
+                String metadata = svgAndMetadata.getMetadata();
                 Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
                 return OBJECT_MAPPER.writeValueAsString(
                         OBJECT_MAPPER.createObjectNode()
                                 .put(SVG_TAG, svg)
+                                .put(METADATA, metadata)
                                 .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
             } catch (JsonProcessingException e) {
                 throw new PowsyblException("Failed to parse JSON response", e);
