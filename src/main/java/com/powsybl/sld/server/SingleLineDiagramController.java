@@ -290,7 +290,7 @@ public class SingleLineDiagramController {
                 return OBJECT_MAPPER.writeValueAsString(
                         OBJECT_MAPPER.createObjectNode()
                                 .put(SVG_TAG, svg)
-                                .put(METADATA, metadata)
+                                .putRawValue(METADATA, new RawValue(metadata))
                                 .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
             } catch (JsonProcessingException e) {
                 throw new PowsyblException("Failed to parse JSON response", e);
