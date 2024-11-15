@@ -89,6 +89,7 @@ class SingleLineDiagramService {
             svgParameters.setLabelCentered(diagParams.isLabelCentered());
             svgParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
             svgParameters.setUseName(diagParams.isUseName());
+            svgParameters.setUndefinedValueSymbol("\u2014");
             svgParameters.setLanguageTag(diagParams.getLanguage());
             svgParameters.setUnifyVoltageLevelColors(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
