@@ -22,7 +22,7 @@ public class CommonLabelProvider extends DefaultLabelProvider {
         VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
         return vl.getBusView().getBusStream()
             .map(b -> new BusLegendInfo(b.getId(), List.of(
-                new BusLegendInfo.Caption(b.getNameOrId(), "busId"),
+                new BusLegendInfo.Caption(b.getId(), "busId"),
                 new BusLegendInfo.Caption(valueFormatter.formatVoltage(b.getV(), "kV"), "v"),
                 new BusLegendInfo.Caption(valueFormatter.formatAngleInDegrees(b.getAngle()), "angle")
             )))
