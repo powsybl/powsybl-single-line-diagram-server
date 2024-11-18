@@ -16,10 +16,7 @@ import com.powsybl.sld.model.nodes.BusNode;
 import com.powsybl.sld.model.nodes.EquipmentNode;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.model.nodes.Node;
-import com.powsybl.sld.svg.DefaultLabelProvider;
-import com.powsybl.sld.svg.LabelPosition;
-import com.powsybl.sld.svg.LabelProviderFactory;
-import com.powsybl.sld.svg.SvgParameters;
+import com.powsybl.sld.svg.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * @author Ben Daamer ahmed<ahmed.bendaamer at rte-france.com>
  */
-public class PositionDiagramLabelProvider extends DefaultLabelProvider {
+public class PositionDiagramLabelProvider extends CommonLabelProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PositionDiagramLabelProvider.class);
 

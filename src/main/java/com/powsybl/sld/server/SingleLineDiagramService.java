@@ -21,7 +21,6 @@ import com.powsybl.sld.server.dto.SubstationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
 import com.powsybl.sld.server.utils.SldDisplayMode;
-import com.powsybl.sld.svg.DefaultLabelProvider;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
@@ -103,7 +102,7 @@ class SingleLineDiagramService {
                 sldParameters.setLabelProviderFactory(PositionDiagramLabelProvider.newLabelProviderFactory(id));
             } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
                 svgParameters.setBusesLegendAdded(true);
-                sldParameters.setLabelProviderFactory(DefaultLabelProvider::new);
+                sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
             } else {
                 throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
             }

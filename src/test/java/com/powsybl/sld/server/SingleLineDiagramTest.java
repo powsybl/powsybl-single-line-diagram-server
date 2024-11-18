@@ -439,6 +439,86 @@ class SingleLineDiagramTest {
         assertEquals("FR", convertedMetadata.get("country"));
     }
 
+    /**
+     * @return a network with 2 voltage level - vl1 with 2 calculated buses, vl2 with 1 calculated bus
+     */
+    public static Network createTwoVoltageLevels() {
+        Network network = Network.create("dl", "test");
+        Substation s = network.newSubstation().setId("s1").setName("Substation 1").add();
+        VoltageLevel vl1 = s.newVoltageLevel()
+            .setId("vl1")
+            .setName("Voltage level 1")
+            .setNominalV(400)
+            .setTopologyKind(TopologyKind.BUS_BREAKER)
+            .add();
+        vl1.getBusBreakerView().newBus()
+            .setId("busId11")
+            .add();
+        vl1.newGenerator()
+            .setId("g11")
+            .setConnectableBus("busId11")
+            .setBus("busId11")
+            .setTargetP(101.3664)
+            .setTargetV(390)
+            .setMinP(0)
+            .setMaxP(150)
+            .setVoltageRegulatorOn(true)
+            .add();
+        vl1.getBusBreakerView().newBus()
+            .setId("busId12")
+            .add();
+        vl1.newGenerator()
+            .setId("g12")
+            .setConnectableBus("busId12")
+            .setBus("busId12")
+            .setTargetP(101.3664)
+            .setTargetV(390)
+            .setMinP(0)
+            .setMaxP(150)
+            .setVoltageRegulatorOn(true)
+            .add();
+        VoltageLevel vl2 = s.newVoltageLevel()
+            .setId("vl2")
+            .setName("Voltage level 2")
+            .setNominalV(400)
+            .setTopologyKind(TopologyKind.BUS_BREAKER)
+            .add();
+        vl2.getBusBreakerView().newBus()
+            .setId("busId2")
+            .add();
+        vl2.newDanglingLine()
+            .setId("dl1")
+            .setConnectableBus("busId2")
+            .setBus("busId2")
+            .setR(0.7)
+            .setX(1)
+            .setG(1e-6)
+            .setB(3e-6)
+            .setP0(101)
+            .setQ0(150)
+            .newGeneration()
+            .setTargetP(0)
+            .setTargetQ(0)
+            .setTargetV(390)
+            .setVoltageRegulationOn(false)
+            .add()
+            .add();
+        network.newLine()
+            .setId("l1")
+            .setVoltageLevel1("vl1")
+            .setBus1("busId11")
+            .setVoltageLevel2("vl2")
+            .setBus2("busId2")
+            .setR(1)
+            .setX(3)
+            .setG1(0)
+            .setG2(0)
+            .setB1(0)
+            .setB2(0)
+            .add();
+        return network;
+    }
+
     private static Network createNetwork() {
         Network network = Network.create("test", "test");
         Substation substationFr1 = network.newSubstation()
@@ -581,6 +661,31 @@ class SingleLineDiagramTest {
         assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
         mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0" + "&voltageLevelsIds=vlNotFound1,vlNotFound2", testNetworkId))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testBusLegendContainsBusId() throws Exception {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createTwoVoltageLevels());
+
+        MvcResult result = mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vl1"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+            .andReturn();
+        String stringResult = result.getResponse().getContentAsString();
+        assertEquals("<?xml", stringResult.substring(0, 5));
+        // vl1 should have 2 busId displayed in bus legend
+        assertTrue(stringResult.contains(">vl1_0<"));
+        assertTrue(stringResult.contains(">vl1_1<"));
+
+        result = mvc.perform(get("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vl2"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+            .andReturn();
+        stringResult = result.getResponse().getContentAsString();
+        assertEquals("<?xml", stringResult.substring(0, 5));
+        // vl1 should have 1 busId displayed in bus legend
+        assertTrue(stringResult.contains(">vl2_0<"));
     }
 
     private static String toString(String resourceName) throws IOException {
