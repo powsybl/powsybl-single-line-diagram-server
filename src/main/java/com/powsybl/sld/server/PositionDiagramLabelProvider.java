@@ -95,19 +95,19 @@ public class PositionDiagramLabelProvider extends DefaultLabelProvider {
     }
 
     static Integer getBranchOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch, boolean throwException) {
-        Integer order = null;
         if (branch.getTerminal1().getVoltageLevel() == voltageLevel) {
-            order = position.getFeeder1().getOrder().orElse(null);
-        } else if (branch.getTerminal2().getVoltageLevel() == voltageLevel) {
-            order = position.getFeeder2().getOrder().orElse(null);
-        } else {
-            LOGGER.error("Given voltageLevel {} not found in terminal 1 and terminal 2 of branch", voltageLevel.getId());
-            if (throwException) {
-                throw new PowsyblException(String.format("Given voltageLevel %s not found in terminal 1 and terminal 2 of branch", voltageLevel.getId()));
-            }
+            return position.getFeeder1() != null ? position.getFeeder1().getOrder().orElse(null) : null;
         }
-        return order;
+        if (branch.getTerminal2().getVoltageLevel() == voltageLevel) {
+            return position.getFeeder2() != null ? position.getFeeder2().getOrder().orElse(null) : null;
+        }
+        LOGGER.error("Given voltageLevel {} not found in terminal 1 and terminal 2 of branch", voltageLevel.getId());
+        if (throwException) {
+            throw new PowsyblException(String.format("Given voltageLevel %s not found in terminal 1 and terminal 2 of branch", voltageLevel.getId()));
+        }
+        return null;
     }
+
 
     static Integer get3wtOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException) {
         Integer order = null;
