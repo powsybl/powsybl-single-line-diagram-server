@@ -108,7 +108,6 @@ public class PositionDiagramLabelProvider extends DefaultLabelProvider {
         return null;
     }
 
-
     static Integer get3wtOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException) {
         Integer order = null;
         if (twt.getLeg1().getTerminal().getVoltageLevel() == voltageLevel) {
