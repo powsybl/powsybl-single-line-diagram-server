@@ -16,7 +16,9 @@ import com.powsybl.sld.model.nodes.BusNode;
 import com.powsybl.sld.model.nodes.EquipmentNode;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.model.nodes.Node;
-import com.powsybl.sld.svg.*;
+import com.powsybl.sld.svg.LabelPosition;
+import com.powsybl.sld.svg.LabelProviderFactory;
+import com.powsybl.sld.svg.SvgParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,35 +94,35 @@ public class PositionDiagramLabelProvider extends CommonLabelProvider {
     }
 
     static Integer getBranchOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch, boolean throwException) {
-        Integer order = null;
-        if (branch.getTerminal1().getVoltageLevel() == voltageLevel) {
-            order = position.getFeeder1().getOrder().orElse(null);
-        } else if (branch.getTerminal2().getVoltageLevel() == voltageLevel) {
-            order = position.getFeeder2().getOrder().orElse(null);
+        Optional<ConnectablePosition.Feeder> feeder = Optional.empty();
+        if (branch.getTerminal1().getVoltageLevel().getId().equals(voltageLevel.getId())) {
+            feeder = Optional.ofNullable(position.getFeeder1());
+        } else if (branch.getTerminal2().getVoltageLevel().getId().equals(voltageLevel.getId())) {
+            feeder = Optional.ofNullable(position.getFeeder2());
         } else {
             LOGGER.error("Given voltageLevel {} not found in terminal 1 and terminal 2 of branch", voltageLevel.getId());
             if (throwException) {
                 throw new PowsyblException(String.format("Given voltageLevel %s not found in terminal 1 and terminal 2 of branch", voltageLevel.getId()));
             }
         }
-        return order;
+        return feeder.flatMap(ConnectablePosition.Feeder::getOrder).orElse(null);
     }
 
     static Integer get3wtOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException) {
-        Integer order = null;
-        if (twt.getLeg1().getTerminal().getVoltageLevel() == voltageLevel) {
-            order = position.getFeeder1().getOrder().orElse(null);
-        } else if (twt.getLeg2().getTerminal().getVoltageLevel() == voltageLevel) {
-            order = position.getFeeder2().getOrder().orElse(null);
-        } else if (twt.getLeg3().getTerminal().getVoltageLevel() == voltageLevel) {
-            order = position.getFeeder3().getOrder().orElse(null);
+        Optional<ConnectablePosition.Feeder> feeder = Optional.empty();
+        if (twt.getLeg1().getTerminal().getVoltageLevel().getId().equals(voltageLevel.getId())) {
+            feeder = Optional.ofNullable(position.getFeeder1());
+        } else if (twt.getLeg2().getTerminal().getVoltageLevel().getId().equals(voltageLevel.getId())) {
+            feeder = Optional.ofNullable(position.getFeeder2());
+        } else if (twt.getLeg3().getTerminal().getVoltageLevel().getId().equals(voltageLevel.getId())) {
+            feeder = Optional.ofNullable(position.getFeeder3());
         } else {
             LOGGER.error("Given voltageLevel {} not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId());
             if (throwException) {
                 throw new PowsyblException(String.format("Given voltageLevel %s not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId()));
             }
         }
-        return order;
+        return feeder.flatMap(ConnectablePosition.Feeder::getOrder).orElse(null);
     }
 
     static Integer getOrderPositions(ConnectablePosition<?> position, VoltageLevel voltageLevel, Identifiable<?> identifiable, boolean throwException) {
