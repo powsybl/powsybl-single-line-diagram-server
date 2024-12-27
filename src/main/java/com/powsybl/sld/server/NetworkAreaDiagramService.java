@@ -6,7 +6,10 @@
  */
 package com.powsybl.sld.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.RawValue;
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.VoltageLevel;
@@ -28,7 +31,6 @@ import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.GeoDataUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -46,14 +48,39 @@ import java.util.stream.Collectors;
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class NetworkAreaDiagramService {
-    @Autowired
-    private NetworkStoreService networkStoreService;
-
-    @Autowired
-    private GeoDataService geoDataService;
-
     private static final int SCALING_FACTOR = 450000;
     private static final double RADIUS_FACTOR = 300;
+
+    static final String SVG_TAG = "svg";
+    static final String METADATA = "metadata";
+    static final String ADDITIONAL_METADATA = "additionalMetadata";
+
+    private final NetworkStoreService networkStoreService;
+    private final GeoDataService geoDataService;
+
+    private final ObjectMapper objectMapper;
+
+    public NetworkAreaDiagramService(NetworkStoreService networkStoreService, GeoDataService geoDataService, ObjectMapper objectMapper) {
+        this.networkStoreService = networkStoreService;
+        this.geoDataService = geoDataService;
+        this.objectMapper = objectMapper;
+    }
+
+    public String getNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+        try {
+            SvgAndMetadata svgAndMetadata = generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
+            String svg = svgAndMetadata.getSvg();
+            String metadata = svgAndMetadata.getMetadata();
+            Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+            return objectMapper.writeValueAsString(
+                objectMapper.createObjectNode()
+                    .put(SVG_TAG, svg)
+                    .putRawValue(METADATA, new RawValue(metadata))
+                    .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
+        } catch (JsonProcessingException e) {
+            throw new PowsyblException("Failed to parse JSON response", e);
+        }
+    }
 
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
