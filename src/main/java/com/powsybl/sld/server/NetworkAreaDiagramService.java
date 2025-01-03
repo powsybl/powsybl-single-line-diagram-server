@@ -57,16 +57,25 @@ class NetworkAreaDiagramService {
 
     private final NetworkStoreService networkStoreService;
     private final GeoDataService geoDataService;
+    private final NetworkAreaExecutionService diagramExecutionService;
 
     private final ObjectMapper objectMapper;
 
-    public NetworkAreaDiagramService(NetworkStoreService networkStoreService, GeoDataService geoDataService, ObjectMapper objectMapper) {
+    public NetworkAreaDiagramService(NetworkStoreService networkStoreService, GeoDataService geoDataService,
+                                     NetworkAreaExecutionService diagramExecutionService, ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
         this.geoDataService = geoDataService;
+        this.diagramExecutionService = diagramExecutionService;
         this.objectMapper = objectMapper;
     }
 
-    public String getNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+    public String getNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+        return diagramExecutionService
+            .supplyAsync(() -> getNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData))
+            .join();
+    }
+
+    private String getNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         try {
             SvgAndMetadata svgAndMetadata = generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
             String svg = svgAndMetadata.getSvg();

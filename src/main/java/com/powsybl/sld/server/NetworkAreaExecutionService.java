@@ -19,12 +19,12 @@ import java.util.function.Supplier;
  * @author Slimane Amar <slimane.amar at rte-france.com>
  */
 @Service
-public class DiagramGenerationExecutionService {
+public class NetworkAreaExecutionService {
 
     private ThreadPoolExecutor executorService;
 
-    public DiagramGenerationExecutionService(@Value("${max-concurrent-nad-generations}") int maxConcurrentNadGenerations,
-                                             @NonNull DiagramGenerationObserver diagramGenerationObserver) {
+    public NetworkAreaExecutionService(@Value("${max-concurrent-nad-generations}") int maxConcurrentNadGenerations,
+                                       @NonNull DiagramGenerationObserver diagramGenerationObserver) {
         executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxConcurrentNadGenerations);
         diagramGenerationObserver.createThreadPoolMetric(executorService);
     }
