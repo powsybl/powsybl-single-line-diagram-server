@@ -51,6 +51,8 @@ import java.util.stream.Collectors;
 @Service
 class NetworkAreaDiagramService {
     private static final int SCALING_FACTOR = 450000;
+    private static final int MIN_SCALING_FACTOR = 50000;
+    private static final int MAX_SCALING_FACTOR = 600000;
     private static final int SCALING_FACTOR_TO_TEST = 1000;
     private static final double RADIUS_FACTOR = 300;
 
@@ -112,12 +114,26 @@ class NetworkAreaDiagramService {
         int result = (int) Math.round( this.modifiedSigmoid(this.getMaxDeltaForScale() / 5) * (MAX_SCALING_FACTOR - MIN_SCALING_FACTOR) + MIN_SCALING_FACTOR);
         System.out.println("CHARLY 🐞🐞 getScalingFactor => " + result);
         return result;*/
+
+        int result = SCALING_FACTOR;
+
+        //result =  (int) Math.round(2200 * this.getDensity() + 50000);
+        result =  (int) Math.round(20000 * this.getDensity() + 50000);
+        if (result > MAX_SCALING_FACTOR) {
+            result = MAX_SCALING_FACTOR;
+        }
+        if (result < MIN_SCALING_FACTOR) {
+            result = MIN_SCALING_FACTOR;
+        }
+        System.out.println("🪲 getScalingFactor => "+result);
+        return result;
+        /*
         if (charlyDepth != 0) {
             System.out.println("🪲 charlyDepth SCALING_FACTOR => "+charlyDepth);
             return charlyDepth;
         }
         if ("charly".length() > 2) {
-            System.out.println("🪲 default value SCALING_FACTOR => "+SCALING_FACTOR);
+            System.out.println("🪲 SCALING_FACTOR (default value) => "+SCALING_FACTOR);
             return SCALING_FACTOR;
         }
 
@@ -127,7 +143,7 @@ class NetworkAreaDiagramService {
             System.out.println("🪲 SCALING_FACTOR => "+SCALING_FACTOR);
             System.out.println("🦂 getScalingFactor => "+result);
         }
-        return result;
+        return result;*/
     }
 
     public double getRadiusFactor() {
@@ -148,11 +164,13 @@ class NetworkAreaDiagramService {
         double minLon = Double.MAX_VALUE;
         double maxLon = Double.MIN_VALUE;
 
+        double gridSize = 0.5;
+
         // Used to find the density of values
-        //Map<String, Integer> gridCounts = new HashMap<>();
+        Map<String, Integer> gridCounts = new HashMap<>();
 
         for (Coordinate coordinate : coordinates) {
-            //System.out.println("🐞 Longitude: " + coordinate.getLon() + ", Latitude: " + coordinate.getLat());
+            System.out.println("🪱 Longitude: " + coordinate.getLon() + ", Latitude: " + coordinate.getLat());
 
             double lat = coordinate.getLat();
             double lon = coordinate.getLon();
@@ -163,27 +181,34 @@ class NetworkAreaDiagramService {
             if (lon > maxLon) { maxLon = lon; }
 
             // Calculate the grid cell indices
-            //int latIndex = (int) Math.floor(lat);
-            //int lonIndex = (int) Math.floor(lon);
+            int latIndex = (int) Math.floor(lat / gridSize);
+            int lonIndex = (int) Math.floor(lon / gridSize);
 
             // Create a unique key for the grid cell
-            //String gridKey = latIndex + "_" + lonIndex;
+            String gridKey = latIndex + "_" + lonIndex;
 
             // Increment the count for this grid cell
-            //gridCounts.put(gridKey, gridCounts.getOrDefault(gridKey, 0) + 1);
+            gridCounts.put(gridKey, gridCounts.getOrDefault(gridKey, 0) + 1);
         }
 
-        /*for (Map.Entry<String, Integer> entry : gridCounts.entrySet()) {
+        for (Map.Entry<String, Integer> entry : gridCounts.entrySet()) {
             System.out.println("🪲 Grid: " + entry.getKey() + ", Count: " + entry.getValue());
-        }*/
+        }
 
         // Represent the size reference used to calculate the density
-        double diagonal = calculateHypotenuse(maxLon - minLon, maxLat - minLat);
-        double width = maxLat - minLat;
-        double height = maxLon - minLon;
+        //double diagonal = calculateHypotenuse(maxLon - minLon, maxLat - minLat);
+        double width = Math.floor((maxLat / gridSize) + 1) - Math.floor(minLat / gridSize);
+        double height = Math.floor((maxLon / gridSize) + 1) - Math.floor(minLon / gridSize);
         this.setDensity(coordinates.size() / (width * height));
-
-        System.out.println("🐝 diagonal: " + diagonal);
+        //this.setDensity(coordinates.size() / diagonal);
+//        System.out.println("maxLon: " + maxLon);
+//        System.out.println("minLon: " + minLon);
+//        System.out.println("maxLat: " + maxLat);
+//        System.out.println("minLat: " + minLat);
+        System.out.println("width: " + width);
+        System.out.println("height: " + height);
+        System.out.println("coordinates.size(): " + coordinates.size());
+        //System.out.println("🐝 diagonal: " + diagonal);
         System.out.println("🐞 density: " + this.getDensity());
     }
 
@@ -211,10 +236,31 @@ class NetworkAreaDiagramService {
 
             //Initialize with geographical data
             if (withGeoData) {
+                List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
+                List<String> substations = voltageLevels.stream()
+                    .map(VoltageLevel::getNullableSubstation)
+                    .filter(Objects::nonNull)
+                    .map(Substation::getId)
+                    .toList();
+
+//                for(String sub: substations) {
+//                    System.out.println("sub id : "+sub);
+//                }
+
                 //get voltage levels' positions on depth+1 to be able to locate lines on depth
-                List<VoltageLevel> voltageLevels = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
-                Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevels);
-                calculateScalingFactor(substationGeoDataMap.values());
+                List<VoltageLevel> voltageLevelsPlusOneDepth = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
+                Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
+
+//                for(String key: substationGeoDataMap.keySet()) {
+//                    System.out.println("substationGeoDataMap Key : "+key);
+//                }
+
+                List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
+                                .filter(entry -> substations.contains(entry.getKey()))
+                                        .map(Map.Entry::getValue)
+                                                .toList();
+
+                calculateScalingFactor(coordinatesForScaling);
                 nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, this.getScalingFactor(charlyDepth), this.getRadiusFactor(), BasicForceLayout::new));
 
             }
