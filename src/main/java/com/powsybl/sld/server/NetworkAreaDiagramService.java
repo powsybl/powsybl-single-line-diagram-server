@@ -31,8 +31,6 @@ import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.GeoDataUtils;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -50,10 +48,9 @@ import java.util.stream.Collectors;
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class NetworkAreaDiagramService {
-    private static final int SCALING_FACTOR = 450000;
+    private static final int DEFAULT_SCALING_FACTOR = 450000;
     private static final int MIN_SCALING_FACTOR = 50000;
     private static final int MAX_SCALING_FACTOR = 600000;
-    private static final int SCALING_FACTOR_TO_TEST = 1000;
     private static final double RADIUS_FACTOR = 300;
 
     static final String SVG_TAG = "svg";
@@ -66,10 +63,6 @@ class NetworkAreaDiagramService {
 
     private final ObjectMapper objectMapper;
 
-    @Setter
-    @Getter
-    private double density = 0;
-
     public NetworkAreaDiagramService(NetworkStoreService networkStoreService, GeoDataService geoDataService,
                                      NetworkAreaExecutionService diagramExecutionService, ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
@@ -80,8 +73,8 @@ class NetworkAreaDiagramService {
 
     public String getNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         return diagramExecutionService
-            .supplyAsync(() -> getNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData))
-            .join();
+                .supplyAsync(() -> getNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData))
+                .join();
     }
 
     private String getNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
@@ -91,130 +84,59 @@ class NetworkAreaDiagramService {
             String metadata = svgAndMetadata.getMetadata();
             Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
             return objectMapper.writeValueAsString(
-                objectMapper.createObjectNode()
-                    .put(SVG_TAG, svg)
-                    .putRawValue(METADATA, new RawValue(metadata))
-                    .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
+                    objectMapper.createObjectNode()
+                            .put(SVG_TAG, svg)
+                            .putRawValue(METADATA, new RawValue(metadata))
+                            .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
         } catch (JsonProcessingException e) {
             throw new PowsyblException("Failed to parse JSON response", e);
         }
     }
 
-    private double calculateHypotenuse(double a, double b) {
-        return Math.sqrt(Math.pow(a, 2) + Math.pow(b, 2));
-    }
-    private double modifiedSigmoid(double x) {
-        // See the curve : https://www.google.com/search?q=1%2F(1%2Be%5E(8(x-0.5)))
-        return 1.0 / (1.0 + Math.exp(8.0 * (x - 0.5)));
-    }
-
-    public int getScalingFactor(int charlyDepth) {
-        /*System.out.println("CHARLY 🐞 getMaxDeltaForScale => "+this.getMaxDeltaForScale());
-        System.out.println("CHARLY 🐞 modifiedSigmoid => "+this.modifiedSigmoid(this.getMaxDeltaForScale()));
-        int result = (int) Math.round( this.modifiedSigmoid(this.getMaxDeltaForScale() / 5) * (MAX_SCALING_FACTOR - MIN_SCALING_FACTOR) + MIN_SCALING_FACTOR);
-        System.out.println("CHARLY 🐞🐞 getScalingFactor => " + result);
-        return result;*/
-
-        int result = SCALING_FACTOR;
-
-        //result =  (int) Math.round(2200 * this.getDensity() + 50000);
-        result =  (int) Math.round(15700 * this.getDensity() + MIN_SCALING_FACTOR);
+    private int calculateScalingFactor(Collection<Coordinate> coordinates) {
+        if (coordinates.isEmpty()) {
+            return DEFAULT_SCALING_FACTOR;
+        }
+        double density = calculateDensity(coordinates);
+        int result = (int) Math.round(15700 * density + MIN_SCALING_FACTOR);
         if (result > MAX_SCALING_FACTOR) {
             result = MAX_SCALING_FACTOR;
         }
         if (result < MIN_SCALING_FACTOR) {
             result = MIN_SCALING_FACTOR;
         }
-        System.out.println("🪲 getScalingFactor => "+result);
         return result;
-        /*
-        if (charlyDepth != 0) {
-            System.out.println("🪲 charlyDepth SCALING_FACTOR => "+charlyDepth);
-            return charlyDepth;
-        }
-        if ("charly".length() > 2) {
-            System.out.println("🪲 SCALING_FACTOR (default value) => "+SCALING_FACTOR);
-            return SCALING_FACTOR;
-        }
-
-        int result = SCALING_FACTOR;
-        if (this.getDensity() != 0) {
-            result = (int) Math.round(SCALING_FACTOR * this.getDensity());
-            System.out.println("🪲 SCALING_FACTOR => "+SCALING_FACTOR);
-            System.out.println("🦂 getScalingFactor => "+result);
-        }
-        return result;*/
     }
 
-    public double getRadiusFactor() {
-        /*if (this.getMaxDeltaForScale() != 0) {
-            double result = RADIUS_FACTOR * 0.3 * this.getMaxDeltaForScale();
-            //double result = RADIUS_FACTOR * this.modifiedSigmoid(this.getMaxDeltaForScale()) * this.getMaxDeltaForScale();
-            // TODO CHARLY division par zéro ?
-            System.out.println("CHARLY 🐞🐞🐞 getRadiusFactor => " + Math.round(result));
-            return result;
-        }*/
-        return RADIUS_FACTOR;
-    }
-
-    private void calculateScalingFactor(Collection<Coordinate> coordinates) {
-        // Used to find the range of values
+    private double calculateDensity(Collection<Coordinate> coordinates) {
         double minLat = Double.MAX_VALUE;
         double maxLat = Double.MIN_VALUE;
         double minLon = Double.MAX_VALUE;
         double maxLon = Double.MIN_VALUE;
-
         double gridSize = 0.5;
-
-        // Used to find the density of values
-        Map<String, Integer> gridCounts = new HashMap<>();
-
         for (Coordinate coordinate : coordinates) {
-            System.out.println("🪱 Longitude: " + coordinate.getLon() + ", Latitude: " + coordinate.getLat());
-
             double lat = coordinate.getLat();
             double lon = coordinate.getLon();
 
-            if (lat < minLat) { minLat = lat; }
-            if (lat > maxLat) { maxLat = lat; }
-            if (lon < minLon) { minLon = lon; }
-            if (lon > maxLon) { maxLon = lon; }
-
-            // Calculate the grid cell indices
-            int latIndex = (int) Math.floor(lat / gridSize);
-            int lonIndex = (int) Math.floor(lon / gridSize);
-
-            // Create a unique key for the grid cell
-            String gridKey = latIndex + "_" + lonIndex;
-
-            // Increment the count for this grid cell
-            gridCounts.put(gridKey, gridCounts.getOrDefault(gridKey, 0) + 1);
+            if (lat < minLat) {
+                minLat = lat;
+            }
+            if (lat > maxLat) {
+                maxLat = lat;
+            }
+            if (lon < minLon) {
+                minLon = lon;
+            }
+            if (lon > maxLon) {
+                maxLon = lon;
+            }
         }
-
-        for (Map.Entry<String, Integer> entry : gridCounts.entrySet()) {
-            System.out.println("🪲 Grid: " + entry.getKey() + ", Count: " + entry.getValue());
-        }
-
-        // Represent the size reference used to calculate the density
-        //double diagonal = calculateHypotenuse(maxLon - minLon, maxLat - minLat);
         double width = Math.floor(maxLat / gridSize) - Math.floor(minLat / gridSize) + gridSize;
         double height = Math.floor(maxLon / gridSize) - Math.floor(minLon / gridSize) + gridSize;
-        this.setDensity(coordinates.size() / (width * height));
-        //this.setDensity(coordinates.size() / diagonal);
-//        System.out.println("maxLon: " + maxLon);
-//        System.out.println("minLon: " + minLon);
-//        System.out.println("maxLat: " + maxLat);
-//        System.out.println("minLat: " + minLat);
-        System.out.println("width: " + width);
-        System.out.println("height: " + height);
-        System.out.println("coordinates.size(): " + coordinates.size());
-        //System.out.println("🐝 diagonal: " + diagonal);
-        System.out.println("🐞 density: " + this.getDensity());
+        return coordinates.size() / (width * height);
     }
 
-    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int charlyDepth, boolean withGeoData) {
-
-        int depth = 0;
+    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
         if (existingVLIds.isEmpty()) {
@@ -238,30 +160,21 @@ class NetworkAreaDiagramService {
             if (withGeoData) {
                 List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
                 List<String> substations = voltageLevels.stream()
-                    .map(VoltageLevel::getNullableSubstation)
-                    .filter(Objects::nonNull)
-                    .map(Substation::getId)
-                    .toList();
-
-//                for(String sub: substations) {
-//                    System.out.println("sub id : "+sub);
-//                }
+                        .map(VoltageLevel::getNullableSubstation)
+                        .filter(Objects::nonNull)
+                        .map(Substation::getId)
+                        .toList();
 
                 //get voltage levels' positions on depth+1 to be able to locate lines on depth
                 List<VoltageLevel> voltageLevelsPlusOneDepth = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
                 Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
 
-//                for(String key: substationGeoDataMap.keySet()) {
-//                    System.out.println("substationGeoDataMap Key : "+key);
-//                }
-
                 List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
-                                .filter(entry -> substations.contains(entry.getKey()))
-                                        .map(Map.Entry::getValue)
-                                                .toList();
-
-                calculateScalingFactor(coordinatesForScaling);
-                nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, this.getScalingFactor(charlyDepth), this.getRadiusFactor(), BasicForceLayout::new));
+                        .filter(entry -> substations.contains(entry.getKey()))
+                        .map(Map.Entry::getValue)
+                        .toList();
+                int scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
+                nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, scalingFactor, RADIUS_FACTOR, BasicForceLayout::new));
 
             }
             nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
