@@ -118,7 +118,7 @@ class NetworkAreaDiagramService {
         int result = SCALING_FACTOR;
 
         //result =  (int) Math.round(2200 * this.getDensity() + 50000);
-        result =  (int) Math.round(20000 * this.getDensity() + 50000);
+        result =  (int) Math.round(15700 * this.getDensity() + MIN_SCALING_FACTOR);
         if (result > MAX_SCALING_FACTOR) {
             result = MAX_SCALING_FACTOR;
         }
@@ -197,8 +197,8 @@ class NetworkAreaDiagramService {
 
         // Represent the size reference used to calculate the density
         //double diagonal = calculateHypotenuse(maxLon - minLon, maxLat - minLat);
-        double width = Math.floor((maxLat / gridSize) + 1) - Math.floor(minLat / gridSize);
-        double height = Math.floor((maxLon / gridSize) + 1) - Math.floor(minLon / gridSize);
+        double width = Math.floor(maxLat / gridSize) - Math.floor(minLat / gridSize) + gridSize;
+        double height = Math.floor(maxLon / gridSize) - Math.floor(minLon / gridSize) + gridSize;
         this.setDensity(coordinates.size() / (width * height));
         //this.setDensity(coordinates.size() / diagonal);
 //        System.out.println("maxLon: " + maxLon);
