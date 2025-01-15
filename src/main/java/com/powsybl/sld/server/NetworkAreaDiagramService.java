@@ -73,8 +73,8 @@ class NetworkAreaDiagramService {
 
     public String getNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         return diagramExecutionService
-                .supplyAsync(() -> getNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData))
-                .join();
+            .supplyAsync(() -> getNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData))
+            .join();
     }
 
     private String getNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
@@ -84,10 +84,10 @@ class NetworkAreaDiagramService {
             String metadata = svgAndMetadata.getMetadata();
             Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
             return objectMapper.writeValueAsString(
-                    objectMapper.createObjectNode()
-                            .put(SVG_TAG, svg)
-                            .putRawValue(METADATA, new RawValue(metadata))
-                            .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
+                objectMapper.createObjectNode()
+                    .put(SVG_TAG, svg)
+                    .putRawValue(METADATA, new RawValue(metadata))
+                    .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
         } catch (JsonProcessingException e) {
             throw new PowsyblException("Failed to parse JSON response", e);
         }
@@ -214,7 +214,6 @@ class NetworkAreaDiagramService {
                 }
             }
         }
-
         return substationGeoDataMap;
     }
 
