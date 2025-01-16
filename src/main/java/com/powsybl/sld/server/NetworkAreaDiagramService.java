@@ -157,6 +157,7 @@ class NetworkAreaDiagramService {
             nadParameters.setLayoutParameters(layoutParameters);
 
             //Initialize with geographical data
+            int scalingFactor = 0;
             if (withGeoData) {
                 List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
                 List<String> substations = voltageLevels.stream()
@@ -173,14 +174,14 @@ class NetworkAreaDiagramService {
                         .filter(entry -> substations.contains(entry.getKey()))
                         .map(Map.Entry::getValue)
                         .toList();
-                int scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
+                scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
                 nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, scalingFactor, RADIUS_FACTOR, BasicForceLayout::new));
 
             }
             nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
 
             NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
-            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth);
+            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth, scalingFactor);
 
             return SvgAndMetadata.builder()
                     .svg(svgWriter.toString())
@@ -217,7 +218,7 @@ class NetworkAreaDiagramService {
         return substationGeoDataMap;
     }
 
-    private Map<String, Object> computeAdditionalMetadata(Network network, List<String> voltageLevelsIds, int depth) {
+    private Map<String, Object> computeAdditionalMetadata(Network network, List<String> voltageLevelsIds, int depth, int scalingFactor) {
 
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
 
@@ -229,6 +230,7 @@ class NetworkAreaDiagramService {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("nbVoltageLevels", vlFilter.getNbVoltageLevels());
         metadata.put("voltageLevels", voltageLevelsInfos);
+        metadata.put("scalingFactor", scalingFactor);
 
         return metadata;
     }
