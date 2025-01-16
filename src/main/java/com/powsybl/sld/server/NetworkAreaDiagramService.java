@@ -98,6 +98,7 @@ class NetworkAreaDiagramService {
             return DEFAULT_SCALING_FACTOR;
         }
         double density = calculateDensity(coordinates);
+        // The value 15700 was tested to give good results across various real-world cases.
         int result = (int) Math.round(15700 * density + MIN_SCALING_FACTOR);
         if (result > MAX_SCALING_FACTOR) {
             result = MAX_SCALING_FACTOR;
