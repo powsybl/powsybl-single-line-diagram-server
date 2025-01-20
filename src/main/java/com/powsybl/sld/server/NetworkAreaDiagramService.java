@@ -118,10 +118,18 @@ class NetworkAreaDiagramService {
         for (Coordinate coordinate : coordinates) {
             double lat = coordinate.getLat();
             double lon = coordinate.getLon();
-            if (lat < minLat) { minLat = lat; }
-            if (lat > maxLat) { maxLat = lat; }
-            if (lon < minLon) { minLon = lon; }
-            if (lon > maxLon) { maxLon = lon; }
+            if (lat < minLat) {
+                minLat = lat;
+            }
+            if (lat > maxLat) {
+                maxLat = lat;
+            }
+            if (lon < minLon) {
+                minLon = lon;
+            }
+            if (lon > maxLon) {
+                maxLon = lon;
+            }
         }
         double width = Math.floor(maxLat / gridSize) - Math.floor(minLat / gridSize) + gridSize;
         double height = Math.floor(maxLon / gridSize) - Math.floor(minLon / gridSize) + gridSize;
@@ -168,7 +176,7 @@ class NetworkAreaDiagramService {
                         .map(Map.Entry::getValue)
                         .toList();
                 scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
-                
+
                 nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, scalingFactor, RADIUS_FACTOR, BasicForceLayout::new));
             }
             nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
