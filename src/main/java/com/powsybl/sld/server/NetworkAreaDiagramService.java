@@ -48,7 +48,9 @@ import java.util.stream.Collectors;
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class NetworkAreaDiagramService {
-    private static final int SCALING_FACTOR = 450000;
+    private static final int DEFAULT_SCALING_FACTOR = 450000;
+    private static final int MIN_SCALING_FACTOR = 50000;
+    private static final int MAX_SCALING_FACTOR = 600000;
     private static final double RADIUS_FACTOR = 300;
 
     static final String SVG_TAG = "svg";
@@ -91,6 +93,49 @@ class NetworkAreaDiagramService {
         }
     }
 
+    private int calculateScalingFactor(Collection<Coordinate> coordinates) {
+        if (coordinates.isEmpty()) {
+            return DEFAULT_SCALING_FACTOR;
+        }
+        double density = calculateDensity(coordinates);
+        // The value 15700 was tested to give good results across various real-world cases.
+        int result = (int) Math.round(15700 * density + MIN_SCALING_FACTOR);
+        if (result > MAX_SCALING_FACTOR) {
+            result = MAX_SCALING_FACTOR;
+        }
+        if (result < MIN_SCALING_FACTOR) {
+            result = MIN_SCALING_FACTOR;
+        }
+        return result;
+    }
+
+    private double calculateDensity(Collection<Coordinate> coordinates) {
+        double minLat = Double.MAX_VALUE;
+        double maxLat = Double.MIN_VALUE;
+        double minLon = Double.MAX_VALUE;
+        double maxLon = Double.MIN_VALUE;
+        double gridSize = 0.5;
+        for (Coordinate coordinate : coordinates) {
+            double lat = coordinate.getLat();
+            double lon = coordinate.getLon();
+            if (lat < minLat) {
+                minLat = lat;
+            }
+            if (lat > maxLat) {
+                maxLat = lat;
+            }
+            if (lon < minLon) {
+                minLon = lon;
+            }
+            if (lon > maxLon) {
+                maxLon = lon;
+            }
+        }
+        double width = Math.floor(maxLat / gridSize) - Math.floor(minLat / gridSize) + gridSize;
+        double height = Math.floor(maxLon / gridSize) - Math.floor(minLon / gridSize) + gridSize;
+        return coordinates.size() / (width * height);
+    }
+
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
@@ -112,17 +157,32 @@ class NetworkAreaDiagramService {
             nadParameters.setLayoutParameters(layoutParameters);
 
             //Initialize with geographical data
+            int scalingFactor = 0;
             if (withGeoData) {
-                //get voltage levels' positions on depth+1 to be able to locate lines on depth
-                List<VoltageLevel> voltageLevels = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
-                assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevels);
-                nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, SCALING_FACTOR, RADIUS_FACTOR, BasicForceLayout::new));
+                List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
+                List<String> substations = voltageLevels.stream()
+                        .map(VoltageLevel::getNullableSubstation)
+                        .filter(Objects::nonNull)
+                        .map(Substation::getId)
+                        .toList();
 
+                //get voltage levels' positions on depth+1 to be able to locate lines on depth
+                List<VoltageLevel> voltageLevelsPlusOneDepth = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
+                Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
+
+                // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
+                List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
+                        .filter(entry -> substations.contains(entry.getKey()))
+                        .map(Map.Entry::getValue)
+                        .toList();
+                scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
+
+                nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, scalingFactor, RADIUS_FACTOR, BasicForceLayout::new));
             }
             nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
 
             NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
-            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth);
+            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth, scalingFactor);
 
             return SvgAndMetadata.builder()
                     .svg(svgWriter.toString())
@@ -133,7 +193,7 @@ class NetworkAreaDiagramService {
         }
     }
 
-    public void assignGeoDataCoordinates(Network network, UUID networkUuid, String variantId, List<VoltageLevel> voltageLevels) {
+    public Map<String, Coordinate> assignGeoDataCoordinates(Network network, UUID networkUuid, String variantId, List<VoltageLevel> voltageLevels) {
         // Geographical positions for substations related to voltageLevels
         List<Substation> substations = voltageLevels.stream()
                 .map(VoltageLevel::getNullableSubstation)
@@ -155,11 +215,11 @@ class NetworkAreaDiagramService {
                             .add();
                 }
             }
-
         }
+        return substationGeoDataMap;
     }
 
-    private Map<String, Object> computeAdditionalMetadata(Network network, List<String> voltageLevelsIds, int depth) {
+    private Map<String, Object> computeAdditionalMetadata(Network network, List<String> voltageLevelsIds, int depth, int scalingFactor) {
 
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
 
@@ -171,6 +231,7 @@ class NetworkAreaDiagramService {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("nbVoltageLevels", vlFilter.getNbVoltageLevels());
         metadata.put("voltageLevels", voltageLevelsInfos);
+        metadata.put("scalingFactor", scalingFactor);
 
         return metadata;
     }
