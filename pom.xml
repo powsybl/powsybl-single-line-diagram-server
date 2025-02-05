@@ -48,7 +48,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <powsybl-ws-dependencies.version>2.17.0</powsybl-ws-dependencies.version>
+        <powsybl-ws-dependencies.version>2.18.0</powsybl-ws-dependencies.version>
     </properties>
 
     <build>
