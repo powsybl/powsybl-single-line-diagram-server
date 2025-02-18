@@ -9,7 +9,6 @@ package com.powsybl.sld.server.repository.nad;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -21,28 +20,28 @@ import java.util.UUID;
 @Setter
 @Entity
 @Builder
-@Table(name = "nadConfig")
-public class NadConfigEntity {
+public class NadVoltageLevelPositionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     private UUID id;
 
-    @Column(name = "depth")
-    private Integer depth;
+    @Column(name = "voltageLevelId")
+    private String voltageLevelId;
 
-    @Column(name = "scalingFactor")
-    private Integer scalingFactor;
+    @Column(name = "xPosition")
+    private double xPosition;
 
-    @Column(name = "radiusFactor")
-    private Integer radiusFactor;
+    @Column(name = "yPosition")
+    private double yPosition;
 
-    @Column(name = "name")
-    private String name;
+    @Column(name = "xLabelPosition")
+    private double xLabelPosition;
 
-    @Column(name = "description")
-    private String description;
+    @Column(name = "yLabelPosition")
+    private double yLabelPosition;
 
-    @OneToMany(mappedBy = "nadConfig", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<NadVoltageLevelPositionEntity> positions;
+    @ManyToOne
+    @JoinColumn(name = "nad_config_id", nullable = false)
+    private NadConfigEntity nadConfig;
 }
