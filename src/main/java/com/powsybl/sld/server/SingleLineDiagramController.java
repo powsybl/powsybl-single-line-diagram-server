@@ -10,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
+import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -272,5 +273,38 @@ public class SingleLineDiagramController {
             LOGGER.debug("getNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
         }
         return networkAreaDiagramService.getNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
+    }
+
+    @PostMapping(value = "/network-area-diagram/config/", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a network area diagram config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram config has been created")})
+    public ResponseEntity<UUID> createNetworkAreaDiagramConfig(@RequestBody NadConfigInfos nadConfigInfos) {
+        return ResponseEntity.ok().body(networkAreaDiagramService.createNetworkAreaDiagramConfig(nadConfigInfos));
+    }
+
+    @PutMapping(value = "/network-area-diagram/config/{uuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Update a network area diagram config")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram config was updated")})
+    public ResponseEntity<Void> updateNetworkAreaDiagramConfig(
+            @Parameter(description = "Network Area Diagram UUID") @PathVariable("uuid") UUID nadConfigUuid,
+            @RequestBody NadConfigInfos nadConfigInfos) {
+        networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigUuid, nadConfigInfos);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping(value = "/network-area-diagram/config/{uuid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get a network area diagram config")
+    @ApiResponse(responseCode = "200", description = "The network area diagram config was returned")
+    public ResponseEntity<NadConfigInfos> getNetworkAreaDiagramConfig(
+            @Parameter(description = "Network Area Diagram UUID") @PathVariable("uuid") UUID nadConfigUuid) {
+        return ResponseEntity.ok().body(networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigUuid));
+    }
+
+    @DeleteMapping(value = "/network-area-diagram/config/{uuid}")
+    @Operation(summary = "Delete a network area diagram config")
+    @ApiResponse(responseCode = "200", description = "The network area diagram config has been deleted")
+    public ResponseEntity<Void> deleteNetworkAreaDiagramConfig(@Parameter(description = "Network Area Diagram UUID") @PathVariable("uuid") UUID nadConfigUuid) {
+        networkAreaDiagramService.deleteNetworkAreaDiagramConfig(nadConfigUuid);
+        return ResponseEntity.ok().build();
     }
 }

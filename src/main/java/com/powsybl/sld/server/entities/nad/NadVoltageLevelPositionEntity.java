@@ -4,8 +4,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package com.powsybl.sld.server.repository.nad;
+package com.powsybl.sld.server.entities.nad;
 
+import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,6 +21,9 @@ import java.util.UUID;
 @Setter
 @Entity
 @Builder
+@Table(name = "nadVoltageLevelPosition", indexes = {
+    @Index(name = "nadConfigEntity_positions_index", columnList = "nad_config_id")
+})
 public class NadVoltageLevelPositionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -42,6 +46,18 @@ public class NadVoltageLevelPositionEntity {
     private double yLabelPosition;
 
     @ManyToOne
-    @JoinColumn(name = "nad_config_id", nullable = false)
+    @JoinColumn(name = "nad_config_id", nullable = false,
+            foreignKey = @ForeignKey(name = "nadVoltageLevelPosition_nadConfig_fk"))
     private NadConfigEntity nadConfig;
+
+    public NadVoltageLevelPositionInfos toDto() {
+        return NadVoltageLevelPositionInfos.builder()
+                .id(id)
+                .voltageLevelId(voltageLevelId)
+                .xPosition(xPosition)
+                .yPosition(yPosition)
+                .xLabelPosition(xLabelPosition)
+                .yLabelPosition(yLabelPosition)
+                .build();
+    }
 }

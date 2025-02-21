@@ -1,21 +1,19 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet author="boutiercha (generated)" id="1739893286852-1">
+    <changeSet author="boutiercha (generated)" id="1740145408632-1">
         <createTable tableName="nad_config">
             <column name="id" type="UUID">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="nad_configPK"/>
             </column>
             <column name="depth" type="INT"/>
-            <column name="description" type="VARCHAR(255)"/>
-            <column name="name" type="VARCHAR(255)"/>
             <column name="radius_factor" type="INT"/>
             <column name="scaling_factor" type="INT"/>
         </createTable>
     </changeSet>
-    <changeSet author="boutiercha (generated)" id="1739893286852-2">
-        <createTable tableName="nad_voltage_level_position_entity">
+    <changeSet author="boutiercha (generated)" id="1740145408632-2">
+        <createTable tableName="nad_voltage_level_position">
             <column name="id" type="UUID">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="nad_voltage_level_position_entityPK"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="nad_voltage_level_positionPK"/>
             </column>
             <column name="voltage_level_id" type="VARCHAR(255)"/>
             <column name="x_label_position" type="FLOAT(53)"/>
@@ -27,7 +25,12 @@
             </column>
         </createTable>
     </changeSet>
-    <changeSet author="boutiercha (generated)" id="1739893286852-3">
-        <addForeignKeyConstraint baseColumnNames="nad_config_id" baseTableName="nad_voltage_level_position_entity" constraintName="FK9j7w5d1mi4ttx3hxt85bf7rt7" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="nad_config" validate="true"/>
+    <changeSet author="boutiercha (generated)" id="1740145408632-3">
+        <createIndex indexName="nadConfigEntity_positions_index" tableName="nad_voltage_level_position">
+            <column name="nad_config_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="boutiercha (generated)" id="1740145408632-4">
+        <addForeignKeyConstraint baseColumnNames="nad_config_id" baseTableName="nad_voltage_level_position" constraintName="nadVoltageLevelPosition_nadConfig_fk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="nad_config" validate="true"/>
     </changeSet>
 </databaseChangeLog>

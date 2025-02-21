@@ -29,12 +29,15 @@ import com.powsybl.sld.server.dto.Coordinate;
 import com.powsybl.sld.server.dto.SubstationGeoData;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
+import com.powsybl.sld.server.dto.nad.NadConfigInfos;
+import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.GeoDataUtils;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -61,14 +64,38 @@ class NetworkAreaDiagramService {
     private final GeoDataService geoDataService;
     private final NetworkAreaExecutionService diagramExecutionService;
 
+    private final NadConfigRepository nadConfigRepository;
+
     private final ObjectMapper objectMapper;
 
     public NetworkAreaDiagramService(NetworkStoreService networkStoreService, GeoDataService geoDataService,
-                                     NetworkAreaExecutionService diagramExecutionService, ObjectMapper objectMapper) {
+                                     NetworkAreaExecutionService diagramExecutionService, NadConfigRepository nadConfigRepository, ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
         this.geoDataService = geoDataService;
         this.diagramExecutionService = diagramExecutionService;
+        this.nadConfigRepository = nadConfigRepository;
         this.objectMapper = objectMapper;
+    }
+
+    @Transactional
+    public UUID createNetworkAreaDiagramConfig(NadConfigInfos nadConfigInfos) {
+        return nadConfigRepository.save(nadConfigInfos.toNadConfigEntity()).getId();
+    }
+
+    @Transactional
+    public void updateNetworkAreaDiagramConfig(UUID nadConfigUuid, NadConfigInfos nadConfigInfos) {
+        // TODO implement this
+    }
+
+    @Transactional(readOnly = true)
+    public NadConfigInfos getNetworkAreaDiagramConfig(UUID nadConfigUuid) {
+        // TODO return HTTP404 instead of HTTP500
+        return nadConfigRepository.findById(nadConfigUuid).orElseThrow(() -> new PowsyblException("Network Area Config not found")).toDto();
+    }
+
+    @Transactional
+    public void deleteNetworkAreaDiagramConfig(UUID nadConfigUuid) {
+        nadConfigRepository.deleteById(nadConfigUuid);
     }
 
     public String getNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {

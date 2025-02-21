@@ -4,11 +4,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-package com.powsybl.sld.server.repository.nad;
+package com.powsybl.sld.server.entities.nad;
 
+import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,12 +39,18 @@ public class NadConfigEntity {
     @Column(name = "radiusFactor")
     private Integer radiusFactor;
 
-    @Column(name = "name")
-    private String name;
-
-    @Column(name = "description")
-    private String description;
-
     @OneToMany(mappedBy = "nadConfig", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<NadVoltageLevelPositionEntity> positions;
+    @Builder.Default
+    private List<NadVoltageLevelPositionEntity> positions = new ArrayList<>();
+
+    public NadConfigInfos toDto() {
+        NadConfigInfos.NadConfigInfosBuilder nadConfigInfosBuilder = NadConfigInfos.builder();
+        nadConfigInfosBuilder.id(this.id)
+                .depth(this.depth)
+                .scalingFactor(this.scalingFactor)
+                .radiusFactor(this.radiusFactor)
+                .build();
+        nadConfigInfosBuilder.positions(this.positions.stream().map(NadVoltageLevelPositionEntity::toDto).toList());
+        return nadConfigInfosBuilder.build();
+    }
 }
