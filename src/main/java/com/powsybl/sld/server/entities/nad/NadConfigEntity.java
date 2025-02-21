@@ -7,12 +7,13 @@
 package com.powsybl.sld.server.entities.nad;
 
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
+import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author Charly Boutier <charly.boutier at rte-france.com>
@@ -52,5 +53,27 @@ public class NadConfigEntity {
                 .build();
         nadConfigInfosBuilder.positions(this.positions.stream().map(NadVoltageLevelPositionEntity::toDto).toList());
         return nadConfigInfosBuilder.build();
+    }
+
+    public void update(@NonNull NadConfigInfos nadConfigInfos) {
+        Optional.ofNullable(nadConfigInfos.getDepth()).ifPresent(this::setDepth);
+        Optional.ofNullable(nadConfigInfos.getScalingFactor()).ifPresent(this::setScalingFactor);
+        Optional.ofNullable(nadConfigInfos.getRadiusFactor()).ifPresent(this::setRadiusFactor);
+
+        if (nadConfigInfos.getPositions() != null && !nadConfigInfos.getPositions().isEmpty()) {
+            Map<UUID, NadVoltageLevelPositionEntity> existingPositionsMap = this.positions.stream()
+                    .collect(Collectors.toMap(NadVoltageLevelPositionEntity::getId, Function.identity()));
+
+            for (NadVoltageLevelPositionInfos nadVoltageLevelPositionInfos : nadConfigInfos.getPositions()) {
+                if (nadVoltageLevelPositionInfos.getId() != null && existingPositionsMap.containsKey(nadVoltageLevelPositionInfos.getId())) {
+                    NadVoltageLevelPositionEntity existingPositionEntity = existingPositionsMap.get(nadVoltageLevelPositionInfos.getId());
+                    existingPositionEntity.update(nadVoltageLevelPositionInfos);
+                } else {
+                    NadVoltageLevelPositionEntity newPositionEntity = nadVoltageLevelPositionInfos.toEntity();
+                    newPositionEntity.setNadConfig(this);
+                    this.positions.add(newPositionEntity);
+                }
+            }
+        }
     }
 }

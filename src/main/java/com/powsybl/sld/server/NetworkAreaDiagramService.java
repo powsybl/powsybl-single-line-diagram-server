@@ -84,13 +84,14 @@ class NetworkAreaDiagramService {
 
     @Transactional
     public void updateNetworkAreaDiagramConfig(UUID nadConfigUuid, NadConfigInfos nadConfigInfos) {
-        // TODO implement this
+        nadConfigRepository.findById(nadConfigUuid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND))
+                .update(nadConfigInfos);
     }
 
     @Transactional(readOnly = true)
     public NadConfigInfos getNetworkAreaDiagramConfig(UUID nadConfigUuid) {
-        // TODO return HTTP404 instead of HTTP500
-        return nadConfigRepository.findById(nadConfigUuid).orElseThrow(() -> new PowsyblException("Network Area Config not found")).toDto();
+        return nadConfigRepository.findById(nadConfigUuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).toDto();
     }
 
     @Transactional

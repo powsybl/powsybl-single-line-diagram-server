@@ -22,10 +22,10 @@ import java.util.UUID;
 public class NadVoltageLevelPositionInfos {
     private UUID id;
     private String voltageLevelId;
-    private double xPosition;
-    private double yPosition;
-    private double xLabelPosition;
-    private double yLabelPosition;
+    private Double xPosition;
+    private Double yPosition;
+    private Double xLabelPosition;
+    private Double yLabelPosition;
 
     public NadVoltageLevelPositionEntity toEntity() {
         return NadVoltageLevelPositionEntity.builder()
