@@ -61,12 +61,22 @@ public class NadConfigEntity {
         Optional.ofNullable(nadConfigInfos.getRadiusFactor()).ifPresent(this::setRadiusFactor);
 
         if (nadConfigInfos.getPositions() != null && !nadConfigInfos.getPositions().isEmpty()) {
-            Map<UUID, NadVoltageLevelPositionEntity> existingPositionsMap = this.positions.stream()
+
+            // Lookup tables
+            Map<UUID, NadVoltageLevelPositionEntity> uuidPositionsMap = this.positions.stream()
                     .collect(Collectors.toMap(NadVoltageLevelPositionEntity::getId, Function.identity()));
+            Map<String, NadVoltageLevelPositionEntity> voltageLevelIdPositionsMap = this.positions.stream()
+                    .collect(Collectors.toMap(NadVoltageLevelPositionEntity::getVoltageLevelId, Function.identity()));
 
             for (NadVoltageLevelPositionInfos nadVoltageLevelPositionInfos : nadConfigInfos.getPositions()) {
-                if (nadVoltageLevelPositionInfos.getId() != null && existingPositionsMap.containsKey(nadVoltageLevelPositionInfos.getId())) {
-                    NadVoltageLevelPositionEntity existingPositionEntity = existingPositionsMap.get(nadVoltageLevelPositionInfos.getId());
+                // If we have an ID, we update the corresponding position.
+                // If we do not have an ID, we check if the VoltageLevelId exists, and if it does, we update the corresponding position.
+                // Otherwise, we add a new position.
+                if (nadVoltageLevelPositionInfos.getId() != null && uuidPositionsMap.containsKey(nadVoltageLevelPositionInfos.getId())) {
+                    NadVoltageLevelPositionEntity existingPositionEntity = uuidPositionsMap.get(nadVoltageLevelPositionInfos.getId());
+                    existingPositionEntity.update(nadVoltageLevelPositionInfos);
+                } else if (nadVoltageLevelPositionInfos.getVoltageLevelId() != null && voltageLevelIdPositionsMap.containsKey(nadVoltageLevelPositionInfos.getVoltageLevelId())) {
+                    NadVoltageLevelPositionEntity existingPositionEntity = voltageLevelIdPositionsMap.get(nadVoltageLevelPositionInfos.getVoltageLevelId());
                     existingPositionEntity.update(nadVoltageLevelPositionInfos);
                 } else {
                     NadVoltageLevelPositionEntity newPositionEntity = nadVoltageLevelPositionInfos.toEntity();

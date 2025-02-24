@@ -7,6 +7,7 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
+import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.vladmihalcea.sql.SQLStatementCountValidator;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,24 +15,17 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.powsybl.sld.server.TestUtils.assertRequestsCount;
-import static com.vladmihalcea.sql.SQLStatementCountValidator.assertInsertCount;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Charly Boutier <charly.boutier at rte-france.com>
  */
 @SpringBootTest
+@Tag("IntegrationTest")
 public class DiagramConfigRepositoryTest {
-    private static final UUID TEST_CONFIG_ID = UUID.fromString("bfa68792-222d-40e1-8703-670ea22b493a");
 
     @Autowired
     private NadConfigRepository nadConfigRepository;
@@ -44,21 +38,78 @@ public class DiagramConfigRepositoryTest {
 
     @Test
     void testCreateNadConfigQueryCount() {
+        NadVoltageLevelPositionEntity position1 = NadVoltageLevelPositionEntity.builder()
+                .voltageLevelId("VL1")
+                .xPosition(0.0)
+                .yPosition(0.0)
+                .xLabelPosition(0.0)
+                .yLabelPosition(0.0)
+                .build();
+
+        NadVoltageLevelPositionEntity position2 = NadVoltageLevelPositionEntity.builder()
+                .voltageLevelId("VL2")
+                .xPosition(0.0)
+                .yPosition(0.0)
+                .xLabelPosition(0.0)
+                .yLabelPosition(0.0)
+                .build();
+
+        ArrayList<NadVoltageLevelPositionEntity> positions = new ArrayList<>();
+        positions.add(position1);
+        positions.add(position2);
+
         NadConfigEntity entity = NadConfigEntity.builder()
-                        .id(TEST_CONFIG_ID)
                 .depth(0)
                 .scalingFactor(0)
                 .radiusFactor(0)
-                .positions(Collections.emptyList())
+                .positions(positions)
                 .build();
+
+        position1.setNadConfig(entity);
+        position2.setNadConfig(entity);
+
+        nadConfigRepository.save(entity);
+        assertRequestsCount(0, 3, 0, 0);
+    }
+
+    @Test
+    void testDeleteNadConfigQueryCount() {
+        NadVoltageLevelPositionEntity position1 = NadVoltageLevelPositionEntity.builder()
+                .voltageLevelId("VL1")
+                .xPosition(0.0)
+                .yPosition(0.0)
+                .xLabelPosition(0.0)
+                .yLabelPosition(0.0)
+                .build();
+
+        NadVoltageLevelPositionEntity position2 = NadVoltageLevelPositionEntity.builder()
+                .voltageLevelId("VL2")
+                .xPosition(0.0)
+                .yPosition(0.0)
+                .xLabelPosition(0.0)
+                .yLabelPosition(0.0)
+                .build();
+
+        ArrayList<NadVoltageLevelPositionEntity> positions = new ArrayList<>();
+        positions.add(position1);
+        positions.add(position2);
+
+        NadConfigEntity entity = NadConfigEntity.builder()
+                .depth(0)
+                .scalingFactor(0)
+                .radiusFactor(0)
+                .positions(positions)
+                .build();
+
+        position1.setNadConfig(entity);
+        position2.setNadConfig(entity);
 
         nadConfigRepository.save(entity);
 
-        // No select
-        assertInsertCount(1);
-        //assertRequestsCount(0, 1, 0, 0);
-        assertThat(nadConfigRepository.findById(TEST_CONFIG_ID)).isPresent();
+        nadConfigRepository.delete(entity);
 
+        // We test that all the positions are also deleted
+        assertRequestsCount(4, 3, 0, 3);
     }
 
 }

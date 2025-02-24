@@ -8,16 +8,18 @@ package com.powsybl.sld.server.dto.nad;
 
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author Charly Boutier <charly.boutier at rte-france.com>
  */
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @Getter
 @Setter
@@ -41,7 +43,7 @@ public class NadConfigInfos {
                     entity.setNadConfig(nadConfigEntity);
                     return entity;
                 })
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
 
         nadConfigEntity.setPositions(positionsEntities);
         return nadConfigEntity;
