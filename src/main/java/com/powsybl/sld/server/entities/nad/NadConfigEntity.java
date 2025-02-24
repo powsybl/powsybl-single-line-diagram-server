@@ -12,8 +12,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * @author Charly Boutier <charly.boutier at rte-france.com>
@@ -62,26 +60,30 @@ public class NadConfigEntity {
 
         if (nadConfigInfos.getPositions() != null && !nadConfigInfos.getPositions().isEmpty()) {
 
-            // Lookup tables
-            Map<UUID, NadVoltageLevelPositionEntity> uuidPositionsMap = this.positions.stream()
-                    .collect(Collectors.toMap(NadVoltageLevelPositionEntity::getId, Function.identity()));
-            Map<String, NadVoltageLevelPositionEntity> voltageLevelIdPositionsMap = this.positions.stream()
-                    .collect(Collectors.toMap(NadVoltageLevelPositionEntity::getVoltageLevelId, Function.identity()));
+            // Build two lookup maps in a single iteration for better performance.
+            Map<UUID, NadVoltageLevelPositionEntity> uuidPositionsMap = new HashMap<>();
+            Map<String, NadVoltageLevelPositionEntity> voltageLevelIdPositionsMap = new HashMap<>();
+            for (NadVoltageLevelPositionEntity position : this.positions) {
+                if (position.getId() != null) {
+                    uuidPositionsMap.put(position.getId(), position);
+                }
+                if (position.getVoltageLevelId() != null) {
+                    voltageLevelIdPositionsMap.put(position.getVoltageLevelId(), position);
+                }
+            }
 
-            for (NadVoltageLevelPositionInfos nadVoltageLevelPositionInfos : nadConfigInfos.getPositions()) {
+            for (NadVoltageLevelPositionInfos info : nadConfigInfos.getPositions()) {
                 // If we have an ID, we update the corresponding position.
                 // If we do not have an ID, we check if the VoltageLevelId exists, and if it does, we update the corresponding position.
                 // Otherwise, we add a new position.
-                if (nadVoltageLevelPositionInfos.getId() != null && uuidPositionsMap.containsKey(nadVoltageLevelPositionInfos.getId())) {
-                    NadVoltageLevelPositionEntity existingPositionEntity = uuidPositionsMap.get(nadVoltageLevelPositionInfos.getId());
-                    existingPositionEntity.update(nadVoltageLevelPositionInfos);
-                } else if (nadVoltageLevelPositionInfos.getVoltageLevelId() != null && voltageLevelIdPositionsMap.containsKey(nadVoltageLevelPositionInfos.getVoltageLevelId())) {
-                    NadVoltageLevelPositionEntity existingPositionEntity = voltageLevelIdPositionsMap.get(nadVoltageLevelPositionInfos.getVoltageLevelId());
-                    existingPositionEntity.update(nadVoltageLevelPositionInfos);
+                if (info.getId() != null && uuidPositionsMap.containsKey(info.getId())) {
+                    uuidPositionsMap.get(info.getId()).update(info);
+                } else if (info.getVoltageLevelId() != null && voltageLevelIdPositionsMap.containsKey(info.getVoltageLevelId())) {
+                    voltageLevelIdPositionsMap.get(info.getVoltageLevelId()).update(info);
                 } else {
-                    NadVoltageLevelPositionEntity newPositionEntity = nadVoltageLevelPositionInfos.toEntity();
-                    newPositionEntity.setNadConfig(this);
-                    this.positions.add(newPositionEntity);
+                    NadVoltageLevelPositionEntity newPosition = info.toEntity();
+                    newPosition.setNadConfig(this);
+                    this.positions.add(newPosition);
                 }
             }
         }
