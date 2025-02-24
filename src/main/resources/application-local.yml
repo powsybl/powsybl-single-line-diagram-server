@@ -10,3 +10,7 @@ gridsuite:
   services:
       geo-data-server:
         base-uri: http://localhost:8087
+
+powsybl-ws:
+  database:
+    host: localhost
