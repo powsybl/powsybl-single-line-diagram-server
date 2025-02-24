@@ -85,8 +85,8 @@ public class NetworkAreaDiagramServiceTest {
 
         // Check position
         Optional<NadVoltageLevelPositionEntity> vl2Position = createdConfig.get().getPositions().stream()
-            .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
-            .findFirst();
+                .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
+                .findFirst();
         assertTrue(vl2Position.isPresent());
         assertEquals(2.0, vl2Position.get().getXPosition(), 0.001);
     }
@@ -97,7 +97,7 @@ public class NetworkAreaDiagramServiceTest {
         try {
             networkAreaDiagramService.getNetworkAreaDiagramConfig(UUID.randomUUID());
             fail();
-        } catch(ResponseStatusException e) {
+        } catch (ResponseStatusException e) {
             assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
         }
     }
@@ -108,7 +108,7 @@ public class NetworkAreaDiagramServiceTest {
         try {
             networkAreaDiagramService.getNetworkAreaDiagramConfig(UUID.randomUUID());
             fail();
-        } catch(ResponseStatusException e) {
+        } catch (ResponseStatusException e) {
             assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
         }
 
@@ -121,8 +121,8 @@ public class NetworkAreaDiagramServiceTest {
 
         // Check position
         Optional<NadVoltageLevelPositionInfos> vl1Position = nadConfigDto.getPositions().stream()
-            .filter(pos -> "VL1".equals(pos.getVoltageLevelId()))
-            .findFirst();
+                .filter(pos -> "VL1".equals(pos.getVoltageLevelId()))
+                .findFirst();
         assertTrue(vl1Position.isPresent());
         assertEquals(1.0, vl1Position.get().getXPosition(), 0.001);
         assertEquals(1.1, vl1Position.get().getYPosition(), 0.001);
@@ -136,7 +136,7 @@ public class NetworkAreaDiagramServiceTest {
         try {
             networkAreaDiagramService.updateNetworkAreaDiagramConfig(UUID.randomUUID(), new NadConfigInfos());
             fail();
-        } catch(ResponseStatusException e) {
+        } catch (ResponseStatusException e) {
             assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
         }
     }
@@ -152,8 +152,8 @@ public class NetworkAreaDiagramServiceTest {
         assertEquals(300000, nadConfigDtoPreUpdate.getScalingFactor());
         assertEquals(2, nadConfigDtoPreUpdate.getPositions().size());
         Optional<NadVoltageLevelPositionInfos> vl2Position = nadConfigDtoPreUpdate.getPositions().stream()
-            .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
-            .findFirst();
+                .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
+                .findFirst();
         assertTrue(vl2Position.isPresent());
         assertEquals(2.0, vl2Position.get().getXPosition(), 0.001);
 
@@ -192,20 +192,20 @@ public class NetworkAreaDiagramServiceTest {
         assertEquals(3, nadConfigDtoPostUpdate.getPositions().size());
 
         Optional<NadVoltageLevelPositionInfos> vl2PositionPostUpdate = nadConfigDtoPostUpdate.getPositions().stream()
-            .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
-            .findFirst();
+                .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
+                .findFirst();
         assertTrue(vl2PositionPostUpdate.isPresent());
         assertEquals(65.0, vl2PositionPostUpdate.get().getXPosition(), 0.001);
 
         Optional<NadVoltageLevelPositionInfos> vl3PositionPostUpdate = nadConfigDtoPostUpdate.getPositions().stream()
-            .filter(pos -> "VL3".equals(pos.getVoltageLevelId()))
-            .findFirst();
+                .filter(pos -> "VL3".equals(pos.getVoltageLevelId()))
+                .findFirst();
         assertTrue(vl3PositionPostUpdate.isPresent());
         assertEquals(3.33, vl3PositionPostUpdate.get().getXPosition(), 0.001);
 
         Optional<NadVoltageLevelPositionInfos> vl1PositionPostUpdate = nadConfigDtoPostUpdate.getPositions().stream()
-            .filter(pos -> "VL1".equals(pos.getVoltageLevelId()))
-            .findFirst();
+                .filter(pos -> "VL1".equals(pos.getVoltageLevelId()))
+                .findFirst();
         assertTrue(vl1PositionPostUpdate.isPresent());
         assertEquals(111.111, vl1PositionPostUpdate.get().getXPosition(), 0.001);
     }
