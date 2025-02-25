@@ -29,7 +29,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @SpringBootTest
 @Tag("IntegrationTest")
-public class NetworkAreaDiagramServiceTest {
+class NetworkAreaDiagramServiceTest {
+
+    private static final UUID NONEXISTANT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
     @Autowired
     private NadConfigRepository nadConfigRepository;
@@ -95,7 +97,7 @@ public class NetworkAreaDiagramServiceTest {
     @Test
     void testReadNadConfigNotFound() {
         try {
-            networkAreaDiagramService.getNetworkAreaDiagramConfig(UUID.randomUUID());
+            networkAreaDiagramService.getNetworkAreaDiagramConfig(NONEXISTANT_UUID);
             fail();
         } catch (ResponseStatusException e) {
             assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
@@ -127,7 +129,7 @@ public class NetworkAreaDiagramServiceTest {
     @Test
     void testUpdateNadConfigNotFound() {
         try {
-            networkAreaDiagramService.updateNetworkAreaDiagramConfig(UUID.randomUUID(), new NadConfigInfos());
+            networkAreaDiagramService.updateNetworkAreaDiagramConfig(NONEXISTANT_UUID, new NadConfigInfos());
             fail();
         } catch (ResponseStatusException e) {
             assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());

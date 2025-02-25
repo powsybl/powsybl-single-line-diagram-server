@@ -25,7 +25,7 @@ import static com.powsybl.sld.server.TestUtils.assertRequestsCount;
  */
 @SpringBootTest
 @Tag("IntegrationTest")
-public class DiagramConfigRepositoryTest {
+class DiagramConfigRepositoryTest {
 
     @Autowired
     private NadConfigRepository nadConfigRepository;
