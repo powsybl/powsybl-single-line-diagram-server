@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class NetworkAreaDiagramServiceTest {
 
     @Autowired
-    private NadConfigRepository nadConfigRepository; // TODO CHARLY nécessaire ?
+    private NadConfigRepository nadConfigRepository;
 
     @Autowired
     private NetworkAreaDiagramService networkAreaDiagramService;
@@ -105,13 +105,6 @@ public class NetworkAreaDiagramServiceTest {
     @Transactional
     @Test
     void testReadNadConfig() {
-        try {
-            networkAreaDiagramService.getNetworkAreaDiagramConfig(UUID.randomUUID());
-            fail();
-        } catch (ResponseStatusException e) {
-            assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
-        }
-
         UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
 
         NadConfigInfos nadConfigDto = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);

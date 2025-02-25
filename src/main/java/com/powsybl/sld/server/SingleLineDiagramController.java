@@ -277,14 +277,17 @@ public class SingleLineDiagramController {
 
     @PostMapping(value = "/network-area-diagram/config/", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a network area diagram config")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram config has been created")})
+    @ApiResponse(responseCode = "200", description = "The network area diagram config has been created")
     public ResponseEntity<UUID> createNetworkAreaDiagramConfig(@RequestBody NadConfigInfos nadConfigInfos) {
         return ResponseEntity.ok().body(networkAreaDiagramService.createNetworkAreaDiagramConfig(nadConfigInfos));
     }
 
     @PutMapping(value = "/network-area-diagram/config/{uuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Update a network area diagram config")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram config was updated")})
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "The network area diagram config was updated"),
+        @ApiResponse(responseCode = "404", description = "The network area diagram config was not found"),
+    })
     public ResponseEntity<Void> updateNetworkAreaDiagramConfig(
             @Parameter(description = "Network Area Diagram UUID") @PathVariable("uuid") UUID nadConfigUuid,
             @RequestBody NadConfigInfos nadConfigInfos) {
@@ -294,7 +297,10 @@ public class SingleLineDiagramController {
 
     @GetMapping(value = "/network-area-diagram/config/{uuid}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get a network area diagram config")
-    @ApiResponse(responseCode = "200", description = "The network area diagram config was returned")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "The network area diagram config was returned"),
+        @ApiResponse(responseCode = "404", description = "The network area diagram config was not found"),
+    })
     public ResponseEntity<NadConfigInfos> getNetworkAreaDiagramConfig(
             @Parameter(description = "Network Area Diagram UUID") @PathVariable("uuid") UUID nadConfigUuid) {
         return ResponseEntity.ok().body(networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigUuid));
