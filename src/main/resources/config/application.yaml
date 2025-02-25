@@ -8,5 +8,9 @@ gridsuite:
       name: geo-data-server
       base-uri: http://geo-data-server/
 
+powsybl-ws:
+  database:
+    name: diagramconfig
+
 # 3 maximum concurrent Network Area Diagram generations for the current configuration
 max-concurrent-nad-generations: 3

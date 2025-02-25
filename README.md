@@ -7,3 +7,6 @@
 [![Slack](https://img.shields.io/badge/slack-powsybl-blueviolet.svg?logo=slack)](https://join.slack.com/t/powsybl/shared_invite/zt-rzvbuzjk-nxi0boim1RKPS5PjieI0rA)
 
 Server to generate single line diagram based on spring-boot.
+
+Please read [liquibase usage](https://github.com/powsybl/powsybl-parent/#liquibase-usage) for instructions to automatically generate changesets. 
+After you generated a changeset do not forget to add it to git and in src/resource/db/changelog/db.changelog-master.yml
