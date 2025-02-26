@@ -282,34 +282,34 @@ public class SingleLineDiagramController {
         return ResponseEntity.ok().body(networkAreaDiagramService.createNetworkAreaDiagramConfig(nadConfigInfos));
     }
 
-    @PutMapping(value = "/network-area-diagram/config/{uuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/network-area-diagram/config/{nadConfigUuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Update a network area diagram config")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "The network area diagram config was updated"),
         @ApiResponse(responseCode = "404", description = "The network area diagram config was not found"),
     })
     public ResponseEntity<Void> updateNetworkAreaDiagramConfig(
-            @Parameter(description = "Network Area Diagram UUID") @PathVariable("uuid") UUID nadConfigUuid,
+            @Parameter(description = "Network Area Diagram UUID") @PathVariable("nadConfigUuid") UUID nadConfigUuid,
             @RequestBody NadConfigInfos nadConfigInfos) {
         networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigUuid, nadConfigInfos);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(value = "/network-area-diagram/config/{uuid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/network-area-diagram/config/{nadConfigUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get a network area diagram config")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "The network area diagram config was returned"),
         @ApiResponse(responseCode = "404", description = "The network area diagram config was not found"),
     })
     public ResponseEntity<NadConfigInfos> getNetworkAreaDiagramConfig(
-            @Parameter(description = "Network Area Diagram UUID") @PathVariable("uuid") UUID nadConfigUuid) {
+            @Parameter(description = "Network Area Diagram UUID") @PathVariable("nadConfigUuid") UUID nadConfigUuid) {
         return ResponseEntity.ok().body(networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigUuid));
     }
 
-    @DeleteMapping(value = "/network-area-diagram/config/{uuid}")
+    @DeleteMapping(value = "/network-area-diagram/config/{nadConfigUuid}")
     @Operation(summary = "Delete a network area diagram config")
     @ApiResponse(responseCode = "200", description = "The network area diagram config has been deleted")
-    public ResponseEntity<Void> deleteNetworkAreaDiagramConfig(@Parameter(description = "Network Area Diagram UUID") @PathVariable("uuid") UUID nadConfigUuid) {
+    public ResponseEntity<Void> deleteNetworkAreaDiagramConfig(@Parameter(description = "Network Area Diagram UUID") @PathVariable("nadConfigUuid") UUID nadConfigUuid) {
         networkAreaDiagramService.deleteNetworkAreaDiagramConfig(nadConfigUuid);
         return ResponseEntity.ok().build();
     }

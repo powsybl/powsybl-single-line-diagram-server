@@ -7,13 +7,11 @@
 package com.powsybl.sld.server.dto.nad;
 
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
-import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import lombok.*;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * @author Charly Boutier <charly.boutier at rte-france.com>
@@ -25,27 +23,26 @@ import java.util.stream.Collectors;
 @Setter
 public class NadConfigInfos {
     private UUID id;
+    @Builder.Default
+    private List<String> voltageLevelIds = new ArrayList<>();
     private Integer depth;
     private Integer scalingFactor;
     private Integer radiusFactor;
-    private List<NadVoltageLevelPositionInfos> positions;
+    @Builder.Default
+    private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
 
-    public NadConfigEntity toNadConfigEntity() {
+    public NadConfigEntity toEntity() {
         NadConfigEntity nadConfigEntity = NadConfigEntity.builder()
                 .id(id)
+                .voltageLevelIds(voltageLevelIds)
                 .depth(depth)
                 .scalingFactor(scalingFactor)
                 .radiusFactor(radiusFactor)
                 .build();
-        List<NadVoltageLevelPositionEntity> positionsEntities = this.positions.stream()
-                .map(position -> {
-                    NadVoltageLevelPositionEntity entity = position.toEntity();
-                    entity.setNadConfig(nadConfigEntity);
-                    return entity;
-                })
-                .collect(Collectors.toCollection(ArrayList::new));
 
-        nadConfigEntity.setPositions(positionsEntities);
+        this.positions.forEach(position ->
+            nadConfigEntity.addPosition(position.toEntity())
+        );
         return nadConfigEntity;
     }
 }

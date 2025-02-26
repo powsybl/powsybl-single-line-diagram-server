@@ -8,8 +8,6 @@ package com.powsybl.sld.server;
 
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
-import com.powsybl.sld.server.entities.nad.NadConfigEntity;
-import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -17,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
@@ -44,7 +41,7 @@ class NetworkAreaDiagramServiceTest {
         nadConfigRepository.deleteAll();
     }
 
-    public NadConfigInfos createNadConfigDto() {
+    NadConfigInfos createNadConfigDto() {
 
         NadVoltageLevelPositionInfos vlPositionInfos1 = NadVoltageLevelPositionInfos.builder()
                 .voltageLevelId("VL1")
@@ -67,6 +64,7 @@ class NetworkAreaDiagramServiceTest {
         positions.add(vlPositionInfos2);
 
         return NadConfigInfos.builder()
+                .voltageLevelIds(List.of("VL1"))
                 .depth(1)
                 .radiusFactor(100)
                 .scalingFactor(300000)
@@ -74,44 +72,19 @@ class NetworkAreaDiagramServiceTest {
                 .build();
     }
 
-    @Transactional
-    @Test
-    void testCreateNadConfig() {
-        UUID newNadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
-
-        Optional<NadConfigEntity> createdConfig = nadConfigRepository.findById(newNadConfigId);
-
-        assertTrue(createdConfig.isPresent());
-        assertEquals(1, createdConfig.get().getDepth());
-        assertEquals(2, createdConfig.get().getPositions().size());
-
-        // Check position
-        Optional<NadVoltageLevelPositionEntity> vl2Position = createdConfig.get().getPositions().stream()
-                .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
-                .findFirst();
-        assertTrue(vl2Position.isPresent());
-        assertEquals(2.0, vl2Position.get().getXPosition(), 0.001);
-    }
-
-    @Transactional
     @Test
     void testReadNadConfigNotFound() {
-        try {
-            networkAreaDiagramService.getNetworkAreaDiagramConfig(NONEXISTANT_UUID);
-            fail();
-        } catch (ResponseStatusException e) {
-            assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
-        }
+        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(NONEXISTANT_UUID), HttpStatus.NOT_FOUND.toString());
     }
 
-    @Transactional
     @Test
-    void testReadNadConfig() {
+    void testCreateAndReadNadConfig() {
         UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
 
         NadConfigInfos nadConfigDto = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
 
         assertEquals(1, nadConfigDto.getDepth());
+        assertEquals(1, nadConfigDto.getVoltageLevelIds().size());
         assertEquals(2, nadConfigDto.getPositions().size());
 
         // Check position
@@ -125,18 +98,12 @@ class NetworkAreaDiagramServiceTest {
         assertEquals(1.3, vl1Position.get().getYLabelPosition(), 0.001);
     }
 
-    @Transactional
     @Test
     void testUpdateNadConfigNotFound() {
-        try {
-            networkAreaDiagramService.updateNetworkAreaDiagramConfig(NONEXISTANT_UUID, new NadConfigInfos());
-            fail();
-        } catch (ResponseStatusException e) {
-            assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
-        }
+        NadConfigInfos configInfos = new NadConfigInfos();
+        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(NONEXISTANT_UUID, configInfos), HttpStatus.NOT_FOUND.toString());
     }
 
-    @Transactional
     @Test
     void testUpdateNadConfig() {
         UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
@@ -144,6 +111,7 @@ class NetworkAreaDiagramServiceTest {
         // Test before update
         NadConfigInfos nadConfigDtoPreUpdate = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
         assertEquals(1, nadConfigDtoPreUpdate.getDepth());
+        assertEquals(1, nadConfigDtoPreUpdate.getVoltageLevelIds().size());
         assertEquals(300000, nadConfigDtoPreUpdate.getScalingFactor());
         assertEquals(2, nadConfigDtoPreUpdate.getPositions().size());
         Optional<NadVoltageLevelPositionInfos> vl2Position = nadConfigDtoPreUpdate.getPositions().stream()
@@ -156,6 +124,7 @@ class NetworkAreaDiagramServiceTest {
         NadConfigInfos nadConfigUpdate = new NadConfigInfos();
         nadConfigUpdate.setDepth(18);
         nadConfigUpdate.setScalingFactor(600000);
+        nadConfigUpdate.setVoltageLevelIds(List.of("VL1", "VL2"));
 
         ArrayList<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
         NadVoltageLevelPositionInfos newPositionVl3 = new NadVoltageLevelPositionInfos();
@@ -183,6 +152,7 @@ class NetworkAreaDiagramServiceTest {
         // Test after update
         NadConfigInfos nadConfigDtoPostUpdate = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
         assertEquals(18, nadConfigDtoPostUpdate.getDepth());
+        assertEquals(2, nadConfigDtoPostUpdate.getVoltageLevelIds().size());
         assertEquals(600000, nadConfigDtoPostUpdate.getScalingFactor());
         assertEquals(3, nadConfigDtoPostUpdate.getPositions().size());
 
@@ -205,17 +175,102 @@ class NetworkAreaDiagramServiceTest {
         assertEquals(111.111, vl1PositionPostUpdate.get().getXPosition(), 0.001);
     }
 
-    @Transactional
+    @Test
+    void testUpdateNadConfigMissingIds() {
+        UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        NadConfigInfos nadConfigUpdate = new NadConfigInfos();
+
+        // Test that the update fails if we send a position without ID or VoltageLevelId
+        NadVoltageLevelPositionInfos newPositionNoIdNoVoltageLevelId = new NadVoltageLevelPositionInfos();
+        newPositionNoIdNoVoltageLevelId.setXPosition(14.6);
+        nadConfigUpdate.setPositions(List.of(newPositionNoIdNoVoltageLevelId));
+        assertThrows(IllegalArgumentException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate), "Missing id or voltageLevelId");
+
+        // Test that the update fails if we send a position with an ID that do not exist for this nad config
+        NadVoltageLevelPositionInfos newPositionUnknownId = new NadVoltageLevelPositionInfos();
+        newPositionUnknownId.setId(NONEXISTANT_UUID);
+        newPositionUnknownId.setXPosition(25.2);
+        nadConfigUpdate.setPositions(List.of(newPositionUnknownId));
+        assertThrows(IllegalArgumentException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate), "Missing id or voltageLevelId");
+    }
+
+    @Test
+    void testUpdateNadConfigVoltageLevelIdsUniqueness() {
+        UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+
+        NadConfigInfos nadConfigUpdate = new NadConfigInfos();
+
+        // Test that we do not add new positions if multiple instances of the same voltage level ID are sent
+        NadVoltageLevelPositionInfos newPositionA = new NadVoltageLevelPositionInfos();
+        newPositionA.setVoltageLevelId("VL1");
+        newPositionA.setXPosition(0.1111);
+
+        NadVoltageLevelPositionInfos newPositionB = new NadVoltageLevelPositionInfos();
+        newPositionB.setVoltageLevelId("VL1");
+        newPositionB.setXPosition(0.2222);
+
+        NadVoltageLevelPositionInfos newPositionC = new NadVoltageLevelPositionInfos();
+        newPositionC.setVoltageLevelId("VL1");
+        newPositionC.setXPosition(0.3333);
+
+        nadConfigUpdate.setPositions(List.of(newPositionA, newPositionB, newPositionC));
+
+        networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate);
+
+        // Test after update
+        NadConfigInfos nadConfigDtoPostUpdate = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
+        assertEquals(2, nadConfigDtoPostUpdate.getPositions().size());
+        Optional<NadVoltageLevelPositionInfos> vl1PositionPostUpdate = nadConfigDtoPostUpdate.getPositions().stream()
+                .filter(pos -> "VL1".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertTrue(vl1PositionPostUpdate.isPresent());
+
+        assertEquals(0.3333, vl1PositionPostUpdate.get().getXPosition(), 0.001); // Should have been updated with the last instance of the new positions
+    }
+
+    @Test
+    void testUpdateNadConfigBadVoltageLevelIds() {
+        UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        NadConfigInfos nadConfigDtoPreUpdate = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
+        Optional<NadVoltageLevelPositionInfos> vl2Position = nadConfigDtoPreUpdate.getPositions().stream()
+                .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertTrue(vl2Position.isPresent());
+        UUID vl2PositionUuid = vl2Position.get().getId();
+
+        NadConfigInfos nadConfigUpdate = new NadConfigInfos();
+
+        // Test to check if we prevent a position from adopting the voltage level ID of another existing position.
+        NadVoltageLevelPositionInfos newPositionExistingIdAnotherVlId = new NadVoltageLevelPositionInfos();
+        newPositionExistingIdAnotherVlId.setId(vl2PositionUuid);
+        newPositionExistingIdAnotherVlId.setVoltageLevelId("VL1");
+        newPositionExistingIdAnotherVlId.setXPosition(5.8);
+        nadConfigUpdate.setPositions(List.of(newPositionExistingIdAnotherVlId));
+
+        networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate);
+
+        // Test after update
+        NadConfigInfos nadConfigDtoPostUpdate = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
+        assertEquals(2, nadConfigDtoPostUpdate.getPositions().size());
+        Optional<NadVoltageLevelPositionInfos> vl2PositionPostUpdate = nadConfigDtoPostUpdate.getPositions().stream()
+                .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertTrue(vl2PositionPostUpdate.isPresent());
+        Optional<NadVoltageLevelPositionInfos> vl1PositionPostUpdate = nadConfigDtoPostUpdate.getPositions().stream()
+                .filter(pos -> "VL1".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertTrue(vl1PositionPostUpdate.isPresent());
+
+        assertEquals(5.8, vl1PositionPostUpdate.get().getXPosition(), 0.001); // Should have been updated
+        assertEquals(2.0, vl2PositionPostUpdate.get().getXPosition(), 0.001); // Should not have changed
+    }
+
     @Test
     void testDeleteNadConfig() {
         UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
         networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
         networkAreaDiagramService.deleteNetworkAreaDiagramConfig(nadConfigId);
-        try {
-            networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
-            fail();
-        } catch (ResponseStatusException e) {
-            assertEquals(HttpStatus.NOT_FOUND, e.getStatusCode());
-        }
+
+        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId), HttpStatus.NOT_FOUND.toString());
     }
 }

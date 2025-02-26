@@ -10,7 +10,7 @@ gridsuite:
 
 powsybl-ws:
   database:
-    name: diagramconfig
+    name: diagram
 
 # 3 maximum concurrent Network Area Diagram generations for the current configuration
 max-concurrent-nad-generations: 3

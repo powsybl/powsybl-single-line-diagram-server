@@ -10,7 +10,6 @@ import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -31,7 +30,7 @@ public class NadVoltageLevelPositionEntity {
     @Column(name = "id")
     private UUID id;
 
-    @Column(name = "voltageLevelId")
+    @Column(name = "voltageLevelId", nullable = false)
     private String voltageLevelId;
 
     @Column(name = "xPosition")
@@ -60,13 +59,5 @@ public class NadVoltageLevelPositionEntity {
                 .xLabelPosition(xLabelPosition)
                 .yLabelPosition(yLabelPosition)
                 .build();
-    }
-
-    public void update(@NonNull NadVoltageLevelPositionInfos nadVoltageLevelPositionInfos) {
-        Optional.ofNullable(nadVoltageLevelPositionInfos.getVoltageLevelId()).ifPresent(this::setVoltageLevelId);
-        Optional.ofNullable(nadVoltageLevelPositionInfos.getXPosition()).ifPresent(this::setXPosition);
-        Optional.ofNullable(nadVoltageLevelPositionInfos.getYPosition()).ifPresent(this::setYPosition);
-        Optional.ofNullable(nadVoltageLevelPositionInfos.getXLabelPosition()).ifPresent(this::setXLabelPosition);
-        Optional.ofNullable(nadVoltageLevelPositionInfos.getYLabelPosition()).ifPresent(this::setYLabelPosition);
     }
 }

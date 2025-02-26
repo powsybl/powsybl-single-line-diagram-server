@@ -10,8 +10,8 @@ import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.vladmihalcea.sql.SQLStatementCountValidator;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,7 +24,6 @@ import static com.powsybl.sld.server.TestUtils.assertRequestsCount;
  * @author Charly Boutier <charly.boutier at rte-france.com>
  */
 @SpringBootTest
-@Tag("IntegrationTest")
 class DiagramConfigRepositoryTest {
 
     @Autowired
@@ -32,84 +31,57 @@ class DiagramConfigRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        nadConfigRepository.deleteAll();
         SQLStatementCountValidator.reset();
+    }
+
+    @AfterEach
+    void cleanUp() {
+        nadConfigRepository.deleteAll();
+    }
+
+    NadConfigEntity createNadConfigEntity() {
+        NadConfigEntity entity = NadConfigEntity.builder()
+                .voltageLevelIds(List.of("VL1", "VL2"))
+                .depth(0)
+                .scalingFactor(0)
+                .radiusFactor(0)
+                .build();
+        entity.addPosition(NadVoltageLevelPositionEntity.builder()
+                .voltageLevelId("VL1")
+                .xPosition(0.0)
+                .yPosition(0.0)
+                .xLabelPosition(0.0)
+                .yLabelPosition(0.0)
+                .build());
+        entity.addPosition(NadVoltageLevelPositionEntity.builder()
+                .voltageLevelId("VL2")
+                .xPosition(0.0)
+                .yPosition(0.0)
+                .xLabelPosition(0.0)
+                .yLabelPosition(0.0)
+                .build());
+        return entity;
     }
 
     @Test
     void testCreateNadConfigQueryCount() {
-        NadVoltageLevelPositionEntity position1 = NadVoltageLevelPositionEntity.builder()
-                .voltageLevelId("VL1")
-                .xPosition(0.0)
-                .yPosition(0.0)
-                .xLabelPosition(0.0)
-                .yLabelPosition(0.0)
-                .build();
-
-        NadVoltageLevelPositionEntity position2 = NadVoltageLevelPositionEntity.builder()
-                .voltageLevelId("VL2")
-                .xPosition(0.0)
-                .yPosition(0.0)
-                .xLabelPosition(0.0)
-                .yLabelPosition(0.0)
-                .build();
-
-        ArrayList<NadVoltageLevelPositionEntity> positions = new ArrayList<>();
-        positions.add(position1);
-        positions.add(position2);
-
-        NadConfigEntity entity = NadConfigEntity.builder()
-                .depth(0)
-                .scalingFactor(0)
-                .radiusFactor(0)
-                .positions(positions)
-                .build();
-
-        position1.setNadConfig(entity);
-        position2.setNadConfig(entity);
-
-        nadConfigRepository.save(entity);
-        assertRequestsCount(0, 3, 0, 0);
+        nadConfigRepository.save(createNadConfigEntity());
+        // 1 insert for nad_config
+        // 2 inserts for nad_config_voltage_level
+        // 2 inserts for nad_voltage_level_position
+        assertRequestsCount(0, 5, 0, 0);
     }
 
     @Test
     void testDeleteNadConfigQueryCount() {
-        NadVoltageLevelPositionEntity position1 = NadVoltageLevelPositionEntity.builder()
-                .voltageLevelId("VL1")
-                .xPosition(0.0)
-                .yPosition(0.0)
-                .xLabelPosition(0.0)
-                .yLabelPosition(0.0)
-                .build();
-
-        NadVoltageLevelPositionEntity position2 = NadVoltageLevelPositionEntity.builder()
-                .voltageLevelId("VL2")
-                .xPosition(0.0)
-                .yPosition(0.0)
-                .xLabelPosition(0.0)
-                .yLabelPosition(0.0)
-                .build();
-
-        ArrayList<NadVoltageLevelPositionEntity> positions = new ArrayList<>();
-        positions.add(position1);
-        positions.add(position2);
-
-        NadConfigEntity entity = NadConfigEntity.builder()
-                .depth(0)
-                .scalingFactor(0)
-                .radiusFactor(0)
-                .positions(positions)
-                .build();
-
-        position1.setNadConfig(entity);
-        position2.setNadConfig(entity);
-
+        NadConfigEntity entity = createNadConfigEntity();
         nadConfigRepository.save(entity);
 
+        SQLStatementCountValidator.reset();
         nadConfigRepository.delete(entity);
-
-        // We test that all the positions are also deleted
-        assertRequestsCount(4, 3, 0, 3);
+        // 1 delete for nad_config_voltage_level (2 rows)
+        // 2 deletes for nad_voltage_level_position // TODO Could this be improved ?
+        // 1 delete for nad_config
+        assertRequestsCount(4, 0, 0, 4);
     }
-
 }
