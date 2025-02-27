@@ -7,9 +7,11 @@
 package com.powsybl.sld.server.repository;
 
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -17,4 +19,6 @@ import java.util.UUID;
  */
 @Repository
 public interface NadConfigRepository extends JpaRepository<NadConfigEntity, UUID> {
+    @EntityGraph(attributePaths = {"voltageLevelIds"}, type = EntityGraph.EntityGraphType.LOAD)
+    Optional<NadConfigEntity> findWithVoltageLevelIdsById(UUID id);
 }

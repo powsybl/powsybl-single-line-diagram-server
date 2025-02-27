@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.*;
-
+import static com.vladmihalcea.sql.SQLStatementCountValidator.*;
 import static com.powsybl.sld.server.TestUtils.assertRequestsCount;
 
 /**
@@ -66,9 +66,6 @@ class DiagramConfigRepositoryTest {
     @Test
     void testCreateNadConfigQueryCount() {
         nadConfigRepository.save(createNadConfigEntity());
-        // 1 insert for nad_config
-        // 2 inserts for nad_config_voltage_level
-        // 2 inserts for nad_voltage_level_position
         assertRequestsCount(0, 5, 0, 0);
     }
 
@@ -79,9 +76,7 @@ class DiagramConfigRepositoryTest {
 
         SQLStatementCountValidator.reset();
         nadConfigRepository.delete(entity);
-        // 1 delete for nad_config_voltage_level (2 rows)
-        // 2 deletes for nad_voltage_level_position // TODO Could this be improved ?
-        // 1 delete for nad_config
-        assertRequestsCount(4, 0, 0, 4);
+
+        assertRequestsCount(5, 0, 0, 4);
     }
 }

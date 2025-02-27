@@ -28,7 +28,7 @@ public class NadConfigEntity {
     @Column(name = "id")
     private UUID id;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection
     @CollectionTable(name = "nadConfigVoltageLevel")
     private List<String> voltageLevelIds;
 
