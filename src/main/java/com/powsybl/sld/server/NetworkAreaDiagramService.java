@@ -126,7 +126,7 @@ class NetworkAreaDiagramService {
                 updateVoltageLevelPositions(uuidPositionsMap.get(info.getId()), info);
             } else {
                 NadVoltageLevelPositionEntity newPosition = info.toEntity();
-                entity.addPosition(newPosition);
+                entity.getPositions().add(newPosition);
                 // We add the newly added position to the map to ensure we don't try to create another position with the same voltageLevelId
                 voltageLevelIdPositionsMap.put(info.getVoltageLevelId(), newPosition);
             }

@@ -32,17 +32,13 @@ public class NadConfigInfos {
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
 
     public NadConfigEntity toEntity() {
-        NadConfigEntity nadConfigEntity = NadConfigEntity.builder()
+        return NadConfigEntity.builder()
                 .id(id)
                 .voltageLevelIds(voltageLevelIds)
                 .depth(depth)
                 .scalingFactor(scalingFactor)
                 .radiusFactor(radiusFactor)
+                .positions(positions.stream().map(NadVoltageLevelPositionInfos::toEntity).toList())
                 .build();
-
-        this.positions.forEach(position ->
-            nadConfigEntity.addPosition(position.toEntity())
-        );
-        return nadConfigEntity;
     }
 }

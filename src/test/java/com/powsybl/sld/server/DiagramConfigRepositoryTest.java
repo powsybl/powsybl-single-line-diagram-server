@@ -17,7 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.*;
-import static com.vladmihalcea.sql.SQLStatementCountValidator.*;
+
 import static com.powsybl.sld.server.TestUtils.assertRequestsCount;
 
 /**
@@ -40,33 +40,35 @@ class DiagramConfigRepositoryTest {
     }
 
     NadConfigEntity createNadConfigEntity() {
-        NadConfigEntity entity = NadConfigEntity.builder()
+        return NadConfigEntity.builder()
                 .voltageLevelIds(List.of("VL1", "VL2"))
                 .depth(0)
                 .scalingFactor(0)
                 .radiusFactor(0)
+                .positions(
+                        List.of(
+                                NadVoltageLevelPositionEntity.builder()
+                                        .voltageLevelId("VL1")
+                                        .xPosition(0.0)
+                                        .yPosition(0.0)
+                                        .xLabelPosition(0.0)
+                                        .yLabelPosition(0.0)
+                                        .build(),
+                                NadVoltageLevelPositionEntity.builder()
+                                        .voltageLevelId("VL2")
+                                        .xPosition(0.0)
+                                        .yPosition(0.0)
+                                        .xLabelPosition(0.0)
+                                        .yLabelPosition(0.0)
+                                        .build())
+                )
                 .build();
-        entity.addPosition(NadVoltageLevelPositionEntity.builder()
-                .voltageLevelId("VL1")
-                .xPosition(0.0)
-                .yPosition(0.0)
-                .xLabelPosition(0.0)
-                .yLabelPosition(0.0)
-                .build());
-        entity.addPosition(NadVoltageLevelPositionEntity.builder()
-                .voltageLevelId("VL2")
-                .xPosition(0.0)
-                .yPosition(0.0)
-                .xLabelPosition(0.0)
-                .yLabelPosition(0.0)
-                .build());
-        return entity;
     }
 
     @Test
     void testCreateNadConfigQueryCount() {
         nadConfigRepository.save(createNadConfigEntity());
-        assertRequestsCount(0, 5, 0, 0);
+        assertRequestsCount(0, 5, 2, 0);
     }
 
     @Test
@@ -76,7 +78,6 @@ class DiagramConfigRepositoryTest {
 
         SQLStatementCountValidator.reset();
         nadConfigRepository.delete(entity);
-
-        assertRequestsCount(5, 0, 0, 4);
+        assertRequestsCount(5, 0, 1, 4);
     }
 }

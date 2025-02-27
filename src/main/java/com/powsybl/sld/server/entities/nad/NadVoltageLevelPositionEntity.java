@@ -21,9 +21,7 @@ import java.util.UUID;
 @Setter
 @Entity
 @Builder
-@Table(name = "nadVoltageLevelPosition", indexes = {
-    @Index(name = "nadConfigEntity_positions_index", columnList = "nad_config_id")
-})
+@Table(name = "nadVoltageLevelPosition")
 public class NadVoltageLevelPositionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -44,11 +42,6 @@ public class NadVoltageLevelPositionEntity {
 
     @Column(name = "yLabelPosition")
     private double yLabelPosition;
-
-    @ManyToOne
-    @JoinColumn(name = "nad_config_id", nullable = false,
-            foreignKey = @ForeignKey(name = "nadVoltageLevelPosition_nadConfig_fk"))
-    private NadConfigEntity nadConfig;
 
     public NadVoltageLevelPositionInfos toDto() {
         return NadVoltageLevelPositionInfos.builder()

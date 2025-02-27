@@ -41,14 +41,10 @@ public class NadConfigEntity {
     @Column(name = "radiusFactor")
     private Integer radiusFactor;
 
-    @OneToMany(mappedBy = "nadConfig", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "nad_config_id")
     @Builder.Default
     private List<NadVoltageLevelPositionEntity> positions = new ArrayList<>();
-
-    public void addPosition(NadVoltageLevelPositionEntity nadVoltageLevelPositionEntity) {
-        nadVoltageLevelPositionEntity.setNadConfig(this);
-        positions.add(nadVoltageLevelPositionEntity);
-    }
 
     public NadConfigInfos toDto() {
         NadConfigInfos.NadConfigInfosBuilder nadConfigInfosBuilder = NadConfigInfos.builder();
