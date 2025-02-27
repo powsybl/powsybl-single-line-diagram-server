@@ -29,7 +29,10 @@ public class NadConfigEntity {
     private UUID id;
 
     @ElementCollection
-    @CollectionTable(name = "nadConfigVoltageLevel")
+    @CollectionTable(name = "nadConfigVoltageLevel",
+            joinColumns = @JoinColumn(name = "nad_config_entity_id"),
+            indexes = @Index(name = "nad_config_voltage_level_index", columnList = "nad_config_entity_id")
+    )
     private List<String> voltageLevelIds;
 
     @Column(name = "depth")

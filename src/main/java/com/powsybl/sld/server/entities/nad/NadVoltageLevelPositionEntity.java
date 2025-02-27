@@ -21,7 +21,9 @@ import java.util.UUID;
 @Setter
 @Entity
 @Builder
-@Table(name = "nadVoltageLevelPosition")
+@Table(name = "nadVoltageLevelPosition", indexes = {
+    @Index(name = "nadConfigEntity_positions_index", columnList = "nad_config_id")
+})
 public class NadVoltageLevelPositionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
