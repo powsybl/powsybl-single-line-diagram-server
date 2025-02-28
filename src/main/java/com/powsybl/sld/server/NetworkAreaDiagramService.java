@@ -29,12 +29,19 @@ import com.powsybl.sld.server.dto.Coordinate;
 import com.powsybl.sld.server.dto.SubstationGeoData;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
+import com.powsybl.sld.server.dto.nad.NadConfigInfos;
+import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
+import com.powsybl.sld.server.entities.nad.NadConfigEntity;
+import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
+import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.GeoDataUtils;
+import lombok.NonNull;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -61,14 +68,87 @@ class NetworkAreaDiagramService {
     private final GeoDataService geoDataService;
     private final NetworkAreaExecutionService diagramExecutionService;
 
+    private final NadConfigRepository nadConfigRepository;
+
     private final ObjectMapper objectMapper;
 
     public NetworkAreaDiagramService(NetworkStoreService networkStoreService, GeoDataService geoDataService,
-                                     NetworkAreaExecutionService diagramExecutionService, ObjectMapper objectMapper) {
+                                     NetworkAreaExecutionService diagramExecutionService, NadConfigRepository nadConfigRepository, ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
         this.geoDataService = geoDataService;
         this.diagramExecutionService = diagramExecutionService;
+        this.nadConfigRepository = nadConfigRepository;
         this.objectMapper = objectMapper;
+    }
+
+    @Transactional
+    public UUID createNetworkAreaDiagramConfig(NadConfigInfos nadConfigInfos) {
+        // TODO At the moment, it is possible to insert multiple positions with the same voltageLevelId. That should probably be fixed.
+        return nadConfigRepository.save(nadConfigInfos.toEntity()).getId();
+    }
+
+    @Transactional
+    public void updateNetworkAreaDiagramConfig(UUID nadConfigUuid, NadConfigInfos nadConfigInfos) {
+        NadConfigEntity entity = nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        updateNadConfig(entity, nadConfigInfos);
+    }
+
+    private void updateNadConfig(@NonNull NadConfigEntity entity, @NonNull NadConfigInfos nadConfigInfos) {
+        Optional.ofNullable(nadConfigInfos.getVoltageLevelIds()).ifPresent(voltageLevels ->
+            entity.setVoltageLevelIds(new ArrayList<>(voltageLevels))
+        );
+        Optional.ofNullable(nadConfigInfos.getDepth()).ifPresent(entity::setDepth);
+        Optional.ofNullable(nadConfigInfos.getScalingFactor()).ifPresent(entity::setScalingFactor);
+        Optional.ofNullable(nadConfigInfos.getRadiusFactor()).ifPresent(entity::setRadiusFactor);
+
+        if (nadConfigInfos.getPositions() != null && !nadConfigInfos.getPositions().isEmpty()) {
+            updatePositions(entity, nadConfigInfos);
+        }
+    }
+
+    private void updatePositions(@NonNull NadConfigEntity entity, @NonNull NadConfigInfos nadConfigInfos) {
+        // Build two lookup maps in a single iteration for better performance.
+        Map<UUID, NadVoltageLevelPositionEntity> uuidPositionsMap = new HashMap<>();
+        Map<String, NadVoltageLevelPositionEntity> voltageLevelIdPositionsMap = new HashMap<>();
+        for (NadVoltageLevelPositionEntity position : entity.getPositions()) {
+            uuidPositionsMap.put(position.getId(), position);
+            voltageLevelIdPositionsMap.put(position.getVoltageLevelId(), position);
+        }
+
+        for (NadVoltageLevelPositionInfos info : nadConfigInfos.getPositions()) {
+            if ((info.getId() == null || !uuidPositionsMap.containsKey(info.getId())) && info.getVoltageLevelId() == null) {
+                throw new IllegalArgumentException("Missing id or voltageLevelId");
+            }
+            if (voltageLevelIdPositionsMap.containsKey(info.getVoltageLevelId())) {
+                updateVoltageLevelPositions(voltageLevelIdPositionsMap.get(info.getVoltageLevelId()), info);
+            } else if (info.getId() != null && uuidPositionsMap.containsKey(info.getId())) {
+                updateVoltageLevelPositions(uuidPositionsMap.get(info.getId()), info);
+            } else {
+                NadVoltageLevelPositionEntity newPosition = info.toEntity();
+                entity.getPositions().add(newPosition);
+                // We add the newly added position to the map to ensure we don't try to create another position with the same voltageLevelId
+                voltageLevelIdPositionsMap.put(info.getVoltageLevelId(), newPosition);
+            }
+        }
+    }
+
+    private void updateVoltageLevelPositions(@NonNull NadVoltageLevelPositionEntity entity, @NonNull NadVoltageLevelPositionInfos nadVoltageLevelPositionInfos) {
+        Optional.ofNullable(nadVoltageLevelPositionInfos.getVoltageLevelId()).ifPresent(entity::setVoltageLevelId);
+        Optional.ofNullable(nadVoltageLevelPositionInfos.getXPosition()).ifPresent(entity::setXPosition);
+        Optional.ofNullable(nadVoltageLevelPositionInfos.getYPosition()).ifPresent(entity::setYPosition);
+        Optional.ofNullable(nadVoltageLevelPositionInfos.getXLabelPosition()).ifPresent(entity::setXLabelPosition);
+        Optional.ofNullable(nadVoltageLevelPositionInfos.getYLabelPosition()).ifPresent(entity::setYLabelPosition);
+    }
+
+    @Transactional(readOnly = true)
+    public NadConfigInfos getNetworkAreaDiagramConfig(UUID nadConfigUuid) {
+        return nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).toDto();
+    }
+
+    @Transactional
+    public void deleteNetworkAreaDiagramConfig(UUID nadConfigUuid) {
+        nadConfigRepository.deleteById(nadConfigUuid);
     }
 
     public String getNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
