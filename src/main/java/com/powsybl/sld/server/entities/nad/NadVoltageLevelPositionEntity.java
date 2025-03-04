@@ -25,6 +25,15 @@ import java.util.UUID;
     @Index(name = "nadConfigEntity_positions_index", columnList = "nad_config_id")
 })
 public class NadVoltageLevelPositionEntity {
+
+    public NadVoltageLevelPositionEntity(NadVoltageLevelPositionEntity origin) {
+        this.voltageLevelId = origin.getVoltageLevelId();
+        this.xPosition = origin.getXPosition();
+        this.yPosition = origin.getYPosition();
+        this.xLabelPosition = origin.getXLabelPosition();
+        this.yLabelPosition = origin.getYLabelPosition();
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")

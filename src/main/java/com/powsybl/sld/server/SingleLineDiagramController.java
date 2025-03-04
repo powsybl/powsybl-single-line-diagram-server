@@ -275,11 +275,18 @@ public class SingleLineDiagramController {
         return networkAreaDiagramService.getNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
     }
 
-    @PostMapping(value = "/network-area-diagram/config/", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/network-area-diagram/config", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a network area diagram config")
     @ApiResponse(responseCode = "200", description = "The network area diagram config has been created")
     public ResponseEntity<UUID> createNetworkAreaDiagramConfig(@RequestBody NadConfigInfos nadConfigInfos) {
         return ResponseEntity.ok().body(networkAreaDiagramService.createNetworkAreaDiagramConfig(nadConfigInfos));
+    }
+
+    @PostMapping(value = "/network-area-diagram/config", params = "duplicateFrom", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a network area diagram config")
+    @ApiResponse(responseCode = "200", description = "The network area diagram config has been created")
+    public ResponseEntity<UUID> duplicateNetworkAreaDiagramConfig(@RequestParam(name = "duplicateFrom") UUID duplicateFrom) {
+        return ResponseEntity.ok().body(networkAreaDiagramService.duplicateNetworkAreaDiagramConfig(duplicateFrom));
     }
 
     @PutMapping(value = "/network-area-diagram/config/{nadConfigUuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
