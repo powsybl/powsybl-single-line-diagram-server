@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Charly Boutier <charly.boutier at rte-france.com>
@@ -102,6 +103,29 @@ class NetworkAreaDiagramServiceTest {
     void testUpdateNadConfigNotFound() {
         NadConfigInfos configInfos = new NadConfigInfos();
         assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(NONEXISTANT_UUID, configInfos), HttpStatus.NOT_FOUND.toString());
+    }
+
+    @Test
+    void testDuplicateNadConfig() {
+        UUID originNadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        UUID duplicateNadConfigId = networkAreaDiagramService.duplicateNetworkAreaDiagramConfig(originNadConfigId);
+
+        NadConfigInfos originNadConfigInfos = networkAreaDiagramService.getNetworkAreaDiagramConfig(originNadConfigId);
+        NadConfigInfos duplicateNadConfigInfos = networkAreaDiagramService.getNetworkAreaDiagramConfig(duplicateNadConfigId);
+
+        // check ids are different for duplicated entities...
+        assertNotEquals(originNadConfigInfos.getId(), duplicateNadConfigInfos.getId());
+        // ... and duplicated children
+        assertNotEquals(originNadConfigInfos.getPositions().getFirst().getId(), duplicateNadConfigInfos.getPositions().getFirst().getId());
+
+        // then check all field properties, except id / position.id are equal
+        assertThat(duplicateNadConfigInfos).usingRecursiveComparison().ignoringFieldsMatchingRegexes(".*\\.id$|id").isEqualTo(originNadConfigInfos);
+    }
+
+    @Test
+    void testDuplicateNadConfigNotFound() {
+        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.duplicateNetworkAreaDiagramConfig(UUID.randomUUID()), HttpStatus.NOT_FOUND.toString());
+        assertEquals(0, nadConfigRepository.count());
     }
 
     @Test

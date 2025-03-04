@@ -88,6 +88,19 @@ class NetworkAreaDiagramService {
     }
 
     @Transactional
+    public UUID duplicateNetworkAreaDiagramConfig(UUID originNadConfigUuid) {
+        Optional<NadConfigEntity> nadConfigEntityOpt = nadConfigRepository.findWithVoltageLevelIdsById(originNadConfigUuid);
+        if (nadConfigEntityOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        NadConfigEntity nadConfigEntityToDuplicate = nadConfigEntityOpt.get();
+        nadConfigEntityToDuplicate.getPositions();
+
+        return nadConfigRepository.save(new NadConfigEntity(nadConfigEntityToDuplicate)).getId();
+    }
+
+    @Transactional
     public void updateNetworkAreaDiagramConfig(UUID nadConfigUuid, NadConfigInfos nadConfigInfos) {
         NadConfigEntity entity = nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
