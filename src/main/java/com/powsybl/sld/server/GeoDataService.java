@@ -28,7 +28,7 @@ public class GeoDataService {
     public static final String GEO_DATA_API_VERSION = "v1";
     public static final String QUERY_PARAM_VARIANT_ID = "variantId";
     public static final String NETWORK_UUID = "networkUuid";
-    static final String SUBSTATIONS = "substations";
+    static final String SUBSTATIONS_INFOS = "substations/infos";
     private static final String DELIMITER = "/";
     private final RestTemplate restTemplate;
     @Setter
@@ -45,22 +45,18 @@ public class GeoDataService {
     }
 
     public String getSubstationsGraphics(UUID networkUuid, String variantId, List<String> substationsIds) {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(getGeoDataServerURI() + SUBSTATIONS)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(getGeoDataServerURI() + SUBSTATIONS_INFOS)
                 .queryParam(NETWORK_UUID, networkUuid);
 
         if (!StringUtils.isBlank(variantId)) {
             uriComponentsBuilder.queryParam(QUERY_PARAM_VARIANT_ID, variantId);
         }
 
-        if (substationsIds != null) {
-            uriComponentsBuilder.queryParam(QUERY_PARAM_SUBSTATION_ID, substationsIds);
-        }
-
         var path = uriComponentsBuilder
                 .buildAndExpand()
                 .toUriString();
 
-        return restTemplate.getForObject(path, String.class);
+        return restTemplate.postForObject(path, substationsIds, String.class);
     }
 }
 
