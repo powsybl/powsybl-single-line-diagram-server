@@ -283,8 +283,8 @@ public class SingleLineDiagramController {
     }
 
     @PostMapping(value = "/network-area-diagram/config", params = "duplicateFrom", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Create a network area diagram config")
-    @ApiResponse(responseCode = "200", description = "The network area diagram config has been created")
+    @Operation(summary = "Duplicate a network area diagram config")
+    @ApiResponse(responseCode = "200", description = "The network area diagram config has been duplicated")
     public ResponseEntity<UUID> duplicateNetworkAreaDiagramConfig(@RequestParam(name = "duplicateFrom") UUID duplicateFrom) {
         return ResponseEntity.ok().body(networkAreaDiagramService.duplicateNetworkAreaDiagramConfig(duplicateFrom));
     }
