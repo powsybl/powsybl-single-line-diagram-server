@@ -31,6 +31,7 @@ import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.GeoDataUtils;
+import jakarta.validation.constraints.NotNull;
 import lombok.NonNull;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -224,32 +225,6 @@ class NetworkAreaDiagramService {
         return coordinates.size() / (width * height);
     }
 
-    private void updateSvgBuilderDataWithGeographicalData(SvgBuilderData svgBuilderData, Network network, UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
-
-        List<VoltageLevel> voltageLevelsDepthN = svgBuilderData.getVoltageLevelFilter().getVoltageLevels().stream().toList();
-        List<String> substations = voltageLevelsDepthN.stream()
-                .map(VoltageLevel::getNullableSubstation)
-                .filter(Objects::nonNull)
-                .map(Substation::getId)
-                .toList();
-
-        //get voltage levels' positions on depth+1 to be able to locate lines on depth+0
-        VoltageLevelFilter vlFilterDepthNPlusOne = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth + 1);
-        List<VoltageLevel> voltageLevelsDepthNPlusOne = vlFilterDepthNPlusOne.getVoltageLevels().stream().toList();
-        Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsDepthNPlusOne);
-
-        // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
-        List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
-                .filter(entry -> substations.contains(entry.getKey()))
-                .map(Map.Entry::getValue)
-                .toList();
-
-        int scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
-
-        svgBuilderData.setScalingFactor(scalingFactor);
-        svgBuilderData.setPositions(getFixedNodePosition(network, scalingFactor, RADIUS_FACTOR));
-    }
-
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
@@ -285,6 +260,45 @@ class NetworkAreaDiagramService {
         return drawSvgAndBuildMetadata(network, nadParameters, svgBuilderData.getVoltageLevelFilter(), existingVLIds, depth, svgBuilderData.getScalingFactor());
     }
 
+    /**
+     * Find the coordinates (latitude and longitude) of substations in the network and use them to populate the Network.
+     * Converts the coordinates to positions (X and Y) using powsybl-diagram's functions and populate the SvgBuilderData with them.
+     * Also updates the SvgBuilderData with the scaling factor used to calculate the positions.
+     *
+     * @param svgBuilderData Will be updated with a Map of substation as keys and their corresponding position (X and Y) as values, and the
+     * scaling factor used to calculate those positions.
+     * @param network The network's substations' coordinate extensions will be populated in the assignGeoDataCoordinates function
+     * @param networkUuid
+     * @param variantId
+     * @param voltageLevelsIds
+     * @param depth
+     */
+    private void updateSvgBuilderDataWithGeographicalData(@NotNull SvgBuilderData svgBuilderData, @NotNull Network network, UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
+
+        List<VoltageLevel> voltageLevelsDepthN = svgBuilderData.getVoltageLevelFilter().getVoltageLevels().stream().toList();
+        List<String> substations = voltageLevelsDepthN.stream()
+                .map(VoltageLevel::getNullableSubstation)
+                .filter(Objects::nonNull)
+                .map(Substation::getId)
+                .toList();
+
+        //get voltage levels' positions on depth+1 to be able to locate lines on depth+0
+        VoltageLevelFilter vlFilterDepthNPlusOne = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth + 1);
+        List<VoltageLevel> voltageLevelsDepthNPlusOne = vlFilterDepthNPlusOne.getVoltageLevels().stream().toList();
+        Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsDepthNPlusOne);
+
+        // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
+        List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
+                .filter(entry -> substations.contains(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .toList();
+
+        int scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
+
+        svgBuilderData.setScalingFactor(scalingFactor);
+        svgBuilderData.setPositions(getFixedNodePosition(network, scalingFactor, RADIUS_FACTOR));
+    }
+
     private SvgAndMetadata drawSvgAndBuildMetadata(Network network, NadParameters nadParameters, VoltageLevelFilter vlFilter, List<String> existingVLIds, int depth, int scalingFactor) {
         try (StringWriter svgWriter = new StringWriter(); StringWriter metadataWriter = new StringWriter()) {
             NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
@@ -299,7 +313,15 @@ class NetworkAreaDiagramService {
         }
     }
 
-    public Map<String, Coordinate> assignGeoDataCoordinates(Network network, UUID networkUuid, String variantId, List<VoltageLevel> voltageLevels) {
+    /**
+     * Updates the network and return a list of substation with their coordinates (latitude and longitude).
+     * @param network The network's substations' coordinate extensions will be populated in this function
+     * @param networkUuid
+     * @param variantId
+     * @param voltageLevels
+     * @return a Map with substation IDs as key and their corresponding Coordinate as value
+     */
+    public Map<String, Coordinate> assignGeoDataCoordinates(@NotNull Network network, UUID networkUuid, String variantId, List<VoltageLevel> voltageLevels) {
         // Geographical positions for substations related to voltageLevels
         List<Substation> substations = voltageLevels.stream()
                 .map(VoltageLevel::getNullableSubstation)
@@ -342,12 +364,14 @@ class NetworkAreaDiagramService {
         return metadata;
     }
 
+    // Function taken from powsybl-diagram GeographicalLayoutFactory.java
     private static Map<String, Point> getFixedNodePosition(Network network, int scalingFactor, double radiusFactor) {
         Map<String, Point> fixedNodePositionMap = new HashMap<>();
         network.getSubstationStream().forEach(substation -> fillPositionMap(substation, fixedNodePositionMap, scalingFactor, radiusFactor));
         return fixedNodePositionMap;
     }
 
+    // Function taken from powsybl-diagram GeographicalLayoutFactory.java
     private static void fillPositionMap(Substation substation, Map<String, Point> fixedNodePositionMap, int scalingFactor, double radiusFactor) {
         SubstationPosition substationPosition = substation.getExtension(SubstationPosition.class);
         if (substationPosition != null) {
@@ -376,6 +400,7 @@ class NetworkAreaDiagramService {
         }
     }
 
+    // Function taken from powsybl-diagram GeographicalLayoutFactory.java
     private static Pair<Double, Double> useMercatorLikeProjection(double longitude, double latitude) {
         double x = longitude * Math.PI / 180;
         double y = -Math.log(Math.tan(Math.PI / 4 + latitude * Math.PI / 180 / 2));
