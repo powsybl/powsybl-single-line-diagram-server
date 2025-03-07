@@ -50,7 +50,7 @@ class GeoDataServiceTest {
         List<String> substationsIds = List.of("subFr1", "subFr2");
 
         String expectedResponse = "Substations graphics data";
-        when(restTemplate.getForObject(ArgumentMatchers.anyString(), ArgumentMatchers.eq(String.class)))
+        when(restTemplate.postForObject(ArgumentMatchers.anyString(), ArgumentMatchers.anyList(), ArgumentMatchers.eq(String.class)))
                 .thenReturn(expectedResponse);
 
         String response = geoDataService.getSubstationsGraphics(networkUuid, variantId, substationsIds);
@@ -67,7 +67,7 @@ class GeoDataServiceTest {
         substationGeoData.setCoordinate(new Coordinate(48.8588443, 2.2943506));
         substationGeoData.setCountry(Country.FR);
         String expectedResponse = substationGeoData.toString();
-        when(restTemplate.getForObject(ArgumentMatchers.anyString(), ArgumentMatchers.eq(String.class)))
+        when(restTemplate.postForObject(ArgumentMatchers.anyString(), ArgumentMatchers.anyList(), ArgumentMatchers.eq(String.class)))
                 .thenReturn(expectedResponse);
 
         String response = geoDataService.getSubstationsGraphics(networkUuid, null, substationsIds);

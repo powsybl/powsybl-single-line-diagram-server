@@ -259,12 +259,12 @@ class NetworkAreaDiagramService {
 
         SvgBuilderData svgBuilderData = SvgBuilderData.builder()
                 .scalingFactor(0)
-                .voltageLevelFilter(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth))
+                .voltageLevelFilter(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth))
                 .build();
 
         //Initialize with geographical data
         if (withGeoData) {
-            updateSvgBuilderDataWithGeographicalData(svgBuilderData, network, networkUuid, variantId, voltageLevelsIds, depth);
+            updateSvgBuilderDataWithGeographicalData(svgBuilderData, network, networkUuid, variantId, existingVLIds, depth);
         }
 
         SvgParameters svgParameters = new SvgParameters()
