@@ -275,6 +275,25 @@ public class SingleLineDiagramController {
         return networkAreaDiagramService.getNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
     }
 
+    // TODO CHARLY tester ce nouveau truc :
+    // TODO 1) sauvegarder depuis gridstudy un nad classique pour avoir la structure normale
+    // TODO 2) avec swagger, utiliser ce point d'API avec le même nadConfig que sauvegardé juste au dessus, plus les infos du network
+    // TODO 3) normalement, on devrait avoir quasiment la même chose qu'en 1, mais avec toutes les positions du réseau au lieu de une ou deux.
+    @PostMapping(value = "/network-area-diagram/config/{networkUuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a network area diagram config using network data")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram config has been created")})
+    public ResponseEntity<UUID> saveNetworkAreaDiagramConfig(
+            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @RequestBody NadConfigInfos nadConfigInfos,
+            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
+            @Parameter(description = "Initialize NAD config with Geographical Data") @RequestParam(name = "withGeoData", defaultValue = "true") boolean withGeoData) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("saveNetworkAreaDiagramConfig request received with parameter networkUuid = {}", networkUuid);
+        }
+        // TODO THIS IS WIP, later we will use this API entry point (maybe renamed) to create a NadConfig.
+        return ResponseEntity.ok().body(networkAreaDiagramService.saveNetworkAreaDiagramConfigAsync(networkUuid, variantId, nadConfigInfos, withGeoData));
+    }
+
     @PostMapping(value = "/network-area-diagram/config", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a network area diagram config")
     @ApiResponse(responseCode = "200", description = "The network area diagram config has been created")

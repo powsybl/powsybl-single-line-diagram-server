@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -164,6 +165,65 @@ class NetworkAreaDiagramService {
         return diagramExecutionService
             .supplyAsync(() -> getNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData))
             .join();
+    }
+
+    public UUID saveNetworkAreaDiagramConfigAsync(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos, boolean withGeoData) {
+        return diagramExecutionService
+                .supplyAsync(() -> {
+                    transformNadConfigInfoForSave(networkUuid, variantId, nadConfigInfos, withGeoData);
+                    return nadConfigInfos;
+                })
+                .thenApply(this::createNetworkAreaDiagramConfig)
+                .join();
+    }
+
+    private void transformNadConfigInfoForSave(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos, boolean withGeoData) {
+        Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
+        List<String> existingVLIds = nadConfigInfos.getVoltageLevelIds().stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
+        if (existingVLIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
+        }
+
+        SvgBuilderData svgBuilderData = SvgBuilderData.builder()
+                .scalingFactor(0)
+                .voltageLevelFilter(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, nadConfigInfos.getDepth()))
+                .build();
+
+        //Initialize with geographical data
+        if (withGeoData) {
+            updateSvgBuilderDataWithGeographicalData(svgBuilderData, network, networkUuid, variantId, existingVLIds, nadConfigInfos.getDepth());
+        }
+
+        nadConfigInfos.setRadiusFactor((int) RADIUS_FACTOR); // TODO Should probably change all of that to double or to int
+        nadConfigInfos.setScalingFactor(svgBuilderData.getScalingFactor());
+        updatePositionsFromSvgData(nadConfigInfos, svgBuilderData);
+    }
+
+    // TODO Comment and explain
+    public void updatePositionsFromSvgData(NadConfigInfos nadConfigInfos, SvgBuilderData svgBuilderData) {
+        Map<String, Point> svgPositions = svgBuilderData.getPositions();
+        List<NadVoltageLevelPositionInfos> positions = nadConfigInfos.getPositions();
+
+        Map<String, NadVoltageLevelPositionInfos> existingMap = positions.stream()
+            .collect(Collectors.toMap(NadVoltageLevelPositionInfos::getVoltageLevelId, Function.identity()));
+
+        svgPositions.forEach((voltageLevelId, point) -> {
+            NadVoltageLevelPositionInfos existing = existingMap.get(voltageLevelId);
+            if (existing != null) {
+                if (existing.getXPosition() == null) {
+                    existing.setXPosition(point.getX());
+                }
+                if (existing.getYPosition() == null) {
+                    existing.setYPosition(point.getY());
+                }
+            } else {
+                positions.add(NadVoltageLevelPositionInfos.builder()
+                        .voltageLevelId(voltageLevelId)
+                        .xPosition(point.getX())
+                        .yPosition(point.getY())
+                        .build());
+            }
+        });
     }
 
     private String getNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
