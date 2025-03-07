@@ -18,10 +18,7 @@ import com.powsybl.iidm.network.extensions.SubstationPositionAdder;
 import com.powsybl.nad.NadParameters;
 import com.powsybl.nad.NetworkAreaDiagram;
 import com.powsybl.nad.build.iidm.VoltageLevelFilter;
-import com.powsybl.nad.layout.BasicForceLayout;
-import com.powsybl.nad.layout.FixedLayoutFactory;
-import com.powsybl.nad.layout.GeographicalLayoutFactory;
-import com.powsybl.nad.layout.LayoutParameters;
+import com.powsybl.nad.layout.*;
 import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -231,159 +228,75 @@ class NetworkAreaDiagramService {
         return coordinates.size() / (width * height);
     }
 
-//    public void generateNetworkAreaDiagramSvgCHARLYv1(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
-//        Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
-//        List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
-//        if (existingVLIds.isEmpty()) {
-//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
-//        }
-//
-//        //List of selected voltageLevels with depth
-//        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
-//
-//        //Initialize with geographical data
-//        int scalingFactor = 0;
-//        if (withGeoData) {
-//            List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
-//            List<String> substations = voltageLevels.stream()
-//                    .map(VoltageLevel::getNullableSubstation)
-//                    .filter(Objects::nonNull)
-//                    .map(Substation::getId)
-//                    .toList();
-//
-//            //get voltage levels' positions on depth+1 to be able to locate lines on depth
-//            List<VoltageLevel> voltageLevelsPlusOneDepth = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
-//            Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
-//
-//            // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
-//            List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
-//                    .filter(entry -> substations.contains(entry.getKey()))
-//                    .map(Map.Entry::getValue)
-//                    .toList();
-//            scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
-//
-//            Map<String, Point> positions = getFixedNodePosition(network, scalingFactor, RADIUS_FACTOR);
-//
-////            Map<String, Point> positions = new HashMap<>();
-////            // We build the Points for each substation
-////            substationGeoDataMap.forEach((key, value) -> {
-////                if (value != null) {
-////                    positions.put(key, coordinateToPoint(value));
-////                }
-////            });
-////            // We want to use the substations to get Points for the corresponding voltage levels
-////            network.getSubstationStream().forEach(substation -> {
-////                List<VoltageLevel> voltageLevelList = substation.getVoltageLevelStream().toList();
-////                int voltageLevelListSize = voltageLevelList.size();
-////
-////                if (voltageLevelListSize >= 1) {
-////                    String voltageLevelId = voltageLevelList.get(0).getId();
-////
-////                    if (positions.containsKey(voltageLevelId.substring(0, Math.min(5, voltageLevelId.length()))) // TODO replace this quick and dirty code
-////                    && !positions.containsKey(voltageLevelId)) {
-////
-////                        Point position = positions.get(voltageLevelId.substring(0, Math.min(5, voltageLevelId.length())));
-////                        positions.put(voltageLevelId, position);
-////                    }
-////                }
-////            });
-//            //nadParameters.setLayoutFactory(new FixedLayoutFactory(positions, BasicForceLayout::new));
-//        }
-//        System.out.println("CHARLY scalingFactor = " + scalingFactor);
-//        System.out.println("CHARLY radiusFactor = " + RADIUS_FACTOR);
-//    }
-
-//    public void generateNetworkAreaDiagramSvgCHARLYv2(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
-//        Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
-//        List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
-//        if (existingVLIds.isEmpty()) {
-//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
-//        }
-//
-//        //List of selected voltageLevels with depth
-//        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
-//
-//        //Initialize with geographical data
-//        int scalingFactor = 0;
-//        if (withGeoData) {
-//            List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
-//            List<String> substations = voltageLevels.stream()
-//                    .map(VoltageLevel::getNullableSubstation)
-//                    .filter(Objects::nonNull)
-//                    .map(Substation::getId)
-//                    .toList();
-//
-//            //get voltage levels' positions on depth+1 to be able to locate lines on depth
-//            List<VoltageLevel> voltageLevelsPlusOneDepth = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
-//            Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
-//
-//            // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
-//            List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
-//                    .filter(entry -> substations.contains(entry.getKey()))
-//                    .map(Map.Entry::getValue)
-//                    .toList();
-//            scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
-//
-//            Map<String, Point> positions = getFixedNodePosition(network, scalingFactor, RADIUS_FACTOR);
-//            //nadParameters.setLayoutFactory(new FixedLayoutFactory(positions, BasicForceLayout::new));
-//        }
-//        System.out.println("CHARLY scalingFactor = " + scalingFactor);
-//        System.out.println("CHARLY radiusFactor = " + RADIUS_FACTOR);
-//    }
-
-    private List<String> getExistingVoltageLevelIds(Network network, List<String> voltageLevelsIds) {
-        return voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
-    }
-
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
         if (existingVLIds.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
         }
+
+        //List of selected voltageLevels with depth
+        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
+
+        //Initialize with geographical data
+        int scalingFactor = 0;
+        LayoutFactory layoutFactory = null;
+        if (withGeoData) {
+            List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
+            List<String> substations = voltageLevels.stream()
+                    .map(VoltageLevel::getNullableSubstation)
+                    .filter(Objects::nonNull)
+                    .map(Substation::getId)
+                    .toList();
+
+            //get voltage levels' positions on depth+1 to be able to locate lines on depth+0
+            List<VoltageLevel> voltageLevelsPlusOneDepth = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
+            Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
+
+            // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
+            List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
+                    .filter(entry -> substations.contains(entry.getKey()))
+                    .map(Map.Entry::getValue)
+                    .toList();
+            scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
+
+            Map<String, Point> positions = getFixedNodePosition(network, scalingFactor, RADIUS_FACTOR);
+
+            System.out.println("CHARLY generated with fixedLayout custom");
+            layoutFactory = new FixedLayoutFactory(positions, BasicForceLayout::new);
+        }
+
+
+        SvgParameters svgParameters = new SvgParameters()
+                .setUndefinedValueSymbol("\u2014")
+                .setSvgWidthAndHeightAdded(true)
+                .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
+
+        LayoutParameters layoutParameters = new LayoutParameters();
+        NadParameters nadParameters = new NadParameters();
+        nadParameters.setSvgParameters(svgParameters);
+        nadParameters.setLayoutParameters(layoutParameters);
+        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
+        if (layoutFactory != null) {
+            nadParameters.setLayoutFactory(layoutFactory);
+        }
+
+        return effectiveGenerateNetworkAreaDiagramSvg(network, nadParameters, vlFilter,existingVLIds, depth, scalingFactor);
+//        try (StringWriter svgWriter = new StringWriter(); StringWriter metadataWriter = new StringWriter()) {
+//            NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
+//            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth, scalingFactor);
+//
+//            return SvgAndMetadata.builder()
+//                    .svg(svgWriter.toString())
+//                    .metadata(metadataWriter.toString())
+//                    .additionalMetadata(additionalMetadata).build();
+//        } catch (IOException e) {
+//            throw new UncheckedIOException(e);
+//        }
+    }
+
+    public SvgAndMetadata effectiveGenerateNetworkAreaDiagramSvg(Network network, NadParameters nadParameters, VoltageLevelFilter vlFilter, List<String> existingVLIds, int depth, int scalingFactor) {
         try (StringWriter svgWriter = new StringWriter(); StringWriter metadataWriter = new StringWriter()) {
-            SvgParameters svgParameters = new SvgParameters()
-                    .setUndefinedValueSymbol("\u2014")
-                    .setSvgWidthAndHeightAdded(true)
-                    .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
-
-            //List of selected voltageLevels with depth
-            VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
-
-            LayoutParameters layoutParameters = new LayoutParameters();
-            NadParameters nadParameters = new NadParameters();
-            nadParameters.setSvgParameters(svgParameters);
-            nadParameters.setLayoutParameters(layoutParameters);
-
-            //Initialize with geographical data
-            int scalingFactor = 0;
-            if (withGeoData) {
-                List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
-                List<String> substations = voltageLevels.stream()
-                        .map(VoltageLevel::getNullableSubstation)
-                        .filter(Objects::nonNull)
-                        .map(Substation::getId)
-                        .toList();
-
-                //get voltage levels' positions on depth+1 to be able to locate lines on depth
-                List<VoltageLevel> voltageLevelsPlusOneDepth = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
-                Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
-
-                // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
-                List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
-                        .filter(entry -> substations.contains(entry.getKey()))
-                        .map(Map.Entry::getValue)
-                        .toList();
-                scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
-
-                Map<String, Point> positions = getFixedNodePosition(network, scalingFactor, RADIUS_FACTOR);
-
-                System.out.println("CHARLY generated with fixedLayout custom");
-                nadParameters.setLayoutFactory(new FixedLayoutFactory(positions, BasicForceLayout::new));
-                //nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, scalingFactor, RADIUS_FACTOR, BasicForceLayout::new));
-            }
-            nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
-
             NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
             Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth, scalingFactor);
 
@@ -395,63 +308,6 @@ class NetworkAreaDiagramService {
             throw new UncheckedIOException(e);
         }
     }
-
-//    public SvgAndMetadata generateNetworkAreaDiagramSvg_original(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
-//        Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
-//        List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
-//        if (existingVLIds.isEmpty()) {
-//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
-//        }
-//        try (StringWriter svgWriter = new StringWriter(); StringWriter metadataWriter = new StringWriter()) {
-//            SvgParameters svgParameters = new SvgParameters()
-//                    .setUndefinedValueSymbol("\u2014")
-//                    .setSvgWidthAndHeightAdded(true)
-//                    .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
-//
-//            //List of selected voltageLevels with depth
-//            VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
-//
-//            LayoutParameters layoutParameters = new LayoutParameters();
-//            NadParameters nadParameters = new NadParameters();
-//            nadParameters.setSvgParameters(svgParameters);
-//            nadParameters.setLayoutParameters(layoutParameters);
-//
-//            //Initialize with geographical data
-//            int scalingFactor = 0;
-//            if (withGeoData) {
-//                List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
-//                List<String> substations = voltageLevels.stream()
-//                        .map(VoltageLevel::getNullableSubstation)
-//                        .filter(Objects::nonNull)
-//                        .map(Substation::getId)
-//                        .toList();
-//
-//                //get voltage levels' positions on depth+1 to be able to locate lines on depth
-//                List<VoltageLevel> voltageLevelsPlusOneDepth = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
-//                Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
-//
-//                // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
-//                List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
-//                        .filter(entry -> substations.contains(entry.getKey()))
-//                        .map(Map.Entry::getValue)
-//                        .toList();
-//                scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
-//
-//                nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, scalingFactor, RADIUS_FACTOR, BasicForceLayout::new));
-//            }
-//            nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
-//
-//            NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
-//            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth, scalingFactor);
-//
-//            return SvgAndMetadata.builder()
-//                    .svg(svgWriter.toString())
-//                    .metadata(metadataWriter.toString())
-//                    .additionalMetadata(additionalMetadata).build();
-//        } catch (IOException e) {
-//            throw new UncheckedIOException(e);
-//        }
-//    }
 
     public Map<String, Coordinate> assignGeoDataCoordinates(Network network, UUID networkUuid, String variantId, List<VoltageLevel> voltageLevels) {
         // Geographical positions for substations related to voltageLevels
@@ -495,11 +351,6 @@ class NetworkAreaDiagramService {
 
         return metadata;
     }
-
-//    private static Point coordinateToPoint(@NotNull Coordinate coordinate) {
-//        Pair<Double, Double> pair = useMercatorLikeProjection(coordinate.getLon(), coordinate.getLat());
-//        return new Point(pair.getFirst(), pair.getSecond());
-//    }
 
     private static Map<String, Point> getFixedNodePosition(Network network, int scalingFactor, double radiusFactor) {
         Map<String, Point> fixedNodePositionMap = new HashMap<>();
