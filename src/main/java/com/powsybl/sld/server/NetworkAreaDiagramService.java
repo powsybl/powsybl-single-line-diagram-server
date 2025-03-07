@@ -23,10 +23,7 @@ import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.sld.server.dto.Coordinate;
-import com.powsybl.sld.server.dto.SubstationGeoData;
-import com.powsybl.sld.server.dto.SvgAndMetadata;
-import com.powsybl.sld.server.dto.VoltageLevelInfos;
+import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
@@ -34,7 +31,6 @@ import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.GeoDataUtils;
-import jakarta.validation.constraints.NotNull;
 import lombok.NonNull;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -228,6 +224,32 @@ class NetworkAreaDiagramService {
         return coordinates.size() / (width * height);
     }
 
+    private void updateSvgBuilderDataWithGeographicalData(SvgBuilderData svgBuilderData, Network network, UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
+
+        List<VoltageLevel> voltageLevelsDepthN = svgBuilderData.getVoltageLevelFilter().getVoltageLevels().stream().toList();
+        List<String> substations = voltageLevelsDepthN.stream()
+                .map(VoltageLevel::getNullableSubstation)
+                .filter(Objects::nonNull)
+                .map(Substation::getId)
+                .toList();
+
+        //get voltage levels' positions on depth+1 to be able to locate lines on depth+0
+        VoltageLevelFilter vlFilterDepthNPlusOne = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth + 1);
+        List<VoltageLevel> voltageLevelsDepthNPlusOne = vlFilterDepthNPlusOne.getVoltageLevels().stream().toList();
+        Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsDepthNPlusOne);
+
+        // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
+        List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
+                .filter(entry -> substations.contains(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .toList();
+
+        int scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
+
+        svgBuilderData.setScalingFactor(scalingFactor);
+        svgBuilderData.setPositions(getFixedNodePosition(network, scalingFactor, RADIUS_FACTOR));
+    }
+
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
@@ -235,37 +257,15 @@ class NetworkAreaDiagramService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
         }
 
-        //List of selected voltageLevels with depth
-        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
+        SvgBuilderData svgBuilderData = SvgBuilderData.builder()
+                .scalingFactor(0)
+                .voltageLevelFilter(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth))
+                .build();
 
         //Initialize with geographical data
-        int scalingFactor = 0;
-        LayoutFactory layoutFactory = null;
         if (withGeoData) {
-            List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
-            List<String> substations = voltageLevels.stream()
-                    .map(VoltageLevel::getNullableSubstation)
-                    .filter(Objects::nonNull)
-                    .map(Substation::getId)
-                    .toList();
-
-            //get voltage levels' positions on depth+1 to be able to locate lines on depth+0
-            List<VoltageLevel> voltageLevelsPlusOneDepth = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
-            Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
-
-            // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
-            List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
-                    .filter(entry -> substations.contains(entry.getKey()))
-                    .map(Map.Entry::getValue)
-                    .toList();
-            scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
-
-            Map<String, Point> positions = getFixedNodePosition(network, scalingFactor, RADIUS_FACTOR);
-
-            System.out.println("CHARLY generated with fixedLayout custom");
-            layoutFactory = new FixedLayoutFactory(positions, BasicForceLayout::new);
+            updateSvgBuilderDataWithGeographicalData(svgBuilderData, network, networkUuid, variantId, voltageLevelsIds, depth);
         }
-
 
         SvgParameters svgParameters = new SvgParameters()
                 .setUndefinedValueSymbol("\u2014")
@@ -277,25 +277,15 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
-        if (layoutFactory != null) {
+        if (withGeoData) {
+            LayoutFactory layoutFactory = new FixedLayoutFactory(svgBuilderData.getPositions(), BasicForceLayout::new);
             nadParameters.setLayoutFactory(layoutFactory);
         }
 
-        return effectiveGenerateNetworkAreaDiagramSvg(network, nadParameters, vlFilter,existingVLIds, depth, scalingFactor);
-//        try (StringWriter svgWriter = new StringWriter(); StringWriter metadataWriter = new StringWriter()) {
-//            NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
-//            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth, scalingFactor);
-//
-//            return SvgAndMetadata.builder()
-//                    .svg(svgWriter.toString())
-//                    .metadata(metadataWriter.toString())
-//                    .additionalMetadata(additionalMetadata).build();
-//        } catch (IOException e) {
-//            throw new UncheckedIOException(e);
-//        }
+        return drawSvgAndBuildMetadata(network, nadParameters, svgBuilderData.getVoltageLevelFilter(), existingVLIds, depth, svgBuilderData.getScalingFactor());
     }
 
-    public SvgAndMetadata effectiveGenerateNetworkAreaDiagramSvg(Network network, NadParameters nadParameters, VoltageLevelFilter vlFilter, List<String> existingVLIds, int depth, int scalingFactor) {
+    private SvgAndMetadata drawSvgAndBuildMetadata(Network network, NadParameters nadParameters, VoltageLevelFilter vlFilter, List<String> existingVLIds, int depth, int scalingFactor) {
         try (StringWriter svgWriter = new StringWriter(); StringWriter metadataWriter = new StringWriter()) {
             NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
             Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth, scalingFactor);
