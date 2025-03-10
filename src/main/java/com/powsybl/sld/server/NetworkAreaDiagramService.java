@@ -176,6 +176,7 @@ class NetworkAreaDiagramService {
                 .join();
     }
 
+    // TODO CHARLY commentaires et tests unitaires
     private void transformNadConfigInfoForSave(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = nadConfigInfos.getVoltageLevelIds().stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
@@ -183,14 +184,11 @@ class NetworkAreaDiagramService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
         }
 
-        SvgBuilderData svgBuilderData = SvgBuilderData.builder()
-                .scalingFactor(0)
-                .voltageLevelFilter(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, nadConfigInfos.getDepth()))
-                .build();
-
-        //Initialize with geographical data
+        SvgBuilderData svgBuilderData;
         if (withGeoData) {
-            updateSvgBuilderDataWithGeographicalData(svgBuilderData, network, networkUuid, variantId, existingVLIds, nadConfigInfos.getDepth());
+            svgBuilderData = getSvgBuilderDataWithGeographicalData(network, networkUuid, variantId, existingVLIds, nadConfigInfos.getDepth());
+        } else {
+            svgBuilderData = getSvgBuilderData(network, existingVLIds, nadConfigInfos.getDepth());
         }
 
         nadConfigInfos.setRadiusFactor(RADIUS_FACTOR);
@@ -198,7 +196,7 @@ class NetworkAreaDiagramService {
         updateMissingPositionsFromSvgData(nadConfigInfos, svgBuilderData);
     }
 
-    // TODO if fine with reviewers, do the unit tests
+    // TODO test unitaires
     /**
      * Updates nadConfigInfos with the positions in svgBuilderData if the position is not already defined.
      * This function should not override a position already defined in nadConfigInfos.
@@ -221,11 +219,13 @@ class NetworkAreaDiagramService {
                 if (nadConfigPosition.getYPosition() == null) {
                     nadConfigPosition.setYPosition(point.getY());
                 }
+                // TODO We still need to get the label positions here
             } else {
                 nadConfigInfosPositions.add(NadVoltageLevelPositionInfos.builder()
                         .voltageLevelId(voltageLevelId)
                         .xPosition(point.getX())
                         .yPosition(point.getY())
+                        // TODO Set the label positions with the default (relative) values from powsybl-diagram if possible (watch out for scaling ?)
                         .build());
             }
         });
@@ -297,14 +297,11 @@ class NetworkAreaDiagramService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
         }
 
-        SvgBuilderData svgBuilderData = SvgBuilderData.builder()
-                .scalingFactor(0)
-                .voltageLevelFilter(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth))
-                .build();
-
-        //Initialize with geographical data
+        SvgBuilderData svgBuilderData;
         if (withGeoData) {
-            updateSvgBuilderDataWithGeographicalData(svgBuilderData, network, networkUuid, variantId, existingVLIds, depth);
+            svgBuilderData = getSvgBuilderDataWithGeographicalData(network, networkUuid, variantId, existingVLIds, depth);
+        } else {
+            svgBuilderData = getSvgBuilderData(network, existingVLIds, depth);
         }
 
         SvgParameters svgParameters = new SvgParameters()
@@ -327,20 +324,21 @@ class NetworkAreaDiagramService {
 
     /**
      * Find the coordinates (latitude and longitude) of substations in the network and use them to populate the Network.
-     * Converts the coordinates to positions (X and Y) using powsybl-diagram's functions and populate the SvgBuilderData with them.
-     * Also updates the SvgBuilderData with the scaling factor used to calculate the positions.
+     * Converts the coordinates to positions (X and Y) using powsybl-diagram's functions and return them in a SvgBuilderData object,
+     * with the scaling factor used to calculate the positions and a voltage level filter corresponding to the voltageLevelsIds parameter.
      *
-     * @param svgBuilderData Will be updated with a Map of substation as keys and their corresponding position (X and Y) as values, and the
-     * scaling factor used to calculate those positions.
      * @param network The network's substations' coordinate extensions will be populated in the assignGeoDataCoordinates function
      * @param networkUuid
      * @param variantId
      * @param voltageLevelsIds
      * @param depth
+     * @return SvgBuilderData contains the scaling factor, voltage level filter and positions used to generate a SVG or NadConfig later.
      */
-    private void updateSvgBuilderDataWithGeographicalData(@NotNull SvgBuilderData svgBuilderData, @NotNull Network network, UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
+    private SvgBuilderData getSvgBuilderDataWithGeographicalData(@NotNull Network network, UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth) {
 
-        List<VoltageLevel> voltageLevelsDepthN = svgBuilderData.getVoltageLevelFilter().getVoltageLevels().stream().toList();
+        VoltageLevelFilter vlFilterDepthN = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
+
+        List<VoltageLevel> voltageLevelsDepthN = vlFilterDepthN.getVoltageLevels().stream().toList();
         List<String> substations = voltageLevelsDepthN.stream()
                 .map(VoltageLevel::getNullableSubstation)
                 .filter(Objects::nonNull)
@@ -360,8 +358,18 @@ class NetworkAreaDiagramService {
 
         int scalingFactor = this.calculateScalingFactor(coordinatesForScaling);
 
-        svgBuilderData.setScalingFactor(scalingFactor);
-        svgBuilderData.setPositions(getFixedNodePosition(network, scalingFactor, RADIUS_FACTOR));
+        return SvgBuilderData.builder()
+                .scalingFactor(scalingFactor)
+                .voltageLevelFilter(vlFilterDepthN)
+                .positions(getFixedNodePosition(network, scalingFactor, RADIUS_FACTOR))
+                .build();
+    }
+
+    private SvgBuilderData getSvgBuilderData(@NotNull Network network, List<String> voltageLevelsIds, int depth) {
+        return SvgBuilderData.builder()
+                .scalingFactor(0)
+                .voltageLevelFilter(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth))
+                .build();
     }
 
     private SvgAndMetadata drawSvgAndBuildMetadata(Network network, NadParameters nadParameters, VoltageLevelFilter vlFilter, List<String> existingVLIds, int depth, int scalingFactor) {
@@ -429,14 +437,14 @@ class NetworkAreaDiagramService {
         return metadata;
     }
 
-    // Function taken from powsybl-diagram GeographicalLayoutFactory.java
+    // Function taken from powsybl-diagram GeographicalLayoutFactory.java (with minor modifications)
     private static Map<String, Point> getFixedNodePosition(Network network, int scalingFactor, double radiusFactor) {
         Map<String, Point> fixedNodePositionMap = new HashMap<>();
         network.getSubstationStream().forEach(substation -> fillPositionMap(substation, fixedNodePositionMap, scalingFactor, radiusFactor));
         return fixedNodePositionMap;
     }
 
-    // Function taken from powsybl-diagram GeographicalLayoutFactory.java
+    // Function taken from powsybl-diagram GeographicalLayoutFactory.java (with minor modifications)
     private static void fillPositionMap(Substation substation, Map<String, Point> fixedNodePositionMap, int scalingFactor, double radiusFactor) {
         SubstationPosition substationPosition = substation.getExtension(SubstationPosition.class);
         if (substationPosition != null) {
@@ -457,7 +465,7 @@ class NetworkAreaDiagramService {
                 double angle = 2 * Math.PI / voltageLevelListSize;
                 int i = 0;
                 for (VoltageLevel voltageLevel : voltageLevelList) {
-                    double angleVoltageLevel = angle * i;
+                    double angleVoltageLevel = angle * i + 45.0; // We add 45° to help readability when the voltage levels have their default label positions
                     fixedNodePositionMap.put(voltageLevel.getId(), new Point(scalingFactor * mercatorCoordinates.getFirst() + radiusFactor * Math.cos(angleVoltageLevel), scalingFactor * mercatorCoordinates.getSecond() + radiusFactor * Math.sin(angleVoltageLevel)));
                     i++;
                 }

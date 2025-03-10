@@ -24,5 +24,6 @@ public class SvgBuilderData {
 
     VoltageLevelFilter voltageLevelFilter;
 
-    Map<String, Point> positions;
+    @Builder.Default
+    Map<String, Point> positions = new HashMap<>();
 }
