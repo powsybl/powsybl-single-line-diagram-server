@@ -175,7 +175,7 @@ class NetworkAreaDiagramService {
                 .thenApply(this::createNetworkAreaDiagramConfig)
                 .join();
     }
-
+    // TODO Unit tests
     /**
      * Updates nadConfigInfos with the relevant information to create a Network Area Diagram from it later.
      * If withGeoData is true, will check the known position of the voltage levels in the network and complete the nadConfigInfos positions

@@ -287,6 +287,8 @@ public class SingleLineDiagramController {
             LOGGER.debug("saveNetworkAreaDiagramConfig request received with parameter networkUuid = {}", networkUuid);
         }
         // TODO THIS IS WIP, later we will use this API entry point (maybe renamed) to create a NadConfig.
+        // The networkUuid parameter will be moved out of the URL
+        // The other API point will most likely be replaced with this one
         return ResponseEntity.ok().body(networkAreaDiagramService.saveNetworkAreaDiagramConfigAsync(networkUuid, variantId, nadConfigInfos, withGeoData));
     }
 
