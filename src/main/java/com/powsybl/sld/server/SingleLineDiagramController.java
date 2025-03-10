@@ -275,10 +275,6 @@ public class SingleLineDiagramController {
         return networkAreaDiagramService.getNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
     }
 
-    // TODO CHARLY tester ce nouveau truc :
-    // TODO 1) sauvegarder depuis gridstudy un nad classique pour avoir la structure normale
-    // TODO 2) avec swagger, utiliser ce point d'API avec le même nadConfig que sauvegardé juste au dessus, plus les infos du network
-    // TODO 3) normalement, on devrait avoir quasiment la même chose qu'en 1, mais avec toutes les positions du réseau au lieu de une ou deux.
     @PostMapping(value = "/network-area-diagram/config/{networkUuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a network area diagram config using network data")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram config has been created")})

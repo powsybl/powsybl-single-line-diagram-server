@@ -82,7 +82,6 @@ class NetworkAreaDiagramService {
 
     @Transactional
     public UUID createNetworkAreaDiagramConfig(NadConfigInfos nadConfigInfos) {
-        // TODO At the moment, it is possible to insert multiple positions with the same voltageLevelId. That should probably be fixed.
         return nadConfigRepository.save(nadConfigInfos.toEntity()).getId();
     }
 
@@ -194,7 +193,7 @@ class NetworkAreaDiagramService {
             updateSvgBuilderDataWithGeographicalData(svgBuilderData, network, networkUuid, variantId, existingVLIds, nadConfigInfos.getDepth());
         }
 
-        nadConfigInfos.setRadiusFactor((int) RADIUS_FACTOR); // TODO Should probably change all of that to double or to int
+        nadConfigInfos.setRadiusFactor(RADIUS_FACTOR);
         nadConfigInfos.setScalingFactor(svgBuilderData.getScalingFactor());
         updatePositionsFromSvgData(nadConfigInfos, svgBuilderData);
     }

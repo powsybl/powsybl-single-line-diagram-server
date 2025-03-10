@@ -53,7 +53,7 @@ public class NadConfigEntity {
     private Integer scalingFactor;
 
     @Column(name = "radiusFactor")
-    private Integer radiusFactor;
+    private Double radiusFactor;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "nad_config_id")

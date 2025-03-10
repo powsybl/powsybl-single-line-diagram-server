@@ -44,7 +44,7 @@ class DiagramConfigRepositoryTest {
                 .voltageLevelIds(List.of("VL1", "VL2"))
                 .depth(0)
                 .scalingFactor(0)
-                .radiusFactor(0)
+                .radiusFactor(0.0)
                 .positions(
                         List.of(
                                 NadVoltageLevelPositionEntity.builder()

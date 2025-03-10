@@ -67,7 +67,7 @@ class NetworkAreaDiagramServiceTest {
         return NadConfigInfos.builder()
                 .voltageLevelIds(List.of("VL1"))
                 .depth(1)
-                .radiusFactor(100)
+                .radiusFactor(100.0)
                 .scalingFactor(300000)
                 .positions(positions)
                 .build();

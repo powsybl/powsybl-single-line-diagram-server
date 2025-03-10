@@ -3,3 +3,6 @@ databaseChangeLog:
   - include:
       file: changesets/changelog_20250218T154110Z.xml
       relativeToChangelogFile: true
+  - include:
+      file: changesets/changelog_20250310T113328Z.xml
+      relativeToChangelogFile: true
