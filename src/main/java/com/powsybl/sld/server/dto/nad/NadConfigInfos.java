@@ -27,7 +27,7 @@ public class NadConfigInfos {
     private List<String> voltageLevelIds = new ArrayList<>();
     private Integer depth;
     private Integer scalingFactor;
-    private Integer radiusFactor;
+    private Double radiusFactor;
     @Builder.Default
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
 
