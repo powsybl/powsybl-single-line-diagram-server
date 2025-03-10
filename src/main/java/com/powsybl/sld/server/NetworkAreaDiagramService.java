@@ -195,28 +195,34 @@ class NetworkAreaDiagramService {
 
         nadConfigInfos.setRadiusFactor(RADIUS_FACTOR);
         nadConfigInfos.setScalingFactor(svgBuilderData.getScalingFactor());
-        updatePositionsFromSvgData(nadConfigInfos, svgBuilderData);
+        updateMissingPositionsFromSvgData(nadConfigInfos, svgBuilderData);
     }
 
-    // TODO Comment and explain
-    public void updatePositionsFromSvgData(NadConfigInfos nadConfigInfos, SvgBuilderData svgBuilderData) {
-        Map<String, Point> svgPositions = svgBuilderData.getPositions();
-        List<NadVoltageLevelPositionInfos> positions = nadConfigInfos.getPositions();
+    // TODO if fine with reviewers, do the unit tests
+    /**
+     * Updates nadConfigInfos with the positions in svgBuilderData if the position is not already defined.
+     * This function should not override a position already defined in nadConfigInfos.
+     * @param nadConfigInfos Will be updated with the positions in svgBuilderData
+     * @param svgBuilderData Contains the positions to add to nadConfigInfos
+     */
+    public void updateMissingPositionsFromSvgData(NadConfigInfos nadConfigInfos, SvgBuilderData svgBuilderData) {
+        List<NadVoltageLevelPositionInfos> nadConfigInfosPositions = nadConfigInfos.getPositions();
 
-        Map<String, NadVoltageLevelPositionInfos> existingMap = positions.stream()
+        // Build a lookup map for quick access.
+        Map<String, NadVoltageLevelPositionInfos> nadConfigInfosPositionMap = nadConfigInfosPositions.stream()
             .collect(Collectors.toMap(NadVoltageLevelPositionInfos::getVoltageLevelId, Function.identity()));
 
-        svgPositions.forEach((voltageLevelId, point) -> {
-            NadVoltageLevelPositionInfos existing = existingMap.get(voltageLevelId);
-            if (existing != null) {
-                if (existing.getXPosition() == null) {
-                    existing.setXPosition(point.getX());
+        svgBuilderData.getPositions().forEach((voltageLevelId, point) -> {
+            NadVoltageLevelPositionInfos nadConfigPosition = nadConfigInfosPositionMap.get(voltageLevelId);
+            if (nadConfigPosition != null) {
+                if (nadConfigPosition.getXPosition() == null) {
+                    nadConfigPosition.setXPosition(point.getX());
                 }
-                if (existing.getYPosition() == null) {
-                    existing.setYPosition(point.getY());
+                if (nadConfigPosition.getYPosition() == null) {
+                    nadConfigPosition.setYPosition(point.getY());
                 }
             } else {
-                positions.add(NadVoltageLevelPositionInfos.builder()
+                nadConfigInfosPositions.add(NadVoltageLevelPositionInfos.builder()
                         .voltageLevelId(voltageLevelId)
                         .xPosition(point.getX())
                         .yPosition(point.getY())
