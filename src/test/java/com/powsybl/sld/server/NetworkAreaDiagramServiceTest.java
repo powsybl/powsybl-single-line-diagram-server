@@ -6,9 +6,11 @@
  */
 package com.powsybl.sld.server;
 
+import com.powsybl.sld.server.dto.SvgBuilderData;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.repository.NadConfigRepository;
+import com.powsybl.nad.model.Point;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -296,5 +298,80 @@ class NetworkAreaDiagramServiceTest {
         networkAreaDiagramService.deleteNetworkAreaDiagramConfig(nadConfigId);
 
         assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId), HttpStatus.NOT_FOUND.toString());
+    }
+
+    @Test
+    void testUpdateMissingPositionsFromSvgData() {
+        NadConfigInfos nadConfigInfos = createNadConfigDto();
+        nadConfigInfos.getPositions().add(
+                NadVoltageLevelPositionInfos.builder()
+                        .voltageLevelId("VL3")
+                        .xPosition(3.0)
+                        // No yPosition before the update
+                        .build()
+        );
+        nadConfigInfos.getPositions().add(
+                NadVoltageLevelPositionInfos.builder()
+                        .voltageLevelId("VL4")
+                        // No xPosition before the update
+                        .yPosition(4.1)
+                        .build()
+        );
+
+        SvgBuilderData svgBuilderData = SvgBuilderData.builder()
+                .positions(Map.of(
+                        "newVL", new Point(18, 27),
+                        "VL1", new Point(53, 56),
+                        "VL3", new Point(40, 789),
+                        "VL4", new Point(456, 23)
+                ))
+                .build();
+
+        // Test before update
+        Optional<NadVoltageLevelPositionInfos> vl1Position = nadConfigInfos.getPositions().stream()
+                .filter(pos -> "VL1".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertTrue(vl1Position.isPresent());
+        assertEquals(1.0, vl1Position.get().getXPosition(), 0.001);
+        assertEquals(1.1, vl1Position.get().getYPosition(), 0.001);
+
+        Optional<NadVoltageLevelPositionInfos> newVlPosition = nadConfigInfos.getPositions().stream()
+                .filter(pos -> "newVL".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertFalse(newVlPosition.isPresent());
+
+        Optional<NadVoltageLevelPositionInfos> vl3Position = nadConfigInfos.getPositions().stream()
+                .filter(pos -> "VL3".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertTrue(vl3Position.isPresent());
+        assertEquals(3.0, vl3Position.get().getXPosition(), 0.001);
+        assertNull(vl3Position.get().getYPosition());
+
+        Optional<NadVoltageLevelPositionInfos> vl4Position = nadConfigInfos.getPositions().stream()
+                .filter(pos -> "VL4".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertTrue(vl4Position.isPresent());
+        assertNull(vl4Position.get().getXPosition());
+        assertEquals(4.1, vl4Position.get().getYPosition(), 0.001);
+
+        // Update
+        networkAreaDiagramService.updateMissingPositionsFromSvgData(nadConfigInfos, svgBuilderData);
+
+        // Test after update
+        assertEquals(1.0, vl1Position.get().getXPosition(), 0.001); // This values should not have been touched
+        assertEquals(1.1, vl1Position.get().getYPosition(), 0.001); // This values should not have been touched
+
+        newVlPosition = nadConfigInfos.getPositions().stream()
+                .filter(pos -> "newVL".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertTrue(newVlPosition.isPresent());
+        assertEquals(18.0, newVlPosition.get().getXPosition(), 0.001);
+        assertEquals(27.0, newVlPosition.get().getYPosition(), 0.001);
+
+        assertEquals(3.0, vl3Position.get().getXPosition(), 0.001); // This values should not have been touched
+        assertEquals(789.0, vl3Position.get().getYPosition(), 0.001); // This values should have been updated
+
+        assertEquals(456.0, vl4Position.get().getXPosition(), 0.001); // This values should have been updated
+        assertEquals(4.1, vl4Position.get().getYPosition(), 0.001); // This values should not have been touched
     }
 }

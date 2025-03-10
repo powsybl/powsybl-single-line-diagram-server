@@ -176,7 +176,15 @@ class NetworkAreaDiagramService {
                 .join();
     }
 
-    // TODO CHARLY commentaires et tests unitaires
+    /**
+     * Updates nadConfigInfos with the relevant information to create a Network Area Diagram from it later.
+     * If withGeoData is true, will check the known position of the voltage levels in the network and complete the nadConfigInfos positions
+     * with the found geo data positions, where not already defined in the nadConfigInfos.
+     * @param networkUuid
+     * @param variantId
+     * @param nadConfigInfos Will be updated
+     * @param withGeoData
+     */
     private void transformNadConfigInfoForSave(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = nadConfigInfos.getVoltageLevelIds().stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
@@ -196,7 +204,6 @@ class NetworkAreaDiagramService {
         updateMissingPositionsFromSvgData(nadConfigInfos, svgBuilderData);
     }
 
-    // TODO test unitaires
     /**
      * Updates nadConfigInfos with the positions in svgBuilderData if the position is not already defined.
      * This function should not override a position already defined in nadConfigInfos.
