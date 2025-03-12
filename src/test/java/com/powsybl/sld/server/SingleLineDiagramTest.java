@@ -394,7 +394,7 @@ class SingleLineDiagramTest {
 
         assertNotNull(nadConfigInfos.getScalingFactor());
         assertNotNull(nadConfigInfos.getRadiusFactor());
-        if(withGeoData) {
+        if (withGeoData) {
             assertEquals(2, nadConfigInfos.getPositions().size());
         } else {
             assertEquals(0, nadConfigInfos.getPositions().size());

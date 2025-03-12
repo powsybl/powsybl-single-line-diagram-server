@@ -23,6 +23,7 @@ import java.util.*;
 @Builder
 @Table(name = "nadConfig")
 public class NadConfigEntity {
+
     public NadConfigEntity(NadConfigEntity origin) {
         this.depth = origin.getDepth();
         this.scalingFactor = origin.getScalingFactor();
