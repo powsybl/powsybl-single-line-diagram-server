@@ -168,11 +168,11 @@ class NetworkAreaDiagramService {
 
     public UUID createNetworkAreaDiagramConfigAsync(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos) {
         return diagramExecutionService
-            .supplyAsync(() -> transformNadConfigInfoForSave(networkUuid, variantId, nadConfigInfos))
+            .supplyAsync(() -> transformNadConfigInfosForSave(networkUuid, variantId, nadConfigInfos))
             .thenApply(this::saveNetworkAreaDiagramConfig) // Applied this way to use the @Transactional annotation
             .join();
     }
-    // TODO Unit tests
+
     /**
      * Updates nadConfigInfos with the relevant information to create a Network Area Diagram from it later.
      * If nadConfigInfos.withGeoData is true, will check the known position of the voltage levels in the network and complete the nadConfigInfos positions
@@ -182,7 +182,7 @@ class NetworkAreaDiagramService {
      * @param nadConfigInfos Will be updated
      * @return the updated nadConfigInfos
      */
-    private NadConfigInfos transformNadConfigInfoForSave(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos) {
+    public NadConfigInfos transformNadConfigInfosForSave(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos) {
         boolean withGeoData = nadConfigInfos.getWithGeoData();
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = nadConfigInfos.getVoltageLevelIds().stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();

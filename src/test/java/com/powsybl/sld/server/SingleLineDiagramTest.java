@@ -28,6 +28,7 @@ import com.powsybl.sld.library.ConvergenceComponentLibrary;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
+import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
@@ -41,9 +42,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -371,6 +374,54 @@ class SingleLineDiagramTest {
     @Test
     void testGenerateNadWithGeoData() throws Exception {
         testGenerateNadBasedOnGeoData(true);
+    }
+
+    private void testTransformNadConfigInfosForSaveGeoData(boolean withGeoData) throws Exception {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
+
+        NadConfigInfos nadConfigInfos = NadConfigInfos.builder()
+                .depth(0)
+                .withGeoData(withGeoData)
+                .voltageLevelIds(List.of("vlFr1A"))
+                .build();
+
+        assertNull(nadConfigInfos.getScalingFactor());
+        assertNull(nadConfigInfos.getRadiusFactor());
+
+        networkAreaDiagramService.transformNadConfigInfosForSave(testNetworkId, VARIANT_2_ID, nadConfigInfos);
+
+        assertNotNull(nadConfigInfos.getScalingFactor());
+        assertNotNull(nadConfigInfos.getRadiusFactor());
+        if(withGeoData) {
+            assertEquals(2, nadConfigInfos.getPositions().size());
+        } else {
+            assertEquals(0, nadConfigInfos.getPositions().size());
+        }
+    }
+
+    @Test
+    void testTransformNadConfigInfosWithoutGeoData() throws Exception {
+        testTransformNadConfigInfosForSaveGeoData(false);
+    }
+
+    @Test
+    void testTransformNadConfigInfosWithGeoData() throws Exception {
+        testTransformNadConfigInfosForSaveGeoData(true);
+    }
+
+    @Test
+    void testTransformNadConfigInfosIncorrectVoltageLevels() throws Exception {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
+
+        NadConfigInfos nadConfigInfos = NadConfigInfos.builder()
+                .voltageLevelIds(List.of("UNKNOWN_VOLTAGE_LEVEL"))
+                .build();
+
+        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.transformNadConfigInfosForSave(testNetworkId, VARIANT_2_ID, nadConfigInfos), HttpStatus.NOT_FOUND.toString());
     }
 
     @Test
