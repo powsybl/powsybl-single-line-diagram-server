@@ -275,28 +275,14 @@ public class SingleLineDiagramController {
         return networkAreaDiagramService.getNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
     }
 
-    @PostMapping(value = "/network-area-diagram/config/{networkUuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/network-area-diagram/config/{networkUuid}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a network area diagram config using network data")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram config has been created")})
-    public ResponseEntity<UUID> saveNetworkAreaDiagramConfig(
-            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @RequestBody NadConfigInfos nadConfigInfos,
-            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-            @Parameter(description = "Initialize NAD config with Geographical Data") @RequestParam(name = "withGeoData", defaultValue = "true") boolean withGeoData) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("saveNetworkAreaDiagramConfig request received with parameter networkUuid = {}", networkUuid);
-        }
-        // TODO THIS IS WIP, later we will use this API entry point (maybe renamed) to create a NadConfig.
-        // The networkUuid parameter will be moved out of the URL
-        // The other API point will most likely be replaced with this one
-        return ResponseEntity.ok().body(networkAreaDiagramService.saveNetworkAreaDiagramConfigAsync(networkUuid, variantId, nadConfigInfos, withGeoData));
-    }
-
-    @PostMapping(value = "/network-area-diagram/config", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Create a network area diagram config")
     @ApiResponse(responseCode = "200", description = "The network area diagram config has been created")
-    public ResponseEntity<UUID> createNetworkAreaDiagramConfig(@RequestBody NadConfigInfos nadConfigInfos) {
-        return ResponseEntity.ok().body(networkAreaDiagramService.createNetworkAreaDiagramConfig(nadConfigInfos));
+    public ResponseEntity<UUID> createNetworkAreaDiagramConfig(
+            @RequestBody NadConfigInfos nadConfigInfos,
+            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId) {
+        return ResponseEntity.ok().body(networkAreaDiagramService.createNetworkAreaDiagramConfigAsync(networkUuid, variantId, nadConfigInfos));
     }
 
     @PostMapping(value = "/network-area-diagram/config", params = "duplicateFrom", consumes = MediaType.APPLICATION_JSON_VALUE)

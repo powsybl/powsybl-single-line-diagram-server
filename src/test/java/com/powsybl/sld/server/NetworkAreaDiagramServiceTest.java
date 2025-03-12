@@ -82,7 +82,7 @@ class NetworkAreaDiagramServiceTest {
 
     @Test
     void testCreateAndReadNadConfig() {
-        UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        UUID nadConfigId = networkAreaDiagramService.saveNetworkAreaDiagramConfig(createNadConfigDto());
 
         NadConfigInfos nadConfigDto = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
 
@@ -109,7 +109,7 @@ class NetworkAreaDiagramServiceTest {
 
     @Test
     void testDuplicateNadConfig() {
-        UUID originNadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        UUID originNadConfigId = networkAreaDiagramService.saveNetworkAreaDiagramConfig(createNadConfigDto());
         UUID duplicateNadConfigId = networkAreaDiagramService.duplicateNetworkAreaDiagramConfig(originNadConfigId);
 
         NadConfigInfos originNadConfigInfos = networkAreaDiagramService.getNetworkAreaDiagramConfig(originNadConfigId);
@@ -132,7 +132,7 @@ class NetworkAreaDiagramServiceTest {
 
     @Test
     void testUpdateNadConfig() {
-        UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        UUID nadConfigId = networkAreaDiagramService.saveNetworkAreaDiagramConfig(createNadConfigDto());
 
         // Test before update
         NadConfigInfos nadConfigDtoPreUpdate = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
@@ -203,7 +203,7 @@ class NetworkAreaDiagramServiceTest {
 
     @Test
     void testUpdateNadConfigMissingIds() {
-        UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        UUID nadConfigId = networkAreaDiagramService.saveNetworkAreaDiagramConfig(createNadConfigDto());
         NadConfigInfos nadConfigUpdate = new NadConfigInfos();
 
         // Test that the update fails if we send a position without ID or VoltageLevelId
@@ -222,7 +222,7 @@ class NetworkAreaDiagramServiceTest {
 
     @Test
     void testUpdateNadConfigVoltageLevelIdsUniqueness() {
-        UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        UUID nadConfigId = networkAreaDiagramService.saveNetworkAreaDiagramConfig(createNadConfigDto());
 
         NadConfigInfos nadConfigUpdate = new NadConfigInfos();
 
@@ -256,7 +256,7 @@ class NetworkAreaDiagramServiceTest {
 
     @Test
     void testUpdateNadConfigBadVoltageLevelIds() {
-        UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        UUID nadConfigId = networkAreaDiagramService.saveNetworkAreaDiagramConfig(createNadConfigDto());
         NadConfigInfos nadConfigDtoPreUpdate = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
         Optional<NadVoltageLevelPositionInfos> vl2Position = nadConfigDtoPreUpdate.getPositions().stream()
                 .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
@@ -293,7 +293,7 @@ class NetworkAreaDiagramServiceTest {
 
     @Test
     void testDeleteNadConfig() {
-        UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        UUID nadConfigId = networkAreaDiagramService.saveNetworkAreaDiagramConfig(createNadConfigDto());
         networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
         networkAreaDiagramService.deleteNetworkAreaDiagramConfig(nadConfigId);
 

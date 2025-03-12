@@ -81,7 +81,7 @@ class NetworkAreaDiagramService {
     }
 
     @Transactional
-    public UUID createNetworkAreaDiagramConfig(NadConfigInfos nadConfigInfos) {
+    public UUID saveNetworkAreaDiagramConfig(NadConfigInfos nadConfigInfos) {
         return nadConfigRepository.save(nadConfigInfos.toEntity()).getId();
     }
 
@@ -166,26 +166,24 @@ class NetworkAreaDiagramService {
             .join();
     }
 
-    public UUID saveNetworkAreaDiagramConfigAsync(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos, boolean withGeoData) {
+    public UUID createNetworkAreaDiagramConfigAsync(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos) {
         return diagramExecutionService
-                .supplyAsync(() -> {
-                    transformNadConfigInfoForSave(networkUuid, variantId, nadConfigInfos, withGeoData);
-                    return nadConfigInfos;
-                })
-                .thenApply(this::createNetworkAreaDiagramConfig)
-                .join();
+            .supplyAsync(() -> transformNadConfigInfoForSave(networkUuid, variantId, nadConfigInfos))
+            .thenApply(this::saveNetworkAreaDiagramConfig) // Applied this way to use the @Transactional annotation
+            .join();
     }
     // TODO Unit tests
     /**
      * Updates nadConfigInfos with the relevant information to create a Network Area Diagram from it later.
-     * If withGeoData is true, will check the known position of the voltage levels in the network and complete the nadConfigInfos positions
+     * If nadConfigInfos.withGeoData is true, will check the known position of the voltage levels in the network and complete the nadConfigInfos positions
      * with the found geo data positions, where not already defined in the nadConfigInfos.
      * @param networkUuid
      * @param variantId
      * @param nadConfigInfos Will be updated
-     * @param withGeoData
+     * @return the updated nadConfigInfos
      */
-    private void transformNadConfigInfoForSave(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos, boolean withGeoData) {
+    private NadConfigInfos transformNadConfigInfoForSave(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos) {
+        boolean withGeoData = nadConfigInfos.getWithGeoData();
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = nadConfigInfos.getVoltageLevelIds().stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
         if (existingVLIds.isEmpty()) {
@@ -193,7 +191,7 @@ class NetworkAreaDiagramService {
         }
 
         SvgBuilderData svgBuilderData;
-        if (withGeoData) {
+        if (withGeoData && networkUuid != null) {
             svgBuilderData = getSvgBuilderDataWithGeographicalData(network, networkUuid, variantId, existingVLIds, nadConfigInfos.getDepth());
         } else {
             svgBuilderData = getSvgBuilderData(network, existingVLIds, nadConfigInfos.getDepth());
@@ -202,6 +200,7 @@ class NetworkAreaDiagramService {
         nadConfigInfos.setRadiusFactor(RADIUS_FACTOR);
         nadConfigInfos.setScalingFactor(svgBuilderData.getScalingFactor());
         updateMissingPositionsFromSvgData(nadConfigInfos, svgBuilderData);
+        return nadConfigInfos;
     }
 
     /**
@@ -304,13 +303,6 @@ class NetworkAreaDiagramService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
         }
 
-        SvgBuilderData svgBuilderData;
-        if (withGeoData) {
-            svgBuilderData = getSvgBuilderDataWithGeographicalData(network, networkUuid, variantId, existingVLIds, depth);
-        } else {
-            svgBuilderData = getSvgBuilderData(network, existingVLIds, depth);
-        }
-
         SvgParameters svgParameters = new SvgParameters()
                 .setUndefinedValueSymbol("\u2014")
                 .setSvgWidthAndHeightAdded(true)
@@ -321,9 +313,14 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
-        if (withGeoData) {
+
+        SvgBuilderData svgBuilderData;
+        if (withGeoData && networkUuid != null) {
+            svgBuilderData = getSvgBuilderDataWithGeographicalData(network, networkUuid, variantId, existingVLIds, depth);
             LayoutFactory layoutFactory = new FixedLayoutFactory(svgBuilderData.getPositions(), BasicForceLayout::new);
             nadParameters.setLayoutFactory(layoutFactory);
+        } else {
+            svgBuilderData = getSvgBuilderData(network, existingVLIds, depth);
         }
 
         return drawSvgAndBuildMetadata(network, nadParameters, svgBuilderData.getVoltageLevelFilter(), existingVLIds, depth, svgBuilderData.getScalingFactor());

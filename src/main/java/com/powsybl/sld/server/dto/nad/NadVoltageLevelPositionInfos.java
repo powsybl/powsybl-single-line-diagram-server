@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2025, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,7 @@ import java.util.UUID;
 @Builder
 @Getter
 @Setter
+@ToString
 public class NadVoltageLevelPositionInfos {
     private UUID id;
     private String voltageLevelId;
