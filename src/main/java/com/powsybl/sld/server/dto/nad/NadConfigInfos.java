@@ -21,7 +21,6 @@ import java.util.UUID;
 @Builder
 @Getter
 @Setter
-@ToString
 public class NadConfigInfos {
     private UUID id;
     @Builder.Default

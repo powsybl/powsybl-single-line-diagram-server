@@ -19,7 +19,6 @@ import java.util.UUID;
 @Builder
 @Getter
 @Setter
-@ToString
 public class NadVoltageLevelPositionInfos {
     private UUID id;
     private String voltageLevelId;
