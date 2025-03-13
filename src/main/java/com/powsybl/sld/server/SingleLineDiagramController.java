@@ -274,8 +274,8 @@ public class SingleLineDiagramController {
         }
         return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
     }
-    
-    @GetMapping(value = "/network-area-diagram/{networkUuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    // TODO At the moment, the difference between those two API points is a little unclear
+    @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get network area diagram image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
     public @ResponseBody String loadNetworkAreaDiagramSvgFromConfig(
