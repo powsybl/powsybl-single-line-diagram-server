@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2025, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,7 +27,7 @@ public class NadConfigInfos {
     private List<String> voltageLevelIds = new ArrayList<>();
     private Integer depth;
     private Integer scalingFactor;
-    private Integer radiusFactor;
+    private Double radiusFactor;
     @Builder.Default
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
 
