@@ -169,25 +169,17 @@ class NetworkAreaDiagramService {
         nadConfigRepository.deleteById(nadConfigUuid);
     }
 
-    public String getNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, UUID nadConfigUuid) {
+    public String loadNetworkAreaDiagramSvgFromConfigAsync(UUID networkUuid, String variantId, UUID nadConfigUuid) {
         return diagramExecutionService
                 .supplyAsync(() -> self.getNetworkAreaDiagramConfig(nadConfigUuid))
-                .thenApply(nadConfigInfos -> processSvgAndMetadata(getSvgAndMetadata(networkUuid, variantId, nadConfigInfos)))
+                .thenApply(nadConfigInfos -> processSvgAndMetadata(loadNetworkAreaDiagramSvg(networkUuid, variantId, nadConfigInfos)))
                 .join();
     }
 
-    public String getNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+    public String generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         return diagramExecutionService
-                .supplyAsync(() -> processSvgAndMetadata(getSvgAndMetadata(networkUuid, variantId, voltageLevelsIds, depth, withGeoData)))
+                .supplyAsync(() -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData)))
                 .join();
-    }
-
-    private SvgAndMetadata getSvgAndMetadata(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
-        return generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
-    }
-
-    private SvgAndMetadata getSvgAndMetadata(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos) {
-        return loadNetworkAreaDiagramSvg(networkUuid, variantId, nadConfigInfos);
     }
 
     private String processSvgAndMetadata(SvgAndMetadata svgAndMetadata) {
