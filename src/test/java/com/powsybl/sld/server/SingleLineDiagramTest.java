@@ -63,6 +63,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -318,7 +319,9 @@ class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(networkStoreService.getNetwork(notFoundNetworkId, PreloadingStrategy.COLLECTION)).willThrow(new PowsyblException());
 
-        MvcResult result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0" + "&voltageLevelsIds=vlFr1A", testNetworkId))
+        MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0", testNetworkId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("[\"vlFr1A\"]"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -328,7 +331,9 @@ class SingleLineDiagramTest {
         assertTrue(stringResult.contains("additionalMetadata"));
         assertTrue(stringResult.contains("<?xml"));
 
-        result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=vlFr1A", testNetworkId))
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2", testNetworkId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("[\"vlFr1A\"]"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -338,7 +343,9 @@ class SingleLineDiagramTest {
         assertTrue(stringResult.contains("additionalMetadata"));
         assertTrue(stringResult2.contains("<?xml"));
 
-        mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2" + "&voltageLevelsIds=notFound", testNetworkId))
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2", testNetworkId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("[\"notFound\"]"))
                 .andExpect(status().isNotFound());
     }
 
@@ -659,7 +666,9 @@ class SingleLineDiagramTest {
         assertNotNull(voltageLevels);
         assertEquals(1, voltageLevels.size());
         assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
-        mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0" + "&voltageLevelsIds=vlNotFound1,vlNotFound2", testNetworkId))
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0", testNetworkId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("[\"vlNotFound1\", \"vlNotFound2\"]"))
                 .andExpect(status().isNotFound());
     }
 
