@@ -18,9 +18,7 @@ import com.powsybl.iidm.network.extensions.SubstationPositionAdder;
 import com.powsybl.nad.NadParameters;
 import com.powsybl.nad.NetworkAreaDiagram;
 import com.powsybl.nad.build.iidm.VoltageLevelFilter;
-import com.powsybl.nad.layout.BasicForceLayout;
-import com.powsybl.nad.layout.GeographicalLayoutFactory;
-import com.powsybl.nad.layout.LayoutParameters;
+import com.powsybl.nad.layout.*;
 import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -36,12 +34,15 @@ import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.GeoDataUtils;
+import jakarta.validation.constraints.NotNull;
 import lombok.NonNull;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
+import com.powsybl.nad.model.Point;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -69,15 +70,21 @@ class NetworkAreaDiagramService {
     private final NetworkAreaExecutionService diagramExecutionService;
 
     private final NadConfigRepository nadConfigRepository;
+    private final NetworkAreaDiagramService self;
 
     private final ObjectMapper objectMapper;
 
-    public NetworkAreaDiagramService(NetworkStoreService networkStoreService, GeoDataService geoDataService,
-                                     NetworkAreaExecutionService diagramExecutionService, NadConfigRepository nadConfigRepository, ObjectMapper objectMapper) {
+    public NetworkAreaDiagramService(NetworkStoreService networkStoreService,
+                                     GeoDataService geoDataService,
+                                     NetworkAreaExecutionService diagramExecutionService,
+                                     NadConfigRepository nadConfigRepository,
+                                     @Lazy NetworkAreaDiagramService networkAreaDiagramService,
+                                     ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
         this.geoDataService = geoDataService;
         this.diagramExecutionService = diagramExecutionService;
         this.nadConfigRepository = nadConfigRepository;
+        this.self = networkAreaDiagramService;
         this.objectMapper = objectMapper;
     }
 
@@ -162,23 +169,37 @@ class NetworkAreaDiagramService {
         nadConfigRepository.deleteById(nadConfigUuid);
     }
 
-    public String getNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+    public String getNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, UUID nadConfigUuid) {
         return diagramExecutionService
-            .supplyAsync(() -> getNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData))
-            .join();
+                .supplyAsync(() -> self.getNetworkAreaDiagramConfig(nadConfigUuid))
+                .thenApply(nadConfigInfos -> processSvgAndMetadata(getSvgAndMetadata(networkUuid, variantId, nadConfigInfos)))
+                .join();
     }
 
-    private String getNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+    public String getNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+        return diagramExecutionService
+                .supplyAsync(() -> processSvgAndMetadata(getSvgAndMetadata(networkUuid, variantId, voltageLevelsIds, depth, withGeoData)))
+                .join();
+    }
+
+    private SvgAndMetadata getSvgAndMetadata(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+        return generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
+    }
+
+    private SvgAndMetadata getSvgAndMetadata(UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos) {
+        return loadNetworkAreaDiagramSvg(networkUuid, variantId, nadConfigInfos);
+    }
+
+    private String processSvgAndMetadata(SvgAndMetadata svgAndMetadata) {
         try {
-            SvgAndMetadata svgAndMetadata = generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
             String svg = svgAndMetadata.getSvg();
             String metadata = svgAndMetadata.getMetadata();
             Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
             return objectMapper.writeValueAsString(
-                objectMapper.createObjectNode()
-                    .put(SVG_TAG, svg)
-                    .putRawValue(METADATA, new RawValue(metadata))
-                    .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
+                    objectMapper.createObjectNode()
+                            .put(SVG_TAG, svg)
+                            .putRawValue(METADATA, new RawValue(metadata))
+                            .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
         } catch (JsonProcessingException e) {
             throw new PowsyblException("Failed to parse JSON response", e);
         }
@@ -227,6 +248,53 @@ class NetworkAreaDiagramService {
         return coordinates.size() / (width * height);
     }
 
+    public SvgAndMetadata loadNetworkAreaDiagramSvg(@NotNull UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos) {
+        Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
+        List<String> existingVLIds = nadConfigInfos.getVoltageLevelIds().stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
+        if (existingVLIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
+        }
+
+        VoltageLevelFilter vlFilterDepthN = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, nadConfigInfos.getDepth());
+
+        SvgParameters svgParameters = new SvgParameters()
+                .setUndefinedValueSymbol("\u2014")
+                .setSvgWidthAndHeightAdded(true)
+                .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
+
+        LayoutParameters layoutParameters = new LayoutParameters();
+        NadParameters nadParameters = new NadParameters();
+        nadParameters.setSvgParameters(svgParameters);
+        nadParameters.setLayoutParameters(layoutParameters);
+        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
+
+        Map<String, Point> positionsForFixedLayout = nadConfigInfos.getPositions().stream()
+            .collect(Collectors.toMap(
+                NadVoltageLevelPositionInfos::getVoltageLevelId,
+                info -> new Point(info.getXPosition(), info.getYPosition())
+            ));
+
+        LayoutFactory layoutFactory = new FixedLayoutFactory(positionsForFixedLayout, BasicForceLayout::new);
+        nadParameters.setLayoutFactory(layoutFactory);
+
+        return drawSvgAndBuildMetadata(network, nadParameters, vlFilterDepthN, existingVLIds, nadConfigInfos.getDepth(), nadConfigInfos.getScalingFactor());
+    }
+
+    private SvgAndMetadata drawSvgAndBuildMetadata(Network network, NadParameters nadParameters, VoltageLevelFilter vlFilter, List<String> existingVLIds, int depth, int scalingFactor) {
+        try (StringWriter svgWriter = new StringWriter(); StringWriter metadataWriter = new StringWriter()) {
+            NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
+            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth, scalingFactor);
+
+            return SvgAndMetadata.builder()
+                    .svg(svgWriter.toString())
+                    .metadata(metadataWriter.toString())
+                    .additionalMetadata(additionalMetadata).build();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    //TODO update this function with code similar to above
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
