@@ -43,16 +43,16 @@ public class NadVoltageLevelPositionEntity {
     private String voltageLevelId;
 
     @Column(name = "xPosition")
-    private double xPosition;
+    private Double xPosition;
 
     @Column(name = "yPosition")
-    private double yPosition;
+    private Double yPosition;
 
     @Column(name = "xLabelPosition")
-    private double xLabelPosition;
+    private Double xLabelPosition;
 
     @Column(name = "yLabelPosition")
-    private double yLabelPosition;
+    private Double yLabelPosition;
 
     public NadVoltageLevelPositionInfos toDto() {
         return NadVoltageLevelPositionInfos.builder()
