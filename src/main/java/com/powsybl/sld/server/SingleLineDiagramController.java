@@ -274,7 +274,7 @@ public class SingleLineDiagramController {
         }
         return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
     }
-    // TODO At the moment, the difference between those two API points is a little unclear
+
     @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get network area diagram image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
@@ -293,8 +293,8 @@ public class SingleLineDiagramController {
     }
 
     @PostMapping(value = "/network-area-diagram/config", params = "duplicateFrom", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Create a network area diagram config")
-    @ApiResponse(responseCode = "200", description = "The network area diagram config has been created")
+    @Operation(summary = "Duplicate a network area diagram config")
+    @ApiResponse(responseCode = "200", description = "The network area diagram config has been duplicated")
     public ResponseEntity<UUID> duplicateNetworkAreaDiagramConfig(@RequestParam(name = "duplicateFrom") UUID duplicateFrom) {
         return ResponseEntity.ok().body(networkAreaDiagramService.duplicateNetworkAreaDiagramConfig(duplicateFrom));
     }

@@ -25,7 +25,8 @@ public class NadConfigInfos {
     private UUID id;
     @Builder.Default
     private List<String> voltageLevelIds = new ArrayList<>();
-    private Integer depth;
+    @Builder.Default
+    private Integer depth = 0;
     private Integer scalingFactor;
     private Double radiusFactor;
     @Builder.Default
