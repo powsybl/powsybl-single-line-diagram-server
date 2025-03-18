@@ -275,6 +275,16 @@ public class SingleLineDiagramController {
         return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
     }
 
+    @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get network area diagram image")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
+    public @ResponseBody String generateNetworkAreaDiagramSvgFromConfig(
+            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
+            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
+            @Parameter(description = "Network area diagram UUID") @RequestParam(name = "nadConfigUuid") UUID nadConfigUuid) {
+        return networkAreaDiagramService.generateNetworkAreaDiagramSvgFromConfigAsync(networkUuid, variantId, nadConfigUuid);
+    }
+
     @PostMapping(value = "/network-area-diagram/config", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Create a network area diagram config")
     @ApiResponse(responseCode = "200", description = "The network area diagram config has been created")
