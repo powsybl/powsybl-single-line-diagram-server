@@ -191,5 +191,10 @@
             <artifactId>db-util</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-guava</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

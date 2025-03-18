@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (c) 2025, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,6 +23,17 @@ import java.util.*;
 @Builder
 @Table(name = "nadConfig")
 public class NadConfigEntity {
+
+    public NadConfigEntity(NadConfigEntity origin) {
+        this.depth = origin.getDepth();
+        this.scalingFactor = origin.getScalingFactor();
+        this.radiusFactor = origin.getRadiusFactor();
+        this.voltageLevelIds = new ArrayList<>();
+        this.voltageLevelIds.addAll(origin.getVoltageLevelIds());
+        this.positions = new ArrayList<>();
+        origin.getPositions().forEach(position -> this.positions.add(new NadVoltageLevelPositionEntity(position)));
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
@@ -33,7 +44,8 @@ public class NadConfigEntity {
             joinColumns = @JoinColumn(name = "nad_config_entity_id"),
             indexes = @Index(name = "nad_config_voltage_level_index", columnList = "nad_config_entity_id")
     )
-    private List<String> voltageLevelIds;
+    @Builder.Default
+    private List<String> voltageLevelIds = new ArrayList<>();
 
     @Column(name = "depth")
     private Integer depth;
@@ -42,7 +54,7 @@ public class NadConfigEntity {
     private Integer scalingFactor;
 
     @Column(name = "radiusFactor")
-    private Integer radiusFactor;
+    private Double radiusFactor;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "nad_config_id")
