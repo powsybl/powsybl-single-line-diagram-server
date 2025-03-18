@@ -28,6 +28,8 @@ import com.powsybl.sld.library.ConvergenceComponentLibrary;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
+import com.powsybl.sld.server.dto.nad.NadConfigInfos;
+import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
@@ -50,18 +52,14 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import static com.powsybl.sld.library.ComponentTypeName.ARROW_ACTIVE;
 import static com.powsybl.sld.library.ComponentTypeName.ARROW_REACTIVE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -83,6 +81,9 @@ class SingleLineDiagramTest {
 
     @Autowired
     private NetworkAreaDiagramService networkAreaDiagramService;
+
+    @MockBean
+    private NadConfigRepository nadConfigRepository;
 
     @MockBean
     private PositionDiagramLabelProvider positionDiagramLabelProvider;
@@ -345,6 +346,48 @@ class SingleLineDiagramTest {
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2", testNetworkId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("[\"notFound\"]"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testNetworkAreaDiagramFromConfig() throws Exception {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        UUID nadConfigUuid = UUID.fromString("3f8193f8-704c-460b-887a-8ffbcbe9f69e");
+        UUID nadConfigUuidVlNotFound = UUID.fromString("585071db-f40b-4fb6-b8df-837b9202eefb");
+
+        NadConfigInfos nadConfigInfos = NadConfigInfos.builder()
+                .id(nadConfigUuid)
+                .voltageLevelIds(List.of("vlFr1A"))
+                .scalingFactor(0)
+                .radiusFactor(0.0)
+                .positions(List.of())
+                .depth(0)
+                .build();
+
+        NadConfigInfos nadConfigInfosVlNotFound = NadConfigInfos.builder()
+                .id(nadConfigUuidVlNotFound)
+                .voltageLevelIds(List.of("notFound"))
+                .scalingFactor(0)
+                .radiusFactor(0.0)
+                .positions(List.of())
+                .depth(0)
+                .build();
+
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+        given(nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid)).willReturn(Optional.ofNullable(nadConfigInfos.toEntity()));
+        given(nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuidVlNotFound)).willReturn(Optional.ofNullable(nadConfigInfosVlNotFound.toEntity()));
+
+        MvcResult result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&nadConfigUuid=" + nadConfigUuid, testNetworkId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        String stringResult = result.getResponse().getContentAsString();
+        assertTrue(stringResult.contains("svg"));
+        assertTrue(stringResult.contains("metadata"));
+        assertTrue(stringResult.contains("additionalMetadata"));
+        assertTrue(stringResult.contains("<?xml"));
+
+        mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&nadConfigUuid=" + nadConfigUuidVlNotFound, testNetworkId))
                 .andExpect(status().isNotFound());
     }
 
