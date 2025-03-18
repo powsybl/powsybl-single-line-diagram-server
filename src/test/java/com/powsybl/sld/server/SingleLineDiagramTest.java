@@ -351,9 +351,9 @@ class SingleLineDiagramTest {
 
     @Test
     void testNetworkAreaDiagramFromConfig() throws Exception {
-        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
-        UUID nadConfigUuid = UUID.fromString("3f8193f8-704c-460b-887a-8ffbcbe9f69e");
-        UUID nadConfigUuidVlNotFound = UUID.fromString("585071db-f40b-4fb6-b8df-837b9202eefb");
+        UUID testNetworkId = UUID.randomUUID();
+        UUID nadConfigUuid = UUID.randomUUID();
+        UUID nadConfigUuidVlNotFound = UUID.randomUUID();
 
         NadConfigInfos nadConfigInfos = NadConfigInfos.builder()
                 .id(nadConfigUuid)
