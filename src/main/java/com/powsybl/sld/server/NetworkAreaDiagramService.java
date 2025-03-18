@@ -169,10 +169,10 @@ class NetworkAreaDiagramService {
         nadConfigRepository.deleteById(nadConfigUuid);
     }
 
-    public String loadNetworkAreaDiagramSvgFromConfigAsync(UUID networkUuid, String variantId, UUID nadConfigUuid) {
+    public String generateNetworkAreaDiagramSvgFromConfigAsync(UUID networkUuid, String variantId, UUID nadConfigUuid) {
         return diagramExecutionService
                 .supplyAsync(() -> self.getNetworkAreaDiagramConfig(nadConfigUuid))
-                .thenApply(nadConfigInfos -> processSvgAndMetadata(loadNetworkAreaDiagramSvg(networkUuid, variantId, nadConfigInfos)))
+                .thenApply(nadConfigInfos -> processSvgAndMetadata(generateNetworkAreaDiagramSvgFromConfig(networkUuid, variantId, nadConfigInfos)))
                 .join();
     }
 
@@ -240,7 +240,7 @@ class NetworkAreaDiagramService {
         return coordinates.size() / (width * height);
     }
 
-    public SvgAndMetadata loadNetworkAreaDiagramSvg(@NotNull UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos) {
+    public SvgAndMetadata generateNetworkAreaDiagramSvgFromConfig(@NotNull UUID networkUuid, String variantId, NadConfigInfos nadConfigInfos) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = nadConfigInfos.getVoltageLevelIds().stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
         if (existingVLIds.isEmpty()) {

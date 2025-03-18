@@ -278,11 +278,11 @@ public class SingleLineDiagramController {
     @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get network area diagram image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
-    public @ResponseBody String loadNetworkAreaDiagramSvgFromConfig(
+    public @ResponseBody String generateNetworkAreaDiagramSvgFromConfig(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @Parameter(description = "Network area diagram UUID") @RequestParam(name = "nadConfigUuid") UUID nadConfigUuid) {
-        return networkAreaDiagramService.loadNetworkAreaDiagramSvgFromConfigAsync(networkUuid, variantId, nadConfigUuid);
+        return networkAreaDiagramService.generateNetworkAreaDiagramSvgFromConfigAsync(networkUuid, variantId, nadConfigUuid);
     }
 
     @PostMapping(value = "/network-area-diagram/config", consumes = MediaType.APPLICATION_JSON_VALUE)
