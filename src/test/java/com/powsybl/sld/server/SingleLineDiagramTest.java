@@ -339,8 +339,8 @@ class SingleLineDiagramTest {
                 .andReturn();
         String stringResult2 = result.getResponse().getContentAsString();
         assertTrue(stringResult2.contains("svg"));
-        assertTrue(stringResult.contains("metadata"));
-        assertTrue(stringResult.contains("additionalMetadata"));
+        assertTrue(stringResult2.contains("metadata"));
+        assertTrue(stringResult2.contains("additionalMetadata"));
         assertTrue(stringResult2.contains("<?xml"));
 
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=2", testNetworkId)
@@ -419,10 +419,31 @@ class SingleLineDiagramTest {
     void testNetworkAreaDiagramAdditionalMetadata() throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
 
-        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
-        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
+        Network networkWithDepth = createNetwork();
+        // We add lines to create depth
+        networkWithDepth.newLine()
+            .setId("l1")
+            .setVoltageLevel1("vlFr1A")
+            .setBus1("busFr1A")
+            .setVoltageLevel2("vlFr2A")
+            .setBus2("busFr2A")
+            .setR(1)
+            .setX(3)
+            .add();
+        networkWithDepth.newLine()
+            .setId("l2")
+            .setVoltageLevel1("vlFr2A")
+            .setBus1("busFr2A")
+            .setVoltageLevel2("vlEs1B")
+            .setBus2("busEs1B")
+            .setR(1)
+            .setX(3)
+            .add();
 
-        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), 2, true);
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(networkWithDepth);
+
+        // Test with a depth of zero, should return in the metadata only one voltage level
+        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, null, List.of("vlFr1A"), 0, false);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, Object> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
@@ -433,6 +454,19 @@ class SingleLineDiagramTest {
         assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
         assertEquals("vlFr1A", voltageLevels.get(0).get("name"));
         assertEquals("subFr1", voltageLevels.get(0).get("substationId"));
+
+        // Test with a depth of two, should return in the metadata three voltage level
+        svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, null, List.of("vlFr1A"), 2, false);
+        additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        assertNotNull(additionalMetadata);
+        convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
+        assertEquals(3, convertedMetadata.get("nbVoltageLevels"));
+        voltageLevels = objectMapper.convertValue(convertedMetadata.get("voltageLevels"), new TypeReference<>() { });
+        assertNotNull(voltageLevels);
+        assertEquals(3, voltageLevels.size());
+        assertTrue(voltageLevels.stream().anyMatch(vl -> "vlFr1A".equals(vl.get("id"))));
+        assertTrue(voltageLevels.stream().anyMatch(vl -> "vlFr2A".equals(vl.get("id"))));
+        assertTrue(voltageLevels.stream().anyMatch(vl -> "vlEs1B".equals(vl.get("id"))));
     }
 
     @Test
