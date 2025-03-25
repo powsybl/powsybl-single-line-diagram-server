@@ -270,7 +270,7 @@ class NetworkAreaDiagramService {
         LayoutFactory layoutFactory = new FixedLayoutFactory(positionsForFixedLayout, BasicForceLayout::new);
         nadParameters.setLayoutFactory(layoutFactory);
 
-        return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, existingVLIds, nadConfigInfos.getDepth(), nadConfigInfos.getScalingFactor());
+        return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, nadConfigInfos.getScalingFactor());
     }
 
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
@@ -318,13 +318,13 @@ class NetworkAreaDiagramService {
         }
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
 
-        return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, existingVLIds, depth, scalingFactor);
+        return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, scalingFactor);
     }
 
-    private SvgAndMetadata drawSvgAndBuildMetadata(Network network, NadParameters nadParameters, VoltageLevelFilter vlFilter, List<String> existingVLIds, int depth, int scalingFactor) {
+    private SvgAndMetadata drawSvgAndBuildMetadata(Network network, NadParameters nadParameters, VoltageLevelFilter vlFilter, Integer scalingFactor) {
         try (StringWriter svgWriter = new StringWriter(); StringWriter metadataWriter = new StringWriter()) {
             NetworkAreaDiagram.draw(network, svgWriter, metadataWriter, nadParameters, vlFilter);
-            Map<String, Object> additionalMetadata = computeAdditionalMetadata(network, existingVLIds, depth, scalingFactor);
+            Map<String, Object> additionalMetadata = computeAdditionalMetadata(vlFilter, scalingFactor);
 
             return SvgAndMetadata.builder()
                     .svg(svgWriter.toString())
@@ -361,12 +361,9 @@ class NetworkAreaDiagramService {
         return substationGeoDataMap;
     }
 
-    private Map<String, Object> computeAdditionalMetadata(Network network, List<String> voltageLevelsIds, int depth, int scalingFactor) {
+    private Map<String, Object> computeAdditionalMetadata(VoltageLevelFilter vlFilter, Integer scalingFactor) {
 
-        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelsIds, depth);
-
-        List<VoltageLevelInfos> voltageLevelsInfos = voltageLevelsIds.stream()
-                .map(network::getVoltageLevel)
+        List<VoltageLevelInfos> voltageLevelsInfos = vlFilter.getVoltageLevels().stream()
                 .map(VoltageLevelInfos::new)
                 .toList();
 
