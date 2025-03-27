@@ -66,8 +66,6 @@ class NetworkAreaDiagramServiceTest {
 
         return NadConfigInfos.builder()
                 .voltageLevelIds(List.of("VL1"))
-                .depth(1)
-                .radiusFactor(100.0)
                 .scalingFactor(300000)
                 .positions(positions)
                 .build();
@@ -84,7 +82,6 @@ class NetworkAreaDiagramServiceTest {
 
         NadConfigInfos nadConfigDto = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
 
-        assertEquals(1, nadConfigDto.getDepth());
         assertEquals(1, nadConfigDto.getVoltageLevelIds().size());
         assertEquals(2, nadConfigDto.getPositions().size());
 
@@ -134,7 +131,6 @@ class NetworkAreaDiagramServiceTest {
 
         // Test before update
         NadConfigInfos nadConfigDtoPreUpdate = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
-        assertEquals(1, nadConfigDtoPreUpdate.getDepth());
         assertEquals(1, nadConfigDtoPreUpdate.getVoltageLevelIds().size());
         assertEquals(300000, nadConfigDtoPreUpdate.getScalingFactor());
         assertEquals(2, nadConfigDtoPreUpdate.getPositions().size());
@@ -146,7 +142,6 @@ class NetworkAreaDiagramServiceTest {
 
         // Update
         NadConfigInfos nadConfigUpdate = new NadConfigInfos();
-        nadConfigUpdate.setDepth(18);
         nadConfigUpdate.setScalingFactor(600000);
         nadConfigUpdate.setVoltageLevelIds(List.of("VL1", "VL2"));
 
@@ -175,7 +170,6 @@ class NetworkAreaDiagramServiceTest {
 
         // Test after update
         NadConfigInfos nadConfigDtoPostUpdate = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
-        assertEquals(18, nadConfigDtoPostUpdate.getDepth());
         assertEquals(2, nadConfigDtoPostUpdate.getVoltageLevelIds().size());
         assertEquals(600000, nadConfigDtoPostUpdate.getScalingFactor());
         assertEquals(3, nadConfigDtoPostUpdate.getPositions().size());

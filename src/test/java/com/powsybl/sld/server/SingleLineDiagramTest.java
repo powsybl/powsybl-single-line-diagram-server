@@ -359,18 +359,14 @@ class SingleLineDiagramTest {
                 .id(nadConfigUuid)
                 .voltageLevelIds(List.of("vlFr1A"))
                 .scalingFactor(0)
-                .radiusFactor(0.0)
                 .positions(List.of())
-                .depth(0)
                 .build();
 
         NadConfigInfos nadConfigInfosVlNotFound = NadConfigInfos.builder()
                 .id(nadConfigUuidVlNotFound)
                 .voltageLevelIds(List.of("notFound"))
                 .scalingFactor(0)
-                .radiusFactor(0.0)
                 .positions(List.of())
-                .depth(0)
                 .build();
 
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());

@@ -25,9 +25,7 @@ import java.util.*;
 public class NadConfigEntity {
 
     public NadConfigEntity(NadConfigEntity origin) {
-        this.depth = origin.getDepth();
         this.scalingFactor = origin.getScalingFactor();
-        this.radiusFactor = origin.getRadiusFactor();
         this.voltageLevelIds = new ArrayList<>();
         this.voltageLevelIds.addAll(origin.getVoltageLevelIds());
         this.positions = new ArrayList<>();
@@ -47,14 +45,8 @@ public class NadConfigEntity {
     @Builder.Default
     private List<String> voltageLevelIds = new ArrayList<>();
 
-    @Column(name = "depth")
-    private Integer depth;
-
     @Column(name = "scalingFactor")
     private Integer scalingFactor;
-
-    @Column(name = "radiusFactor")
-    private Double radiusFactor;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "nad_config_id")
@@ -65,9 +57,7 @@ public class NadConfigEntity {
         NadConfigInfos.NadConfigInfosBuilder nadConfigInfosBuilder = NadConfigInfos.builder();
         nadConfigInfosBuilder.id(this.id)
                 .voltageLevelIds(this.voltageLevelIds)
-                .depth(this.depth)
                 .scalingFactor(this.scalingFactor)
-                .radiusFactor(this.radiusFactor)
                 .build();
         nadConfigInfosBuilder.positions(this.positions.stream().map(NadVoltageLevelPositionEntity::toDto).toList());
         return nadConfigInfosBuilder.build();

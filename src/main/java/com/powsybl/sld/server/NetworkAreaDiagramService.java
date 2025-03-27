@@ -116,9 +116,7 @@ class NetworkAreaDiagramService {
         Optional.ofNullable(nadConfigInfos.getVoltageLevelIds()).ifPresent(voltageLevels ->
             entity.setVoltageLevelIds(new ArrayList<>(voltageLevels))
         );
-        Optional.ofNullable(nadConfigInfos.getDepth()).ifPresent(entity::setDepth);
         Optional.ofNullable(nadConfigInfos.getScalingFactor()).ifPresent(entity::setScalingFactor);
-        Optional.ofNullable(nadConfigInfos.getRadiusFactor()).ifPresent(entity::setRadiusFactor);
 
         if (nadConfigInfos.getPositions() != null && !nadConfigInfos.getPositions().isEmpty()) {
             updatePositions(entity, nadConfigInfos);
@@ -252,8 +250,8 @@ class NetworkAreaDiagramService {
                 .setSvgWidthAndHeightAdded(true)
                 .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
-        //List of selected voltageLevels with depth
-        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, nadConfigInfos.getDepth());
+        //List of selected voltageLevels with depth (zero at the moment, as depth modification is disabled for NAD generated from a config)
+        VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, 0);
 
         LayoutParameters layoutParameters = new LayoutParameters();
         NadParameters nadParameters = new NadParameters();
