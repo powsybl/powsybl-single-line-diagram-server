@@ -25,10 +25,7 @@ public class NadConfigInfos {
     private UUID id;
     @Builder.Default
     private List<String> voltageLevelIds = new ArrayList<>();
-    @Builder.Default
-    private Integer depth = 0;
     private Integer scalingFactor;
-    private Double radiusFactor;
     @Builder.Default
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
 
@@ -36,9 +33,7 @@ public class NadConfigInfos {
         return NadConfigEntity.builder()
                 .id(id)
                 .voltageLevelIds(voltageLevelIds)
-                .depth(depth)
                 .scalingFactor(scalingFactor)
-                .radiusFactor(radiusFactor)
                 .positions(positions.stream().map(NadVoltageLevelPositionInfos::toEntity).toList())
                 .build();
     }
