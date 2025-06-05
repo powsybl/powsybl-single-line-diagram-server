@@ -451,6 +451,19 @@ class SingleLineDiagramTest {
         assertEquals("vlFr1A", voltageLevels.get(0).get("name"));
         assertEquals("subFr1", voltageLevels.get(0).get("substationId"));
 
+        // Test with an initial depth zero and enable depth extension on the selected voltage level "vlFr1A"
+        svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, null, List.of("vlFr1A"), "vlFr1A", 0, false);
+        additionalMetadata = svgAndMetadata.getAdditionalMetadata();
+        assertNotNull(additionalMetadata);
+        convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
+        assertEquals(2, convertedMetadata.get("nbVoltageLevels"));
+        voltageLevels = objectMapper.convertValue(convertedMetadata.get("voltageLevels"), new TypeReference<>() { });
+        assertNotNull(voltageLevels);
+        assertEquals(2, voltageLevels.size());
+
+        assertTrue(voltageLevels.stream().anyMatch(vl -> "vlFr1A".equals(vl.get("id"))));
+        assertTrue(voltageLevels.stream().anyMatch(vl -> "vlFr2A".equals(vl.get("id"))));
+
         // Test with a depth of two, should return in the metadata three voltage level
         svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, null, List.of("vlFr1A"), null, 2, false);
         additionalMetadata = svgAndMetadata.getAdditionalMetadata();
