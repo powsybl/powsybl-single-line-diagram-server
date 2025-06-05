@@ -361,8 +361,7 @@ class SingleLineDiagramTest {
         UUID filterUuid = UUID.randomUUID();
         UUID filterUuidNotFound = UUID.randomUUID();
 
-        List<IdentifiableAttributes> filterContent = new ArrayList<>();
-        filterContent.add(new IdentifiableAttributes("vlFr1A", IdentifiableType.VOLTAGE_LEVEL, null));
+        List<IdentifiableAttributes> filterContent = List.of(new IdentifiableAttributes("vlFr1A", IdentifiableType.VOLTAGE_LEVEL, null));
 
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
