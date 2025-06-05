@@ -23,17 +23,15 @@ import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.sld.server.dto.Coordinate;
-import com.powsybl.sld.server.dto.SubstationGeoData;
-import com.powsybl.sld.server.dto.SvgAndMetadata;
-import com.powsybl.sld.server.dto.VoltageLevelInfos;
+import com.powsybl.sld.server.dto.*;
+import com.powsybl.sld.server.dto.nad.ElementParametersInfos;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
-import com.powsybl.sld.server.utils.GeoDataUtils;
+import com.powsybl.sld.server.utils.ResourceUtils;
 import jakarta.validation.constraints.NotNull;
 import lombok.NonNull;
 import org.springframework.context.annotation.ComponentScan;
@@ -67,6 +65,7 @@ class NetworkAreaDiagramService {
 
     private final NetworkStoreService networkStoreService;
     private final GeoDataService geoDataService;
+    private final FilterService filterService;
     private final NetworkAreaExecutionService diagramExecutionService;
 
     private final NadConfigRepository nadConfigRepository;
@@ -76,12 +75,14 @@ class NetworkAreaDiagramService {
 
     public NetworkAreaDiagramService(NetworkStoreService networkStoreService,
                                      GeoDataService geoDataService,
+                                     FilterService filterService,
                                      NetworkAreaExecutionService diagramExecutionService,
                                      NadConfigRepository nadConfigRepository,
                                      @Lazy NetworkAreaDiagramService networkAreaDiagramService,
                                      ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
         this.geoDataService = geoDataService;
+        this.filterService = filterService;
         this.diagramExecutionService = diagramExecutionService;
         this.nadConfigRepository = nadConfigRepository;
         this.self = networkAreaDiagramService;
@@ -162,15 +163,37 @@ class NetworkAreaDiagramService {
         return nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).toDto();
     }
 
+    @Transactional(readOnly = true)
+    public List<String> getVoltageLevelsIdsFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
+        List<IdentifiableAttributes> filterContent = filterService.exportFilter(networkUuid, variantId, filterUuid);
+        return filterContent.stream()
+            .map(IdentifiableAttributes::getId)
+            .collect(Collectors.toList());
+    }
+
     @Transactional
     public void deleteNetworkAreaDiagramConfig(UUID nadConfigUuid) {
         nadConfigRepository.deleteById(nadConfigUuid);
+    }
+
+    public String generateNetworkAreaDiagramSvgFromElement(UUID networkUuid, String variantId, @NonNull ElementParametersInfos elementParametersInfos) {
+        return switch(elementParametersInfos.getElementType()) {
+            case DIAGRAM_CONFIG -> generateNetworkAreaDiagramSvgFromConfigAsync(networkUuid, variantId, elementParametersInfos.getElementUuid());
+            case FILTER -> generateNetworkAreaDiagramSvgFromFilterAsync(networkUuid, variantId, elementParametersInfos.getElementUuid(), elementParametersInfos.getDepth(), elementParametersInfos.getWithGeoData());
+        };
     }
 
     public String generateNetworkAreaDiagramSvgFromConfigAsync(UUID networkUuid, String variantId, UUID nadConfigUuid) {
         return diagramExecutionService
                 .supplyAsync(() -> self.getNetworkAreaDiagramConfig(nadConfigUuid))
                 .thenApply(nadConfigInfos -> processSvgAndMetadata(generateNetworkAreaDiagramSvgFromConfig(networkUuid, variantId, nadConfigInfos)))
+                .join();
+    }
+
+    public String generateNetworkAreaDiagramSvgFromFilterAsync(UUID networkUuid, String variantId, UUID filterUuid, Integer depth, Boolean withGeoData) {
+        return diagramExecutionService
+                .supplyAsync(() -> self.getVoltageLevelsIdsFromFilter(networkUuid, variantId, filterUuid))
+                .thenApply(voltageLevelsIds -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData)))
                 .join();
     }
 
@@ -341,7 +364,7 @@ class NetworkAreaDiagramService {
                 .toList();
 
         String substationsGeoDataString = geoDataService.getSubstationsGraphics(networkUuid, variantId, substations.stream().map(Substation::getId).toList());
-        List<SubstationGeoData> substationsGeoData = GeoDataUtils.fromStringToSubstationGeoData(substationsGeoDataString, new ObjectMapper());
+        List<SubstationGeoData> substationsGeoData = ResourceUtils.fromStringToSubstationGeoData(substationsGeoDataString, new ObjectMapper());
         Map<String, Coordinate> substationGeoDataMap = substationsGeoData.stream()
                 .collect(Collectors.toMap(SubstationGeoData::getId, SubstationGeoData::getCoordinate));
 
