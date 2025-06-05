@@ -177,7 +177,7 @@ class NetworkAreaDiagramService {
     }
 
     public String generateNetworkAreaDiagramSvgFromElement(UUID networkUuid, String variantId, @NonNull ElementParametersInfos elementParametersInfos) {
-        return switch(elementParametersInfos.getElementType()) {
+        return switch (elementParametersInfos.getElementType()) {
             case DIAGRAM_CONFIG -> generateNetworkAreaDiagramSvgFromConfigAsync(networkUuid, variantId, elementParametersInfos.getElementUuid());
             case FILTER -> generateNetworkAreaDiagramSvgFromFilterAsync(networkUuid, variantId, elementParametersInfos.getElementUuid(), elementParametersInfos.getDepth(), elementParametersInfos.getWithGeoData());
         };
