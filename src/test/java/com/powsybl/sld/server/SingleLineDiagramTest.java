@@ -391,7 +391,7 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
-        networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), 0, withGeoData);
+        networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), null, 0, withGeoData);
         if (withGeoData) {
             //initialize with geographical data
             verify(geoDataService, times(1)).getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"));
@@ -439,7 +439,7 @@ class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(networkWithDepth);
 
         // Test with a depth of zero, should return in the metadata only one voltage level
-        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, null, List.of("vlFr1A"), 0, false);
+        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, null, List.of("vlFr1A"), null, 0, false);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, Object> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
@@ -452,7 +452,7 @@ class SingleLineDiagramTest {
         assertEquals("subFr1", voltageLevels.get(0).get("substationId"));
 
         // Test with a depth of two, should return in the metadata three voltage level
-        svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, null, List.of("vlFr1A"), 2, false);
+        svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, null, List.of("vlFr1A"), null, 2, false);
         additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
@@ -729,7 +729,7 @@ class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
 
-        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A", "vlNotFound1"), 0, true);
+        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A", "vlNotFound1"), null, 0, true);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, Object> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
@@ -738,7 +738,7 @@ class SingleLineDiagramTest {
         assertNotNull(voltageLevels);
         assertEquals(1, voltageLevels.size());
         assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
-        mvc.perform(post("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0", testNetworkId)
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0&selectedVoltageLevel=vlNotFound3", testNetworkId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("[\"vlNotFound1\", \"vlNotFound2\"]"))
                 .andExpect(status().isNotFound());

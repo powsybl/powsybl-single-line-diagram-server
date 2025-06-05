@@ -174,9 +174,9 @@ class NetworkAreaDiagramService {
                 .join();
     }
 
-    public String generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+    public String generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, String selectedVoltageLevel, int depth, boolean withGeoData) {
         return diagramExecutionService
-                .supplyAsync(() -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData)))
+                .supplyAsync(() -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, selectedVoltageLevel, depth, withGeoData)))
                 .join();
     }
 
@@ -271,7 +271,7 @@ class NetworkAreaDiagramService {
         return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, nadConfigInfos.getScalingFactor());
     }
 
-    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, int depth, boolean withGeoData) {
+    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, String selectedVoltageLevel, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
         if (existingVLIds.isEmpty()) {
@@ -285,6 +285,14 @@ class NetworkAreaDiagramService {
 
         //List of selected voltageLevels with depth
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
+        Set<VoltageLevel> mergedVoltageLevels = new HashSet<>(vlFilter.getVoltageLevels());
+
+        if (selectedVoltageLevel != null) {
+            VoltageLevelFilter selectedVlFilter = VoltageLevelFilter.createVoltageLevelDepthFilter(network, selectedVoltageLevel, 1);
+            mergedVoltageLevels.addAll(selectedVlFilter.getVoltageLevels());
+        } //"929ba893-c9dc-44d7-b1fd-30834bd3ab85"
+
+        VoltageLevelFilter allVlFilter = new VoltageLevelFilter(mergedVoltageLevels);
 
         LayoutParameters layoutParameters = new LayoutParameters();
         NadParameters nadParameters = new NadParameters();
@@ -294,7 +302,7 @@ class NetworkAreaDiagramService {
         //Initialize with geographical data
         int scalingFactor = 0;
         if (withGeoData) {
-            List<VoltageLevel> voltageLevels = vlFilter.getVoltageLevels().stream().toList();
+            List<VoltageLevel> voltageLevels = allVlFilter.getVoltageLevels().stream().toList();
             List<String> substations = voltageLevels.stream()
                     .map(VoltageLevel::getNullableSubstation)
                     .filter(Objects::nonNull)
@@ -302,7 +310,10 @@ class NetworkAreaDiagramService {
                     .toList();
 
             //get voltage levels' positions on depth+1 to be able to locate lines on depth
-            List<VoltageLevel> voltageLevelsPlusOneDepth = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList();
+            List<VoltageLevel> voltageLevelsPlusOneDepth = new ArrayList<>(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList());
+            if (selectedVoltageLevel != null) {
+                voltageLevelsPlusOneDepth.addAll(VoltageLevelFilter.createVoltageLevelDepthFilter(network, selectedVoltageLevel, 2).getVoltageLevels().stream().toList());
+            }
             Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
 
             // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
@@ -316,7 +327,7 @@ class NetworkAreaDiagramService {
         }
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(network));
 
-        return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, scalingFactor);
+        return drawSvgAndBuildMetadata(network, nadParameters, allVlFilter, scalingFactor);
     }
 
     private SvgAndMetadata drawSvgAndBuildMetadata(Network network, NadParameters nadParameters, VoltageLevelFilter vlFilter, Integer scalingFactor) {

@@ -268,11 +268,12 @@ public class SingleLineDiagramController {
             @RequestBody List<String> voltageLevelsIds,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth,
+            @Parameter(description = "Voltage level on which to extend depth") @RequestParam(name = "selectedVoltageLevel", required = false) String selectedVoltageLevel,
             @Parameter(description = "Initialize NAD with Geographical Data") @RequestParam(name = "withGeoData", defaultValue = "true") boolean withGeoData) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
         }
-        return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
+        return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, null, depth, withGeoData);
     }
 
     @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
