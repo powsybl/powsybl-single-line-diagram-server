@@ -10,7 +10,9 @@ import com.powsybl.sld.server.dto.IdentifiableAttributes;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import lombok.Setter;
@@ -58,8 +60,13 @@ public class FilterService {
             uriComponentsBuilder.queryParam(QUERY_PARAM_VARIANT_ID, variantId);
         }
         var uriComponent = uriComponentsBuilder.buildAndExpand(filterUuid);
-        return restTemplate.exchange(uriComponent.toUriString(), HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<IdentifiableAttributes>>() {
-                }).getBody();
+
+        try {
+            return restTemplate.exchange(uriComponent.toUriString(), HttpMethod.GET, null,
+                    new ParameterizedTypeReference<List<IdentifiableAttributes>>() {
+                    }).getBody();
+        } catch (HttpStatusCodeException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
     }
 }

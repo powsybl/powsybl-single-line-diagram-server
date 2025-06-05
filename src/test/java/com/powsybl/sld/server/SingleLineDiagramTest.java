@@ -27,6 +27,7 @@ import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ConvergenceComponentLibrary;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
+import com.powsybl.sld.server.dto.IdentifiableAttributes;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.repository.NadConfigRepository;
@@ -43,9 +44,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URLEncoder;
 import java.io.IOException;
@@ -93,6 +96,8 @@ class SingleLineDiagramTest {
     private NetworkStoreService networkStoreService;
     @MockBean
     private GeoDataService geoDataService;
+    @MockBean
+    private FilterService filterService;
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
@@ -351,6 +356,38 @@ class SingleLineDiagramTest {
     }
 
     @Test
+    void testNetworkAreaDiagramFromFilter() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        UUID filterUuid = UUID.randomUUID();
+        UUID filterUuidNotFound = UUID.randomUUID();
+
+        List<IdentifiableAttributes> filterContent = new ArrayList<>();
+        filterContent.add(new IdentifiableAttributes("vlFr1A", IdentifiableType.VOLTAGE_LEVEL, null));
+
+        given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+        given(filterService.exportFilter(testNetworkId, VARIANT_2_ID, filterUuid)).willReturn(filterContent);
+        given(filterService.exportFilter(testNetworkId, VARIANT_2_ID, filterUuidNotFound)).willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        String jsonElementParams = "{\"elementType\":\"FILTER\",\"elementUuid\":\"" + filterUuid + "\",\"depth\":0,\"withGeoData\":true}";
+
+        MvcResult result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&elementParams=" + URLEncoder.encode(jsonElementParams, StandardCharsets.UTF_8), testNetworkId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        String stringResult = result.getResponse().getContentAsString();
+        assertTrue(stringResult.contains("svg"));
+        assertTrue(stringResult.contains("metadata"));
+        assertTrue(stringResult.contains("additionalMetadata"));
+        assertTrue(stringResult.contains("<?xml"));
+
+        String jsonElementParamsNotFound = "{\"elementType\":\"FILTER\",\"elementUuid\":\"" + filterUuidNotFound + "\",\"depth\":0,\"withGeoData\":true}";
+
+        mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&elementParams=" + URLEncoder.encode(jsonElementParamsNotFound, StandardCharsets.UTF_8), testNetworkId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void testNetworkAreaDiagramFromConfig() throws Exception {
         UUID testNetworkId = UUID.randomUUID();
         UUID nadConfigUuid = UUID.randomUUID();
@@ -386,9 +423,9 @@ class SingleLineDiagramTest {
         assertTrue(stringResult.contains("additionalMetadata"));
         assertTrue(stringResult.contains("<?xml"));
 
-        String jsonElementParamsVlNotFound = "{\"elementType\":\"DIAGRAM_CONFIG\",\"elementUuid\":\"" + nadConfigUuidVlNotFound + "\"}";
+        String jsonElementParamsNotFound = "{\"elementType\":\"DIAGRAM_CONFIG\",\"elementUuid\":\"" + nadConfigUuidVlNotFound + "\"}";
 
-        mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&elementParams=" + URLEncoder.encode(jsonElementParamsVlNotFound, StandardCharsets.UTF_8), testNetworkId))
+        mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&elementParams=" + URLEncoder.encode(jsonElementParamsNotFound, StandardCharsets.UTF_8), testNetworkId))
                 .andExpect(status().isNotFound());
     }
 
