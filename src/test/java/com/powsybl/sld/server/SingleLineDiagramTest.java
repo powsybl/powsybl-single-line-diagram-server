@@ -47,6 +47,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.net.URLEncoder;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -373,7 +374,9 @@ class SingleLineDiagramTest {
         given(nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid)).willReturn(Optional.ofNullable(nadConfigInfos.toEntity()));
         given(nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuidVlNotFound)).willReturn(Optional.ofNullable(nadConfigInfosVlNotFound.toEntity()));
 
-        MvcResult result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&nadConfigUuid=" + nadConfigUuid, testNetworkId))
+        String jsonElementParams = "{\"elementType\":\"DIAGRAM_CONFIG\",\"elementUuid\":\"" + nadConfigUuid + "\"}";
+
+        MvcResult result = mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&elementParams=" + URLEncoder.encode(jsonElementParams, StandardCharsets.UTF_8), testNetworkId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -383,7 +386,9 @@ class SingleLineDiagramTest {
         assertTrue(stringResult.contains("additionalMetadata"));
         assertTrue(stringResult.contains("<?xml"));
 
-        mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&nadConfigUuid=" + nadConfigUuidVlNotFound, testNetworkId))
+        String jsonElementParamsVlNotFound = "{\"elementType\":\"DIAGRAM_CONFIG\",\"elementUuid\":\"" + nadConfigUuidVlNotFound + "\"}";
+
+        mvc.perform(get("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&elementParams=" + URLEncoder.encode(jsonElementParamsVlNotFound, StandardCharsets.UTF_8), testNetworkId))
                 .andExpect(status().isNotFound());
     }
 
