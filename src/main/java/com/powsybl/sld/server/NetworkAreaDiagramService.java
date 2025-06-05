@@ -290,7 +290,7 @@ class NetworkAreaDiagramService {
         if (selectedVoltageLevel != null) {
             VoltageLevelFilter selectedVlFilter = VoltageLevelFilter.createVoltageLevelDepthFilter(network, selectedVoltageLevel, 1);
             mergedVoltageLevels.addAll(selectedVlFilter.getVoltageLevels());
-        } //"929ba893-c9dc-44d7-b1fd-30834bd3ab85"
+        }
 
         VoltageLevelFilter allVlFilter = new VoltageLevelFilter(mergedVoltageLevels);
 

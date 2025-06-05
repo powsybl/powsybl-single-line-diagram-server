@@ -737,8 +737,8 @@ class SingleLineDiagramTest {
         List<Map<String, String>> voltageLevels = objectMapper.convertValue(convertedMetadata.get("voltageLevels"), new TypeReference<>() { });
         assertNotNull(voltageLevels);
         assertEquals(1, voltageLevels.size());
-        assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
-        mvc.perform(post("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0&selectedVoltageLevel=vlNotFound3", testNetworkId)
+        assertEquals("vlFr1A", voltageLevels.getFirst().get("id"));
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}?variantId=" + VARIANT_2_ID + "&depth=0", testNetworkId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("[\"vlNotFound1\", \"vlNotFound2\"]"))
                 .andExpect(status().isNotFound());

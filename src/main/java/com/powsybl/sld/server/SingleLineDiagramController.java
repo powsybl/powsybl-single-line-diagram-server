@@ -273,7 +273,7 @@ public class SingleLineDiagramController {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
         }
-        return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, null, depth, withGeoData);
+        return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, selectedVoltageLevel, depth, withGeoData);
     }
 
     @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
