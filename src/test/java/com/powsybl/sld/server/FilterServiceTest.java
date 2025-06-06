@@ -9,6 +9,7 @@ package com.powsybl.sld.server;
 import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -42,10 +43,17 @@ class FilterServiceTest {
     @Mock
     private NetworkStoreService networkStoreService;
 
+    private AutoCloseable mocks;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        mocks = MockitoAnnotations.openMocks(this);
         filterService.setFilterServerBaseUri(BASE_URI);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        mocks.close();
     }
 
     @Test
