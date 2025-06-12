@@ -7,6 +7,7 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
+import lombok.NonNull;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,6 @@ import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -49,9 +49,7 @@ public class FilterService {
         return this.filterServerBaseUri + DELIMITER + FILTER_API_VERSION + DELIMITER;
     }
 
-    public List<IdentifiableAttributes> exportFilter(UUID networkUuid, String variantId, UUID filterUuid) {
-        Objects.requireNonNull(networkUuid);
-        Objects.requireNonNull(filterUuid);
+    public List<IdentifiableAttributes> exportFilter(@NonNull UUID networkUuid, String variantId, @NonNull UUID filterUuid) {
         String endPointUrl = getFilterServerURI() + FILTER_END_POINT_EXPORT;
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(endPointUrl);
