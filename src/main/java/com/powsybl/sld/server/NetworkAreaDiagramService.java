@@ -284,16 +284,28 @@ class NetworkAreaDiagramService {
         return new VoltageLevelFilter(mergedVoltageLevels);
     }
 
+    private List<String> validateAndFilterExistingVoltageLevels(List<String> voltageLevelIds, Network network) {
+        List<String> existingIds = voltageLevelIds.stream()
+                .filter(vl -> network.getVoltageLevel(vl) != null)
+                .toList();
+
+        if (existingIds.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No voltage level was found");
+        }
+
+        return existingIds;
+    }
+
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, VoltageLevelSelectionInfos voltageLevelSelectionInfos, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> voltageLevelsIds = voltageLevelSelectionInfos.getVoltageLevelsIds();
         List<String> expandedVoltageLevelIds = voltageLevelSelectionInfos.getExpandedVoltageLevelIds();
 
-        List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
-        if (existingVLIds.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
+        List<String> existingVLIds = validateAndFilterExistingVoltageLevels(voltageLevelsIds, network);
+        List<String> existingExpandedVLIds = List.of();
+        if (expandedVoltageLevelIds != null) {
+            existingExpandedVLIds = validateAndFilterExistingVoltageLevels(expandedVoltageLevelIds, network);
         }
-
         SvgParameters svgParameters = new SvgParameters()
                 .setUndefinedValueSymbol("\u2014")
                 .setSvgWidthAndHeightAdded(true)
@@ -301,7 +313,7 @@ class NetworkAreaDiagramService {
 
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
 
-        VoltageLevelFilter allVlFilter = mergeVoltageLevelFilters(vlFilter, expandedVoltageLevelIds, network);
+        VoltageLevelFilter allVlFilter = mergeVoltageLevelFilters(vlFilter, existingExpandedVLIds, network);
         LayoutParameters layoutParameters = new LayoutParameters();
         NadParameters nadParameters = new NadParameters();
         nadParameters.setSvgParameters(svgParameters);
@@ -319,13 +331,12 @@ class NetworkAreaDiagramService {
             //get voltage levels' positions on depth+1 to be able to locate lines on depth
             List<VoltageLevel> voltageLevelsPlusOneDepth = new ArrayList<>(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList());
 
-            if (expandedVoltageLevelIds != null && !expandedVoltageLevelIds.isEmpty()) {
-                voltageLevelsPlusOneDepth.addAll(
-                        expandedVoltageLevelIds.stream()
-                                .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, EXPANDED_VOLTAGE_LEVEL_PLUS_ONE_DEPTH).getVoltageLevels().stream())
-                                .toList()
-                );
-            }
+            voltageLevelsPlusOneDepth.addAll(
+                    existingExpandedVLIds.stream()
+                            .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, EXPANDED_VOLTAGE_LEVEL_PLUS_ONE_DEPTH).getVoltageLevels().stream())
+                            .toList()
+            );
+
             Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
 
             List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
