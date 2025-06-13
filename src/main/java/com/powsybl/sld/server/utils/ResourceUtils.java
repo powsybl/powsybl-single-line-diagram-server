@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.sld.server.dto.SubstationGeoData;
+import com.powsybl.sld.server.dto.nad.ElementParametersInfos;
 
 import java.util.List;
 
@@ -18,8 +19,8 @@ import java.util.List;
  * @author Maissa SOUISSI<maissa.souissi at rte-france.com>
  */
 
-public final class GeoDataUtils {
-    private GeoDataUtils() {
+public final class ResourceUtils {
+    private ResourceUtils() {
         throw new AssertionError("Utility class should not be instantiated");
     }
 
@@ -32,7 +33,13 @@ public final class GeoDataUtils {
         }
     }
 
+    public static ElementParametersInfos fromStringToElementParametersInfos(String jsonResponse, ObjectMapper objectMapper) {
+        try {
+            return objectMapper.readValue(jsonResponse, new TypeReference<>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new PowsyblException("Failed to parse JSON response", e);
+        }
+    }
+
 }
-
-
-

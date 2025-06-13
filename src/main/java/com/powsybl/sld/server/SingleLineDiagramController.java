@@ -10,7 +10,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
+import com.powsybl.sld.server.dto.nad.ElementParametersInfos;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
+import com.powsybl.sld.server.utils.ResourceUtils;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,11 +22,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -51,6 +56,9 @@ public class SingleLineDiagramController {
     private final SingleLineDiagramService singleLineDiagramService;
 
     private final NetworkAreaDiagramService networkAreaDiagramService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     public SingleLineDiagramController(SingleLineDiagramService singleLineDiagramService,
                                        NetworkAreaDiagramService networkAreaDiagramService) {
@@ -276,13 +284,16 @@ public class SingleLineDiagramController {
     }
 
     @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get network area diagram image")
+    @Operation(summary = "Get network area diagram image using an element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
-    public @ResponseBody String generateNetworkAreaDiagramSvgFromConfig(
+    public @ResponseBody String generateNetworkAreaDiagramSvgFromElement(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-            @Parameter(description = "Network area diagram UUID") @RequestParam(name = "nadConfigUuid") UUID nadConfigUuid) {
-        return networkAreaDiagramService.generateNetworkAreaDiagramSvgFromConfigAsync(networkUuid, variantId, nadConfigUuid);
+            @Parameter(description = "Element parameters") @RequestParam(name = "elementParams") String stringElementParams) {
+        ElementParametersInfos elementParams = ResourceUtils.fromStringToElementParametersInfos(
+                URLDecoder.decode(stringElementParams, StandardCharsets.UTF_8),
+                new ObjectMapper());
+        return networkAreaDiagramService.generateNetworkAreaDiagramSvgFromElement(networkUuid, variantId, elementParams);
     }
 
     @PostMapping(value = "/network-area-diagram/config", consumes = MediaType.APPLICATION_JSON_VALUE)
