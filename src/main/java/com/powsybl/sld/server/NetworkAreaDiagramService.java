@@ -23,10 +23,7 @@ import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.sld.server.dto.Coordinate;
-import com.powsybl.sld.server.dto.SubstationGeoData;
-import com.powsybl.sld.server.dto.SvgAndMetadata;
-import com.powsybl.sld.server.dto.VoltageLevelInfos;
+import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
@@ -174,9 +171,9 @@ class NetworkAreaDiagramService {
                 .join();
     }
 
-    public String generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, List<String> voltageLevelsIds, String selectedVoltageLevel, int depth, boolean withGeoData) {
+    public String generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, ExpandedVoltageLevelId expandedVoltageLevelId, int depth, boolean withGeoData) {
         return diagramExecutionService
-                .supplyAsync(() -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, selectedVoltageLevel, depth, withGeoData)))
+                .supplyAsync(() -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, expandedVoltageLevelId, depth, withGeoData)))
                 .join();
     }
 
@@ -271,8 +268,10 @@ class NetworkAreaDiagramService {
         return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, nadConfigInfos.getScalingFactor());
     }
 
-    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, List<String> voltageLevelsIds, String selectedVoltageLevel, int depth, boolean withGeoData) {
+    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, ExpandedVoltageLevelId expandedVoltageLevelId, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
+        List<String> voltageLevelsIds = expandedVoltageLevelId.getVoltageLevelsIds();
+        List<String> locallyExtendedVlIds = expandedVoltageLevelId.getLocallyExtendedVls();
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
         if (existingVLIds.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
@@ -287,9 +286,11 @@ class NetworkAreaDiagramService {
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
         Set<VoltageLevel> mergedVoltageLevels = new HashSet<>(vlFilter.getVoltageLevels());
 
-        if (selectedVoltageLevel != null) {
-            VoltageLevelFilter selectedVlFilter = VoltageLevelFilter.createVoltageLevelDepthFilter(network, selectedVoltageLevel, 1);
-            mergedVoltageLevels.addAll(selectedVlFilter.getVoltageLevels());
+        if (locallyExtendedVlIds != null && !locallyExtendedVlIds.isEmpty()) {
+            Set<VoltageLevel> locallyExtendedVoltageLevels = locallyExtendedVlIds.stream()
+                    .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, 1).getVoltageLevels().stream())
+                    .collect(Collectors.toSet());
+            mergedVoltageLevels.addAll(locallyExtendedVoltageLevels);
         }
 
         VoltageLevelFilter allVlFilter = new VoltageLevelFilter(mergedVoltageLevels);
@@ -299,7 +300,6 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
 
-        //Initialize with geographical data
         int scalingFactor = 0;
         if (withGeoData) {
             List<VoltageLevel> voltageLevels = allVlFilter.getVoltageLevels().stream().toList();
@@ -311,12 +311,16 @@ class NetworkAreaDiagramService {
 
             //get voltage levels' positions on depth+1 to be able to locate lines on depth
             List<VoltageLevel> voltageLevelsPlusOneDepth = new ArrayList<>(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList());
-            if (selectedVoltageLevel != null) {
-                voltageLevelsPlusOneDepth.addAll(VoltageLevelFilter.createVoltageLevelDepthFilter(network, selectedVoltageLevel, 2).getVoltageLevels().stream().toList());
+
+            if (locallyExtendedVlIds != null && !locallyExtendedVlIds.isEmpty()) {
+                voltageLevelsPlusOneDepth.addAll(
+                        locallyExtendedVlIds.stream()
+                                .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, 2).getVoltageLevels().stream())
+                                .toList()
+                );
             }
             Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(network, networkUuid, variantId, voltageLevelsPlusOneDepth);
 
-            // We only keep the depth+0 voltage levels' positions to calculate the scaling factor
             List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
                     .filter(entry -> substations.contains(entry.getKey()))
                     .map(Map.Entry::getValue)
