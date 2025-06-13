@@ -271,6 +271,19 @@ class NetworkAreaDiagramService {
         return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, nadConfigInfos.getScalingFactor());
     }
 
+    private VoltageLevelFilter mergeVoltageLevelFilters(VoltageLevelFilter baseFilter, List<String> expandedVoltageLevelIds, Network network) {
+        Set<VoltageLevel> mergedVoltageLevels = new HashSet<>(baseFilter.getVoltageLevels());
+
+        if (expandedVoltageLevelIds != null && !expandedVoltageLevelIds.isEmpty()) {
+            Set<VoltageLevel> locallyExtendedVoltageLevels = expandedVoltageLevelIds.stream()
+                    .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, EXPANDED_VOLTAGE_LEVEL_DEPTH).getVoltageLevels().stream())
+                    .collect(Collectors.toSet());
+            mergedVoltageLevels.addAll(locallyExtendedVoltageLevels);
+        }
+
+        return new VoltageLevelFilter(mergedVoltageLevels);
+    }
+
     public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, VoltageLevelSelectionInfos voltageLevelSelectionInfos, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> voltageLevelsIds = voltageLevelSelectionInfos.getVoltageLevelsIds();
@@ -286,19 +299,9 @@ class NetworkAreaDiagramService {
                 .setSvgWidthAndHeightAdded(true)
                 .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
-        //List of selected voltageLevels with depth
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
-        Set<VoltageLevel> mergedVoltageLevels = new HashSet<>(vlFilter.getVoltageLevels());
 
-        if (expandedVoltageLevelIds != null && !expandedVoltageLevelIds.isEmpty()) {
-            Set<VoltageLevel> locallyExtendedVoltageLevels = expandedVoltageLevelIds.stream()
-                    .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, EXPANDED_VOLTAGE_LEVEL_DEPTH).getVoltageLevels().stream())
-                    .collect(Collectors.toSet());
-            mergedVoltageLevels.addAll(locallyExtendedVoltageLevels);
-        }
-
-        VoltageLevelFilter allVlFilter = new VoltageLevelFilter(mergedVoltageLevels);
-
+        VoltageLevelFilter allVlFilter = mergeVoltageLevelFilters(vlFilter, expandedVoltageLevelIds, network);
         LayoutParameters layoutParameters = new LayoutParameters();
         NadParameters nadParameters = new NadParameters();
         nadParameters.setSvgParameters(svgParameters);
