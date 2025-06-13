@@ -270,7 +270,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth,
             @Parameter(description = "Initialize NAD with Geographical Data") @RequestParam(name = "withGeoData", defaultValue = "true") boolean withGeoData) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelSelectionInfos.toString()), depth);
+            LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, expandedVoltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelSelectionInfos.getVoltageLevelsIds().toString()), sanitizeParam(voltageLevelSelectionInfos.getExpandedVoltageLevelIds().toString()), depth);
         }
         return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelSelectionInfos, depth, withGeoData);
     }
