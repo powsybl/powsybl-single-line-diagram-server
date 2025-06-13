@@ -12,7 +12,7 @@ import java.util.List;
 
 @Getter
 @Builder
-public class ExpandedVoltageLevelId {
+public class VoltageLevelSelectionInfos {
     private List<String> voltageLevelsIds;
-    private List<String> locallyExtendedVls;
+    private List<String> expandedVoltageLevelIds;
 }

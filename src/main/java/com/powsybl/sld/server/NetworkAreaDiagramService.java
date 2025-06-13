@@ -69,6 +69,9 @@ class NetworkAreaDiagramService {
     private final NadConfigRepository nadConfigRepository;
     private final NetworkAreaDiagramService self;
 
+    static final int EXPANDED_VOLTAGE_LEVEL_DEPTH = 1;
+    static final int EXPANDED_VOLTAGE_LEVEL_PLUS_ONE_DEPTH = 2;
+
     private final ObjectMapper objectMapper;
 
     public NetworkAreaDiagramService(NetworkStoreService networkStoreService,
@@ -171,9 +174,9 @@ class NetworkAreaDiagramService {
                 .join();
     }
 
-    public String generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, ExpandedVoltageLevelId expandedVoltageLevelId, int depth, boolean withGeoData) {
+    public String generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, VoltageLevelSelectionInfos voltageLevelSelectionInfos, int depth, boolean withGeoData) {
         return diagramExecutionService
-                .supplyAsync(() -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, expandedVoltageLevelId, depth, withGeoData)))
+                .supplyAsync(() -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelSelectionInfos, depth, withGeoData)))
                 .join();
     }
 
@@ -268,10 +271,11 @@ class NetworkAreaDiagramService {
         return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, nadConfigInfos.getScalingFactor());
     }
 
-    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, ExpandedVoltageLevelId expandedVoltageLevelId, int depth, boolean withGeoData) {
+    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, VoltageLevelSelectionInfos voltageLevelSelectionInfos, int depth, boolean withGeoData) {
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
-        List<String> voltageLevelsIds = expandedVoltageLevelId.getVoltageLevelsIds();
-        List<String> locallyExtendedVlIds = expandedVoltageLevelId.getLocallyExtendedVls();
+        List<String> voltageLevelsIds = voltageLevelSelectionInfos.getVoltageLevelsIds();
+        List<String> expandedVoltageLevelIds = voltageLevelSelectionInfos.getExpandedVoltageLevelIds();
+
         List<String> existingVLIds = voltageLevelsIds.stream().filter(vl -> network.getVoltageLevel(vl) != null).toList();
         if (existingVLIds.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
@@ -286,9 +290,9 @@ class NetworkAreaDiagramService {
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
         Set<VoltageLevel> mergedVoltageLevels = new HashSet<>(vlFilter.getVoltageLevels());
 
-        if (locallyExtendedVlIds != null && !locallyExtendedVlIds.isEmpty()) {
-            Set<VoltageLevel> locallyExtendedVoltageLevels = locallyExtendedVlIds.stream()
-                    .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, 1).getVoltageLevels().stream())
+        if (expandedVoltageLevelIds != null && !expandedVoltageLevelIds.isEmpty()) {
+            Set<VoltageLevel> locallyExtendedVoltageLevels = expandedVoltageLevelIds.stream()
+                    .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, EXPANDED_VOLTAGE_LEVEL_DEPTH).getVoltageLevels().stream())
                     .collect(Collectors.toSet());
             mergedVoltageLevels.addAll(locallyExtendedVoltageLevels);
         }
@@ -312,10 +316,10 @@ class NetworkAreaDiagramService {
             //get voltage levels' positions on depth+1 to be able to locate lines on depth
             List<VoltageLevel> voltageLevelsPlusOneDepth = new ArrayList<>(VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth + 1).getVoltageLevels().stream().toList());
 
-            if (locallyExtendedVlIds != null && !locallyExtendedVlIds.isEmpty()) {
+            if (expandedVoltageLevelIds != null && !expandedVoltageLevelIds.isEmpty()) {
                 voltageLevelsPlusOneDepth.addAll(
-                        locallyExtendedVlIds.stream()
-                                .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, 2).getVoltageLevels().stream())
+                        expandedVoltageLevelIds.stream()
+                                .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, EXPANDED_VOLTAGE_LEVEL_PLUS_ONE_DEPTH).getVoltageLevels().stream())
                                 .toList()
                 );
             }

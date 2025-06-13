@@ -9,7 +9,7 @@ package com.powsybl.sld.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
-import com.powsybl.sld.server.dto.ExpandedVoltageLevelId;
+import com.powsybl.sld.server.dto.VoltageLevelSelectionInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
@@ -265,14 +265,14 @@ public class SingleLineDiagramController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
     public @ResponseBody String generateNetworkAreaDiagramSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @RequestBody ExpandedVoltageLevelId expandedVoltageLevelId,
+            @RequestBody VoltageLevelSelectionInfos voltageLevelSelectionInfos,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth,
             @Parameter(description = "Initialize NAD with Geographical Data") @RequestParam(name = "withGeoData", defaultValue = "true") boolean withGeoData) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(expandedVoltageLevelId.toString()), depth);
+            LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelSelectionInfos.toString()), depth);
         }
-        return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, expandedVoltageLevelId, depth, withGeoData);
+        return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelSelectionInfos, depth, withGeoData);
     }
 
     @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
