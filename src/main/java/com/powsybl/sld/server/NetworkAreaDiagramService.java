@@ -19,6 +19,7 @@ import com.powsybl.nad.NadParameters;
 import com.powsybl.nad.NetworkAreaDiagram;
 import com.powsybl.nad.build.iidm.VoltageLevelFilter;
 import com.powsybl.nad.layout.*;
+import com.powsybl.nad.model.Point;
 import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
@@ -38,9 +39,8 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
-import com.powsybl.nad.model.Point;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -165,11 +165,15 @@ class NetworkAreaDiagramService {
     }
 
     @Transactional(readOnly = true)
-    public List<String> getVoltageLevelsIdsFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
+    public VoltageLevelSelectionInfos getVoltageLevelSelectionInfosFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
         List<IdentifiableAttributes> filterContent = filterService.exportFilter(networkUuid, variantId, filterUuid);
-        return filterContent.stream()
-            .map(IdentifiableAttributes::getId)
-            .collect(Collectors.toList());
+        List<String> voltageLevelsIds = filterContent.stream()
+                .map(IdentifiableAttributes::getId)
+                .collect(Collectors.toList());
+
+        return VoltageLevelSelectionInfos.builder()
+                .voltageLevelsIds(voltageLevelsIds)
+                .build();
     }
 
     @Transactional
@@ -193,8 +197,8 @@ class NetworkAreaDiagramService {
 
     public String generateNetworkAreaDiagramSvgFromFilterAsync(UUID networkUuid, String variantId, UUID filterUuid, Integer depth, Boolean withGeoData) {
         return diagramExecutionService
-                .supplyAsync(() -> self.getVoltageLevelsIdsFromFilter(networkUuid, variantId, filterUuid))
-                .thenApply(voltageLevelsIds -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelsIds, depth, withGeoData)))
+                .supplyAsync(() -> self.getVoltageLevelSelectionInfosFromFilter(networkUuid, variantId, filterUuid))
+                .thenApply(voltageLevelSelectionInfos -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelSelectionInfos, depth, withGeoData)))
                 .join();
     }
 
