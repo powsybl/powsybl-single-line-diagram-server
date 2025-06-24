@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Getter
 @Builder
-public class VoltageLevelSelectionInfos {
+public class VoltageLevelSelectionInfos { // TODO REFONTE : devient le nouveau DTO
     private List<String> voltageLevelsIds;
     private List<String> expandedVoltageLevelIds;
 }

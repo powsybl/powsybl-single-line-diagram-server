@@ -273,9 +273,9 @@ public class SingleLineDiagramController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
     public @ResponseBody String generateNetworkAreaDiagramSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @RequestBody VoltageLevelSelectionInfos voltageLevelSelectionInfos,
+            @RequestBody VoltageLevelSelectionInfos voltageLevelSelectionInfos, // TODO REFONTE : remplacé par le nouveau DTO
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-            @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth,
+            @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth, // TODO REFONTE : plus utilisé
             @Parameter(description = "Initialize NAD with Geographical Data") @RequestParam(name = "withGeoData", defaultValue = "true") boolean withGeoData) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, expandedVoltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelSelectionInfos.getVoltageLevelsIds().toString()), sanitizeParam(voltageLevelSelectionInfos.getExpandedVoltageLevelIds().toString()), depth);
@@ -283,7 +283,7 @@ public class SingleLineDiagramController {
         return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelSelectionInfos, depth, withGeoData);
     }
 
-    @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE) // TODO REFONTE : point d'entrée API à supprimer
     @Operation(summary = "Get network area diagram image using an element")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
     public @ResponseBody String generateNetworkAreaDiagramSvgFromElement(

@@ -165,7 +165,7 @@ class NetworkAreaDiagramService {
     }
 
     @Transactional(readOnly = true)
-    public VoltageLevelSelectionInfos getVoltageLevelSelectionInfosFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
+    public VoltageLevelSelectionInfos getVoltageLevelSelectionInfosFromFilter(UUID networkUuid, String variantId, UUID filterUuid) { // TODO REFONTE : Je pense qu'il faut rollback ce changement et garder le code de la branche main pour cette fonction : ce n'est pas sa responsabilité de créer un DTO, mais seulement de trouver une liste de VL à partir du filtre
         List<IdentifiableAttributes> filterContent = filterService.exportFilter(networkUuid, variantId, filterUuid);
         List<String> voltageLevelsIds = filterContent.stream()
                 .map(IdentifiableAttributes::getId)
@@ -181,7 +181,7 @@ class NetworkAreaDiagramService {
         nadConfigRepository.deleteById(nadConfigUuid);
     }
 
-    public String generateNetworkAreaDiagramSvgFromElement(UUID networkUuid, String variantId, @NonNull ElementParametersInfos elementParametersInfos) {
+    public String generateNetworkAreaDiagramSvgFromElement(UUID networkUuid, String variantId, @NonNull ElementParametersInfos elementParametersInfos) { // TODO REFONTE : On doit pouvoir continuer à générer un NAD depuis une config ou un filtre, en fonction de ce qu'on trouve dans le DTO du front. Sûrement à adapter.
         return switch (elementParametersInfos.getElementType()) {
             case DIAGRAM_CONFIG -> generateNetworkAreaDiagramSvgFromConfigAsync(networkUuid, variantId, elementParametersInfos.getElementUuid());
             case FILTER -> generateNetworkAreaDiagramSvgFromFilterAsync(networkUuid, variantId, elementParametersInfos.getElementUuid(), elementParametersInfos.getDepth(), elementParametersInfos.getWithGeoData());
@@ -202,7 +202,7 @@ class NetworkAreaDiagramService {
                 .join();
     }
 
-    public String generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, VoltageLevelSelectionInfos voltageLevelSelectionInfos, int depth, boolean withGeoData) {
+    public String generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, VoltageLevelSelectionInfos voltageLevelSelectionInfos, int depth, boolean withGeoData) { // TODO REFONTE : devient le nouveau point d'entrée pour générer un NAD. On décortique le DTO et on construit la bonne liste de VL en fonction.
         return diagramExecutionService
                 .supplyAsync(() -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelSelectionInfos, depth, withGeoData)))
                 .join();
@@ -299,7 +299,7 @@ class NetworkAreaDiagramService {
         return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, nadConfigInfos.getScalingFactor());
     }
 
-    private VoltageLevelFilter mergeVoltageLevelFilters(VoltageLevelFilter baseFilter, List<String> expandedVoltageLevelIds, Network network) {
+    private VoltageLevelFilter mergeVoltageLevelFilters(VoltageLevelFilter baseFilter, List<String> expandedVoltageLevelIds, Network network) { // TODO REFONTE : Sûrement à réécrire, si on décide de garder.
         if (expandedVoltageLevelIds == null || expandedVoltageLevelIds.isEmpty()) {
             return baseFilter;
         }
@@ -318,7 +318,25 @@ class NetworkAreaDiagramService {
                 .toList();
     }
 
-    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, VoltageLevelSelectionInfos voltageLevelSelectionInfos, int depth, boolean withGeoData) {
+    public SvgAndMetadata generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, VoltageLevelSelectionInfos voltageLevelSelectionInfos, int depth, boolean withGeoData) { // TODO REFONTE : on supprime le parametre depth
+        // TODO REFONTE : Il faut refactor cette fonction. Elle devient trop grosse et difficile à lire
+        // TODO REFONTE : je pense qu'elle doit se contenter de traiter une liste de VL en entrée, et que la création/consolidation de cette liste doit être fait avant l'appel à cette fonction.
+
+        /* // TODO REFONTE :
+           Pseudo code :
+            1) Le Controller reçoit une demande de NAD qui contient le DTO
+            2) Il appel un point d'entrée dans le Service
+            3) Le service regarde le DTO et :
+                3a) Si on a une config, on la récupère depuis la base et on trouve une liste de VL (code déjà existant)
+                3b) Si on a un filtre, on le récupère depuis un webservice et on trouve une liste de VL (code déjà existant)
+                    => POUR PLUS TARD (dans un autre ticket) : Cette liste doit s'ajouter à l'éventuelle liste qu'on a trouvé via la config.
+                3c) Si on a une liste voltageLevelsIds, on ajoute tout à l'éventuelle liste
+                3d) Si on a une liste voltageLevelToOmitIds, on supprime de la liste ce qu'on trouve dans voltageLevelToOmitIds
+                3e) Si on a une liste voltageLevelsToExpandIds, on va demander à l'API Powsybl de trouver les voisins à profondeur 1, et on ajoute tout à la liste
+                Au final, on a une liste de VL.
+            4) Le service appel la (refondue) fonction generateNetworkAreaDiagramSvg avec la liste générée en 3.
+        */
+
         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
         List<String> voltageLevelsIds = voltageLevelSelectionInfos.getVoltageLevelsIds();
         List<String> expandedVoltageLevelIds = voltageLevelSelectionInfos.getExpandedVoltageLevelIds();
@@ -338,7 +356,7 @@ class NetworkAreaDiagramService {
 
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, depth);
 
-        VoltageLevelFilter allVlFilter = mergeVoltageLevelFilters(vlFilter, existingExpandedVLIds, network);
+        VoltageLevelFilter allVlFilter = mergeVoltageLevelFilters(vlFilter, existingExpandedVLIds, network); // TODO REFONTE : Je pense que pour la refonte, il faut repartir de la version de main, ça sera plus simple à réécrire
         LayoutParameters layoutParameters = new LayoutParameters();
         NadParameters nadParameters = new NadParameters();
         nadParameters.setSvgParameters(svgParameters);
