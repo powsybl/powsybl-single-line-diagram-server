@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
-import com.powsybl.sld.server.dto.nad.NadVoltageLevelInfos;
+import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -270,13 +270,13 @@ public class SingleLineDiagramController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
     public @ResponseBody String generateNetworkAreaDiagramSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @RequestBody NadVoltageLevelInfos nadVoltageLevelInfos,
+            @RequestBody NadRequestInfos nadRequestInfos,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @Parameter(description = "Initialize NAD with Geographical Data") @RequestParam(name = "withGeoData", defaultValue = "true") boolean withGeoData) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}", networkUuid, sanitizeParam(nadVoltageLevelInfos.getVoltageLevelsIds().toString()));
+            LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}", networkUuid, sanitizeParam(nadRequestInfos.getVoltageLevelsIds().toString()));
         }
-        return networkAreaDiagramService.generateNetworkAreaDiagramSvgFromRequestAsync(networkUuid, variantId, nadVoltageLevelInfos, withGeoData);
+        return networkAreaDiagramService.generateNetworkAreaDiagramSvgFromRequestAsync(networkUuid, variantId, nadRequestInfos, withGeoData);
     }
 
     @PostMapping(value = "/network-area-diagram/config", consumes = MediaType.APPLICATION_JSON_VALUE)

@@ -25,7 +25,7 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
-import com.powsybl.sld.server.dto.nad.NadVoltageLevelInfos;
+import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
@@ -174,37 +174,37 @@ class NetworkAreaDiagramService {
         nadConfigRepository.deleteById(nadConfigUuid);
     }
 
-    public String generateNetworkAreaDiagramSvgFromRequestAsync(UUID networkUuid, String variantId, NadVoltageLevelInfos nadVoltageLevelInfos, boolean withGeoData) {
+    public String generateNetworkAreaDiagramSvgFromRequestAsync(UUID networkUuid, String variantId, NadRequestInfos nadRequestInfos, boolean withGeoData) {
         return diagramExecutionService
                 .supplyAsync(() -> {
                     List<String> voltageLevelIds = new ArrayList<>();
-                    if (nadVoltageLevelInfos.getNadConfigUuid() != null) {
-                        voltageLevelIds.addAll(self.getNetworkAreaDiagramConfig(nadVoltageLevelInfos.getNadConfigUuid()).getVoltageLevelIds()); //TODO : use NadConfigInfos
+                    if (nadRequestInfos.getNadConfigUuid() != null) {
+                        voltageLevelIds.addAll(self.getNetworkAreaDiagramConfig(nadRequestInfos.getNadConfigUuid()).getVoltageLevelIds()); //TODO : use NadConfigInfos
                     }
                     return voltageLevelIds;
                 })
                 .thenApply(voltageLevelIds -> {
-                    if (nadVoltageLevelInfos.getFilterUuid() != null) {
-                        voltageLevelIds.addAll(self.getVoltageLevelsIdsFromFilter(networkUuid, variantId, nadVoltageLevelInfos.getFilterUuid()));
+                    if (nadRequestInfos.getFilterUuid() != null) {
+                        voltageLevelIds.addAll(self.getVoltageLevelsIdsFromFilter(networkUuid, variantId, nadRequestInfos.getFilterUuid()));
                     }
                     return voltageLevelIds;
                 })
                 .thenApply(voltageLevelIds -> {
-                    if (nadVoltageLevelInfos.getVoltageLevelsIds() != null) {
-                        voltageLevelIds.addAll(nadVoltageLevelInfos.getVoltageLevelsIds());
+                    if (nadRequestInfos.getVoltageLevelsIds() != null) {
+                        voltageLevelIds.addAll(nadRequestInfos.getVoltageLevelsIds());
                     }
                     return voltageLevelIds;
                 })
                 .thenApply(voltageLevelIds -> {
-                    if (!nadVoltageLevelInfos.getVoltageLevelToOmitIds().isEmpty()) {
-                        voltageLevelIds.removeAll(nadVoltageLevelInfos.getVoltageLevelToOmitIds());
+                    if (!nadRequestInfos.getVoltageLevelsToOmitIds().isEmpty()) {
+                        voltageLevelIds.removeAll(nadRequestInfos.getVoltageLevelsToOmitIds());
                     }
                     return voltageLevelIds;
                 })
                 .thenApply(voltageLevelIds -> {
-                    if(!nadVoltageLevelInfos.getVoltageLevelsToExpandIds().isEmpty()) {
+                    if(!nadRequestInfos.getVoltageLevelsToExpandIds().isEmpty()) {
                         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
-                        voltageLevelIds.addAll(self.getExpandedVoltageLevelIds(nadVoltageLevelInfos.getVoltageLevelsToExpandIds(), network));
+                        voltageLevelIds.addAll(self.getExpandedVoltageLevelIds(nadRequestInfos.getVoltageLevelsToExpandIds(), network));
                     }
                     return voltageLevelIds;
                 })
