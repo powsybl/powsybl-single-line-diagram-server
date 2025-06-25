@@ -179,7 +179,7 @@ class NetworkAreaDiagramService {
                 .supplyAsync(() -> {
                     List<String> voltageLevelIds = new ArrayList<>();
                     if (nadVoltageLevelInfos.getNadConfigUuid() != null) {
-                        voltageLevelIds.addAll(self.getNetworkAreaDiagramConfig(nadVoltageLevelInfos.getNadConfigUuid()).getVoltageLevelIds());
+                        voltageLevelIds.addAll(self.getNetworkAreaDiagramConfig(nadVoltageLevelInfos.getNadConfigUuid()).getVoltageLevelIds()); //TODO : use NadConfigInfos
                     }
                     return voltageLevelIds;
                 })
@@ -196,8 +196,15 @@ class NetworkAreaDiagramService {
                     return voltageLevelIds;
                 })
                 .thenApply(voltageLevelIds -> {
-                    if (nadVoltageLevelInfos.getVoltageLevelToOmitIds() != null) {
+                    if (!nadVoltageLevelInfos.getVoltageLevelToOmitIds().isEmpty()) {
                         voltageLevelIds.removeAll(nadVoltageLevelInfos.getVoltageLevelToOmitIds());
+                    }
+                    return voltageLevelIds;
+                })
+                .thenApply(voltageLevelIds -> {
+                    if(!nadVoltageLevelInfos.getVoltageLevelsToExpandIds().isEmpty()) {
+                        Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
+                        voltageLevelIds.addAll(self.getExpandedVoltageLevelIds(nadVoltageLevelInfos.getVoltageLevelsToExpandIds(), network));
                     }
                     return voltageLevelIds;
                 })
@@ -326,6 +333,18 @@ class NetworkAreaDiagramService {
         nadParameters.setLayoutFactory(new GeographicalLayoutFactory(network, scalingFactor, RADIUS_FACTOR, BasicForceLayout::new));
 
         return scalingFactor;
+    }
+
+    private List<String> getExpandedVoltageLevelIds(List<String> voltageLevelIds, Network network) {
+        if (voltageLevelIds == null || voltageLevelIds.isEmpty()) {
+            return voltageLevelIds;
+        }
+        Set<String> expandedVoltageLevelIds = new HashSet<>(voltageLevelIds);
+        voltageLevelIds.stream()
+                .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, 1).getVoltageLevels().stream())
+                .map(VoltageLevel::getId)
+                .forEach(expandedVoltageLevelIds::add);
+        return expandedVoltageLevelIds.stream().toList();
     }
 
     private SvgAndMetadata drawSvgAndBuildMetadata(Network network, NadParameters nadParameters, VoltageLevelFilter vlFilter, Integer scalingFactor) {
