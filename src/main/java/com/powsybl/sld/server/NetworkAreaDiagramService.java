@@ -202,7 +202,7 @@ class NetworkAreaDiagramService {
                     return voltageLevelIds;
                 })
                 .thenApply(voltageLevelIds -> {
-                    if(!nadRequestInfos.getVoltageLevelsToExpandIds().isEmpty()) {
+                    if (!nadRequestInfos.getVoltageLevelsToExpandIds().isEmpty()) {
                         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
                         voltageLevelIds.addAll(self.getExpandedVoltageLevelIds(nadRequestInfos.getVoltageLevelsToExpandIds(), network));
                     }
@@ -280,8 +280,8 @@ class NetworkAreaDiagramService {
 
         VoltageLevelFilter vlFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVLIds, 0);
         SvgParameters svgParameters = createSvgParameters();
-        NadParameters nadParameters = createNadParameters(network,svgParameters);
-        int scalingFactor = withGeoData ? setupGeographicalLayout(network, vlFilter,networkUuid, variantId, nadParameters) : 0;
+        NadParameters nadParameters = createNadParameters(network, svgParameters);
+        int scalingFactor = withGeoData ? setupGeographicalLayout(network, vlFilter, networkUuid, variantId, nadParameters) : 0;
 
         return drawSvgAndBuildMetadata(network, nadParameters, vlFilter, scalingFactor);
     }
