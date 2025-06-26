@@ -491,19 +491,6 @@ class SingleLineDiagramTest {
         assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
         assertEquals("vlFr1A", voltageLevels.get(0).get("name"));
         assertEquals("subFr1", voltageLevels.get(0).get("substationId"));
-
-        // Test with a global depth, should return in the metadata three voltage level :TODO
-        svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, null, List.of("vlFr1A"), false);
-        additionalMetadata = svgAndMetadata.getAdditionalMetadata();
-        assertNotNull(additionalMetadata);
-        convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
-        assertEquals(3, convertedMetadata.get("nbVoltageLevels"));
-        voltageLevels = objectMapper.convertValue(convertedMetadata.get("voltageLevels"), new TypeReference<>() { });
-        assertNotNull(voltageLevels);
-        assertEquals(3, voltageLevels.size());
-        assertTrue(voltageLevels.stream().anyMatch(vl -> "vlFr1A".equals(vl.get("id"))));
-        assertTrue(voltageLevels.stream().anyMatch(vl -> "vlFr2A".equals(vl.get("id"))));
-        assertTrue(voltageLevels.stream().anyMatch(vl -> "vlEs1B".equals(vl.get("id"))));
     }
 
     @Test

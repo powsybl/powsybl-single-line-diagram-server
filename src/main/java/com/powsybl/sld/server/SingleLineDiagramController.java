@@ -269,13 +269,12 @@ public class SingleLineDiagramController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
     public @ResponseBody String generateNetworkAreaDiagramSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @RequestBody NadRequestInfos nadRequestInfos,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-            @Parameter(description = "Initialize NAD with Geographical Data") @RequestParam(name = "withGeoData", defaultValue = "true") boolean withGeoData) {
+            @RequestBody NadRequestInfos nadRequestInfos) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}", networkUuid, sanitizeParam(nadRequestInfos.getVoltageLevelsIds().toString()));
+            LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, body = {}", networkUuid, sanitizeParam(nadRequestInfos.toString()));
         }
-        return networkAreaDiagramService.generateNetworkAreaDiagramSvgFromRequestAsync(networkUuid, variantId, nadRequestInfos, withGeoData);
+        return networkAreaDiagramService.generateNetworkAreaDiagramSvgFromRequestAsync(networkUuid, variantId, nadRequestInfos);
     }
 
     @PostMapping(value = "/network-area-diagram/config", consumes = MediaType.APPLICATION_JSON_VALUE)

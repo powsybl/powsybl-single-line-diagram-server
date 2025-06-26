@@ -15,4 +15,6 @@ public class NadRequestInfos {
     private List<String> voltageLevelsToExpandIds;
     private List<String> voltageLevelsToOmitIds;
     private List<NadVoltageLevelPositionInfos> positions;
+    @Builder.Default
+    private Boolean withGeoData = true;
 }

@@ -174,7 +174,7 @@ class NetworkAreaDiagramService {
         nadConfigRepository.deleteById(nadConfigUuid);
     }
 
-    public String generateNetworkAreaDiagramSvgFromRequestAsync(UUID networkUuid, String variantId, NadRequestInfos nadRequestInfos, boolean withGeoData) {
+    public String generateNetworkAreaDiagramSvgFromRequestAsync(UUID networkUuid, String variantId, NadRequestInfos nadRequestInfos) {
         return diagramExecutionService
                 .supplyAsync(() -> {
                     List<String> voltageLevelIds = new ArrayList<>();
@@ -208,7 +208,7 @@ class NetworkAreaDiagramService {
                     }
                     return voltageLevelIds;
                 })
-                .thenApply(voltageLevelIds -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelIds, withGeoData)))
+                .thenApply(voltageLevelIds -> processSvgAndMetadata(generateNetworkAreaDiagramSvg(networkUuid, variantId, voltageLevelIds, nadRequestInfos.getWithGeoData())))
                 .join();
     }
 
