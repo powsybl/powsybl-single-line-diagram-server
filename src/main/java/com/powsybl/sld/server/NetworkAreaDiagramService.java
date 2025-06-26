@@ -190,7 +190,7 @@ class NetworkAreaDiagramService {
                     return voltageLevelIds;
                 })
                 .thenApply(voltageLevelIds -> {
-                    if (nadRequestInfos.getVoltageLevelIds() != null) {
+                    if (!nadRequestInfos.getVoltageLevelIds().isEmpty()) {
                         voltageLevelIds.addAll(nadRequestInfos.getVoltageLevelIds());
                     }
                     return voltageLevelIds;
