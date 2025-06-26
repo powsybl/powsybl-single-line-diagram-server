@@ -11,9 +11,9 @@ import java.util.UUID;
 public class NadRequestInfos {
     private UUID nadConfigUuid;
     private UUID filterUuid;
-    private List<String> voltageLevelsIds;
-    private List<String> voltageLevelsToExpandIds;
-    private List<String> voltageLevelsToOmitIds;
+    private List<String> voltageLevelIds;
+    private List<String> voltageLevelToExpandIds;
+    private List<String> voltageLevelToOmitIds;
     private List<NadVoltageLevelPositionInfos> positions;
     @Builder.Default
     private Boolean withGeoData = true;

@@ -162,7 +162,7 @@ class NetworkAreaDiagramService {
     }
 
     @Transactional(readOnly = true)
-    public List<String> getVoltageLevelsIdsFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
+    public List<String> getVoltageLevelIdsFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
         List<IdentifiableAttributes> filterContent = filterService.exportFilter(networkUuid, variantId, filterUuid);
         return filterContent.stream()
             .map(IdentifiableAttributes::getId)
@@ -185,26 +185,26 @@ class NetworkAreaDiagramService {
                 })
                 .thenApply(voltageLevelIds -> {
                     if (nadRequestInfos.getFilterUuid() != null) {
-                        voltageLevelIds.addAll(self.getVoltageLevelsIdsFromFilter(networkUuid, variantId, nadRequestInfos.getFilterUuid()));
+                        voltageLevelIds.addAll(self.getVoltageLevelIdsFromFilter(networkUuid, variantId, nadRequestInfos.getFilterUuid()));
                     }
                     return voltageLevelIds;
                 })
                 .thenApply(voltageLevelIds -> {
-                    if (nadRequestInfos.getVoltageLevelsIds() != null) {
-                        voltageLevelIds.addAll(nadRequestInfos.getVoltageLevelsIds());
+                    if (nadRequestInfos.getVoltageLevelIds() != null) {
+                        voltageLevelIds.addAll(nadRequestInfos.getVoltageLevelIds());
                     }
                     return voltageLevelIds;
                 })
                 .thenApply(voltageLevelIds -> {
-                    if (!nadRequestInfos.getVoltageLevelsToOmitIds().isEmpty()) {
-                        voltageLevelIds.removeAll(nadRequestInfos.getVoltageLevelsToOmitIds());
+                    if (!nadRequestInfos.getVoltageLevelToOmitIds().isEmpty()) {
+                        voltageLevelIds.removeAll(nadRequestInfos.getVoltageLevelToOmitIds());
                     }
                     return voltageLevelIds;
                 })
                 .thenApply(voltageLevelIds -> {
-                    if (!nadRequestInfos.getVoltageLevelsToExpandIds().isEmpty()) {
+                    if (!nadRequestInfos.getVoltageLevelToExpandIds().isEmpty()) {
                         Network network = DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION);
-                        voltageLevelIds.addAll(self.getExpandedVoltageLevelIds(nadRequestInfos.getVoltageLevelsToExpandIds(), network));
+                        voltageLevelIds.addAll(self.getExpandedVoltageLevelIds(nadRequestInfos.getVoltageLevelToExpandIds(), network));
                     }
                     return voltageLevelIds;
                 })
