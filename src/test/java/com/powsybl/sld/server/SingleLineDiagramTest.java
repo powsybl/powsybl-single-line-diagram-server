@@ -51,7 +51,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.net.URLEncoder;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -347,8 +346,6 @@ class SingleLineDiagramTest {
         assertTrue(stringResult.contains("metadata"));
         assertTrue(stringResult.contains("additionalMetadata"));
         assertTrue(stringResult.contains("<?xml"));
-
-
     }
 
     @Test
@@ -457,7 +454,6 @@ class SingleLineDiagramTest {
         assertTrue(validResponseContent.contains("additionalMetadata"));
         assertTrue(validResponseContent.contains("<?xml"));
     }
-
 
     private void testGenerateNadBasedOnGeoData(boolean withGeoData) throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
