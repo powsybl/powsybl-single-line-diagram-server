@@ -6,28 +6,38 @@
  */
 package com.powsybl.sld.server.dto.nad;
 
+import com.powsybl.iidm.network.Network;
+import com.powsybl.nad.NadParameters;
+import com.powsybl.nad.build.iidm.VoltageLevelFilter;
 import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * @author Charly Boutier <charly.boutier at rte-france.com>
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
 @Setter
-public class NadRequestInfos {
-    private UUID nadConfigUuid;
-    private UUID filterUuid;
-    @Builder.Default
-    private List<String> voltageLevelIds = new ArrayList<>();
-    @Builder.Default
-    private List<String> voltageLevelToExpandIds = new ArrayList<>();
-    @Builder.Default
-    private List<String> voltageLevelToOmitIds = new ArrayList<>();
+public class NadGenerationContext {
+
+    private Network network;
+    private UUID networkUuid;
+    private String variantId;
+    private Boolean withGeoData;
+    private Integer scalingFactor;
+
     @Builder.Default
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
+
     @Builder.Default
-    private Boolean withGeoData = true;
+    private List<String> voltageLevelIds = new ArrayList<>();
+
+    private VoltageLevelFilter voltageLevelFilter;
+
+    private NadParameters nadParameters;
 }
