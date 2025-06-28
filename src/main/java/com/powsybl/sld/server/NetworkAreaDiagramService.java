@@ -226,6 +226,10 @@ class NetworkAreaDiagramService {
 
     private void buildGraphicalParameters(NadGenerationContext nadGenerationContext) {
 
+        if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
+        }
+
         SvgParameters svgParameters = new SvgParameters()
                 .setUndefinedValueSymbol("\u2014")
                 .setSvgWidthAndHeightAdded(true)
@@ -238,7 +242,7 @@ class NetworkAreaDiagramService {
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork()));
 
         // Set style provider factory either with geographical data or with provided positions (if any)
-        if (nadGenerationContext.getWithGeoData() && nadGenerationContext.getPositions().isEmpty()) {
+        if (Boolean.TRUE.equals(nadGenerationContext.getWithGeoData()) && nadGenerationContext.getPositions().isEmpty()) {
             nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
         } else {
             nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
@@ -353,12 +357,9 @@ class NetworkAreaDiagramService {
         if (voltageLevelIds.isEmpty()) {
             return voltageLevelIds;
         }
-        Set<String> expandedVoltageLevelIds = new HashSet<>(voltageLevelIds);
-        voltageLevelIds.stream()
-                .flatMap(vlId -> VoltageLevelFilter.createVoltageLevelDepthFilter(network, vlId, 1).getVoltageLevels().stream())
-                .map(VoltageLevel::getId)
-                .forEach(expandedVoltageLevelIds::add);
-        return expandedVoltageLevelIds.stream().toList();
+        return VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelIds, 1)
+                        .getVoltageLevels().stream()
+                        .map(VoltageLevel::getId).toList();
     }
 
     private SvgAndMetadata drawSvgAndBuildMetadata(NadGenerationContext nadGenerationContext) {
@@ -385,14 +386,18 @@ class NetworkAreaDiagramService {
      * Updates the network with the substation's positions in an extension and return the coordinates for further processing.
      * Note : nadGenerationContext.network is modified by reference
      */
-    public Map<String, Coordinate> assignGeoDataCoordinates(NadGenerationContext nadGenerationContext, List<Substation> substations) {
+    public Map<String, Coordinate> assignGeoDataCoordinates(NadGenerationContext nadGenerationContext, List<Substation> substationsToFetch) {
 
-        String substationsGeoDataString = geoDataService.getSubstationsGraphics(nadGenerationContext.getNetworkUuid(), nadGenerationContext.getVariantId(), substations.stream().map(Substation::getId).toList());
+        String substationsGeoDataString = geoDataService.getSubstationsGraphics(
+                nadGenerationContext.getNetworkUuid(),
+                nadGenerationContext.getVariantId(),
+                substationsToFetch.stream().map(Substation::getId).toList()
+        );
         List<SubstationGeoData> substationsGeoData = ResourceUtils.fromStringToSubstationGeoData(substationsGeoDataString, new ObjectMapper());
         Map<String, Coordinate> substationGeoDataMap = substationsGeoData.stream()
                 .collect(Collectors.toMap(SubstationGeoData::getId, SubstationGeoData::getCoordinate));
 
-        for (Substation substation : substations) {
+        for (Substation substation : substationsToFetch) {
             if (nadGenerationContext.getNetwork().getSubstation(substation.getId()).getExtension(SubstationPosition.class) == null) {
                 com.powsybl.sld.server.dto.Coordinate coordinate = substationGeoDataMap.get(substation.getId());
                 if (coordinate != null) {

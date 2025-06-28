@@ -30,6 +30,7 @@ import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
+import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
@@ -302,14 +303,20 @@ class SingleLineDiagramTest {
         String substationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"lon\":2.2943506}},{\"id\":\"subFr2\",\"coordinate\":{\"lat\":51.507351,\"lon\":1.127758}}]";
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, List.of("subFr2"))).willReturn(substationGeoDataJson);
 
-        networkAreaDiagramService.assignGeoDataCoordinates(network, testNetworkId, VARIANT_1_ID, List.of(network.getVoltageLevel("vlFr2A")));
+        NadGenerationContext context = NadGenerationContext.builder()
+                .network(network)
+                .networkUuid(testNetworkId)
+                .variantId(VARIANT_1_ID)
+                .build();
+
+        networkAreaDiagramService.assignGeoDataCoordinates(context, List.of(network.getSubstation("subFr2")));
         assertEquals(network.getSubstation("subFr2").getExtension(SubstationPosition.class).getCoordinate(), new com.powsybl.iidm.network.extensions.Coordinate(51.507351, 1.127758));
         assertNull(network.getSubstation("subFr1").getExtension(SubstationPosition.class));
 
         String faultSubstationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"long\":2.2943506}}]";
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, List.of("subFr1"))).willReturn(faultSubstationGeoDataJson);
         PowsyblException exception = assertThrows(PowsyblException.class, () ->
-            networkAreaDiagramService.assignGeoDataCoordinates(network, testNetworkId, VARIANT_1_ID, List.of(network.getVoltageLevel("vlFr1A"))));
+            networkAreaDiagramService.assignGeoDataCoordinates(context, List.of(network.getSubstation("subFr1"))));
 
         // Assert the exception message
         assertEquals("Failed to parse JSON response", exception.getMessage());
@@ -333,11 +340,10 @@ class SingleLineDiagramTest {
                 .positions(Collections.emptyList())
                 .build();
 
-        String jsonContent = objectMapper.writeValueAsString(nadRequestInfos);
         MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonContent))
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -346,6 +352,21 @@ class SingleLineDiagramTest {
         assertTrue(stringResult.contains("metadata"));
         assertTrue(stringResult.contains("additionalMetadata"));
         assertTrue(stringResult.contains("<?xml"));
+
+        NadRequestInfos nadRequestInfosNotFound = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(List.of("ThisVlDoesNotExist"))
+                .voltageLevelToExpandIds(Collections.emptyList())
+                .voltageLevelToOmitIds(Collections.emptyList())
+                .positions(Collections.emptyList())
+                .build();
+
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfosNotFound)))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -369,11 +390,11 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptyList())
                 .positions(Collections.emptyList())
                 .build();
-        String jsonContent = objectMapper.writeValueAsString(nadRequestWithValidFilter);
+
         MvcResult validResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonContent))
+                        .content(objectMapper.writeValueAsString(nadRequestWithValidFilter)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -392,11 +413,10 @@ class SingleLineDiagramTest {
                 .positions(Collections.emptyList())
                 .build();
 
-        String jsonContentNotFoundFilter = objectMapper.writeValueAsString(invalidFilterNadRequestJson);
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonContentNotFoundFilter))
+                        .content(objectMapper.writeValueAsString(invalidFilterNadRequestJson)))
                 .andExpect(status().isNotFound());
     }
 
@@ -437,12 +457,10 @@ class SingleLineDiagramTest {
                 .withGeoData(false) // what if true ? TODO : failing with true geadata
                 .build();
 
-        String validConfigRequestJson = objectMapper.writeValueAsString(requestWithValidConfig);
-
         MvcResult validResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(validConfigRequestJson))
+                        .content(objectMapper.writeValueAsString(requestWithValidConfig)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -459,7 +477,15 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
-        networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A"), withGeoData);
+
+        NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+                .filterUuid(null)
+                .nadConfigUuid(null)
+                .withGeoData(withGeoData)
+                .voltageLevelIds(List.of("vlFr1A"))
+                .build();
+
+        networkAreaDiagramService.generateNetworkAreaDiagramSvgFromRequestAsync(testNetworkId, VARIANT_2_ID, nadRequestInfos);
         if (withGeoData) {
             //initialize with geographical data
             verify(geoDataService, times(1)).getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"));
@@ -480,7 +506,7 @@ class SingleLineDiagramTest {
     }
 
     @Test
-    void testNetworkAreaDiagramAdditionalMetadata() throws Exception {
+    void testNetworkAreaDiagramExtension() throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
 
         Network networkWithDepth = createNetwork();
@@ -506,18 +532,49 @@ class SingleLineDiagramTest {
 
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(networkWithDepth);
 
-        // Test with a depth of zero, should return in the metadata only one voltage level
-        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, null, List.of("vlFr1A"), false);
-        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
-        assertNotNull(additionalMetadata);
-        Map<String, Object> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
-        assertEquals(1, convertedMetadata.get("nbVoltageLevels"));
-        List<Map<String, String>> voltageLevels = objectMapper.convertValue(convertedMetadata.get("voltageLevels"), new TypeReference<>() { });
-        assertNotNull(voltageLevels);
-        assertEquals(1, voltageLevels.size());
-        assertEquals("vlFr1A", voltageLevels.get(0).get("id"));
-        assertEquals("vlFr1A", voltageLevels.get(0).get("name"));
-        assertEquals("subFr1", voltageLevels.get(0).get("substationId"));
+        NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(List.of("vlFr1A"))
+                .voltageLevelToExpandIds(Collections.emptyList())
+                .voltageLevelToOmitIds(Collections.emptyList())
+                .positions(Collections.emptyList())
+                .withGeoData(false)
+                .build();
+
+        MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String stringResult = result.getResponse().getContentAsString();
+        assertTrue(stringResult.contains("\"additionalMetadata\":{\"nbVoltageLevels\":1"));
+        assertTrue(stringResult.contains("\"voltageLevels\":[{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
+
+        // TODO CHARLY fix this : It should extend but at the moment, it does not
+        NadRequestInfos nadRequestInfosExtendedVl = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(Collections.emptyList())
+                .voltageLevelToExpandIds(List.of("vlFr1A"))
+                .voltageLevelToOmitIds(Collections.emptyList())
+                .positions(Collections.emptyList())
+                .withGeoData(false)
+                .build();
+
+        MvcResult resultExtendedVl = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfosExtendedVl)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String stringResultExtendedVl = resultExtendedVl.getResponse().getContentAsString();
+        assertTrue(stringResultExtendedVl.contains("\"additionalMetadata\":{\"nbVoltageLevels\":2"));
+        assertTrue(stringResultExtendedVl.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
+        assertTrue(stringResultExtendedVl.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+
+        // TODO CHARLY test with the omit list
     }
 
     @Test
@@ -784,17 +841,27 @@ class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
 
-        SvgAndMetadata svgAndMetadata = networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, List.of("vlFr1A", "vlNotFound1"), true);
-        Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
-        assertNotNull(additionalMetadata);
-        Map<String, Object> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
-        assertEquals(1, convertedMetadata.get("nbVoltageLevels"));
-        List<Map<String, String>> voltageLevels = objectMapper.convertValue(convertedMetadata.get("voltageLevels"), new TypeReference<>() { });
-        assertNotNull(voltageLevels);
-        assertEquals(1, voltageLevels.size());
-        assertEquals("vlFr1A", voltageLevels.getFirst().get("id"));
-
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(List.of("vlFr1A", "vlNotFound1"))
+                .voltageLevelToExpandIds(Collections.emptyList())
+                .voltageLevelToOmitIds(Collections.emptyList())
+                .positions(Collections.emptyList())
+                .build();
+
+        MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String stringResult = result.getResponse().getContentAsString();
+        assertEquals("{\"svg\":\"<?xml", stringResult.substring(0, 13));
+        assertTrue(stringResult.contains("\"equipmentId\" : \"vlFr1A\""));
+        assertTrue(stringResult.contains("\"additionalMetadata\":{\"nbVoltageLevels\":1"));
+
+        NadRequestInfos nadRequestInfosVlNotFound = NadRequestInfos.builder()
                 .nadConfigUuid(null)
                 .filterUuid(null)
                 .voltageLevelIds(List.of("vlNotFound1", "vlNotFound2"))
@@ -803,11 +870,10 @@ class SingleLineDiagramTest {
                 .positions(Collections.emptyList())
                 .build();
 
-        String jsonContent = objectMapper.writeValueAsString(nadRequestInfos);
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonContent))
+                        .content(objectMapper.writeValueAsString(nadRequestInfosVlNotFound)))
                 .andExpect(status().isNotFound());
     }
 
