@@ -324,7 +324,7 @@ class SingleLineDiagramTest {
     }
 
     @Test
-    void testNetworkAreaDiagram() throws Exception {
+    void testNetworkAreaDiagramWithGeoData() throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         UUID notFoundNetworkId = UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
@@ -338,6 +338,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptyList())
                 .voltageLevelToOmitIds(Collections.emptyList())
                 .positions(Collections.emptyList())
+                .withGeoData(true)
                 .build();
 
         MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -360,6 +361,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptyList())
                 .voltageLevelToOmitIds(Collections.emptyList())
                 .positions(Collections.emptyList())
+                .withGeoData(true)
                 .build();
 
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -505,10 +507,7 @@ class SingleLineDiagramTest {
         testGenerateNadBasedOnGeoData(true);
     }
 
-    @Test
-    void testNetworkAreaDiagramExtension() throws Exception {
-        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
-
+    Network createNetworkWithDepth() {
         Network networkWithDepth = createNetwork();
         // We add lines to create depth
         networkWithDepth.newLine()
@@ -529,8 +528,13 @@ class SingleLineDiagramTest {
             .setR(1)
             .setX(3)
             .add();
+        return networkWithDepth;
+    }
 
-        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(networkWithDepth);
+    @Test
+    void testNetworkAreaDiagram() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetworkWithDepth());
 
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .nadConfigUuid(null)
@@ -543,7 +547,6 @@ class SingleLineDiagramTest {
                 .build();
 
         MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
-                        .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
                 .andExpect(status().isOk())
@@ -551,8 +554,13 @@ class SingleLineDiagramTest {
         String stringResult = result.getResponse().getContentAsString();
         assertTrue(stringResult.contains("\"additionalMetadata\":{\"nbVoltageLevels\":1"));
         assertTrue(stringResult.contains("\"voltageLevels\":[{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
+    }
 
-        // TODO CHARLY fix this : It should extend but at the moment, it does not
+    @Test
+    void testNetworkAreaDiagramExtension() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetworkWithDepth());
+
         NadRequestInfos nadRequestInfosExtendedVl = NadRequestInfos.builder()
                 .nadConfigUuid(null)
                 .filterUuid(null)
@@ -564,7 +572,6 @@ class SingleLineDiagramTest {
                 .build();
 
         MvcResult resultExtendedVl = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
-                        .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfosExtendedVl)))
                 .andExpect(status().isOk())
@@ -573,8 +580,106 @@ class SingleLineDiagramTest {
         assertTrue(stringResultExtendedVl.contains("\"additionalMetadata\":{\"nbVoltageLevels\":2"));
         assertTrue(stringResultExtendedVl.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
         assertTrue(stringResultExtendedVl.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+    }
 
-        // TODO CHARLY test with the omit list
+    @Test
+    void testNetworkAreaDiagramOmition() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        UUID filterUuid = UUID.randomUUID();
+
+        List<IdentifiableAttributes> filterContent = List.of(
+                new IdentifiableAttributes("vlFr1A", IdentifiableType.VOLTAGE_LEVEL, null),
+                new IdentifiableAttributes("vlFr2A", IdentifiableType.VOLTAGE_LEVEL, null)
+        );
+
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+        given(filterService.exportFilter(testNetworkId, VARIANT_2_ID, filterUuid)).willReturn(filterContent);
+
+        // First we test that the NAD contains 3 voltage levels (two come from the filter used)
+        NadRequestInfos nadRequestNoOmition = NadRequestInfos.builder()
+                .filterUuid(filterUuid)
+                .nadConfigUuid(null)
+                .voltageLevelIds(List.of("vlEs1B"))
+                .voltageLevelToExpandIds(Collections.emptyList())
+                .voltageLevelToOmitIds(Collections.emptyList())
+                .positions(Collections.emptyList())
+                .withGeoData(false)
+                .build();
+
+        MvcResult resultNoOmition = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestNoOmition)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        String stringResultNoOmition = resultNoOmition.getResponse().getContentAsString();
+        assertTrue(stringResultNoOmition.contains("\"additionalMetadata\":{\"nbVoltageLevels\":3"));
+        assertTrue(stringResultNoOmition.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
+        assertTrue(stringResultNoOmition.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+        assertTrue(stringResultNoOmition.contains("{\"id\":\"vlEs1B\",\"name\":\"vlEs1B\",\"substationId\":\"subEs1\""));
+
+        // Then we test that the omition system removes the voltage levels (even if they were initially in the filter)
+        NadRequestInfos nadRequestWithOmition = NadRequestInfos.builder()
+                .filterUuid(filterUuid)
+                .nadConfigUuid(null)
+                .voltageLevelIds(List.of("vlEs1B"))
+                .voltageLevelToExpandIds(Collections.emptyList())
+                .voltageLevelToOmitIds(List.of("vlFr2A"))
+                .positions(Collections.emptyList())
+                .withGeoData(false)
+                .build();
+
+        MvcResult resultWithOmition = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestWithOmition)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        String stringResultWithOmition = resultWithOmition.getResponse().getContentAsString();
+        assertTrue(stringResultWithOmition.contains("\"additionalMetadata\":{\"nbVoltageLevels\":2"));
+        assertTrue(stringResultWithOmition.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
+        assertFalse(stringResultWithOmition.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+        assertTrue(stringResultWithOmition.contains("{\"id\":\"vlEs1B\",\"name\":\"vlEs1B\",\"substationId\":\"subEs1\""));
+    }
+
+    @Test
+    void testNetworkAreaDiagramOmitedAndExtension() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        UUID filterUuid = UUID.randomUUID();
+
+        List<IdentifiableAttributes> filterContent = List.of(
+                new IdentifiableAttributes("vlFr1A", IdentifiableType.VOLTAGE_LEVEL, null),
+                new IdentifiableAttributes("vlFr2A", IdentifiableType.VOLTAGE_LEVEL, null)
+        );
+
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetworkWithDepth());
+        given(filterService.exportFilter(testNetworkId, null, filterUuid)).willReturn(filterContent);
+
+        // If a VL was omited but the user requested to expand another VL that would add again the omited VL,
+        // then the omited VL would be added to the SVG.
+        NadRequestInfos nadRequestWithOmitionAndExtension = NadRequestInfos.builder()
+                .filterUuid(filterUuid) // Adds vlFr1A, vlFr2A
+                .nadConfigUuid(null)
+                .voltageLevelIds(List.of("vlEs1B")) // Adds vlEs1B
+                .voltageLevelToExpandIds(List.of("vlFr1A")) // Adds vlFr2A (vlFr1A's neighour)
+                .voltageLevelToOmitIds(List.of("vlFr2A"))
+                .positions(Collections.emptyList())
+                .withGeoData(false)
+                .build();
+
+        MvcResult resultWithOmitionAndExtension = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestWithOmitionAndExtension)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+        String stringResultWithOmitionAndExtension = resultWithOmitionAndExtension.getResponse().getContentAsString();
+        assertTrue(stringResultWithOmitionAndExtension.contains("\"additionalMetadata\":{\"nbVoltageLevels\":3"));
+        assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
+        assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+        assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlEs1B\",\"name\":\"vlEs1B\",\"substationId\":\"subEs1\""));
     }
 
     @Test
