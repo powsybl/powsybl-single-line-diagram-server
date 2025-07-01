@@ -423,10 +423,9 @@ class SingleLineDiagramTest {
     }
 
     @Test
-    void testNetworkAreaDiagramFromConfig() throws Exception {
+    void testNetworkAreaDiagramWithValidConfig() throws Exception {
         UUID networkUuid = UUID.randomUUID();
         UUID validConfigUuid = UUID.randomUUID();
-        UUID configWithInvalidVlUuid = UUID.randomUUID();
 
         NadConfigInfos validConfig = NadConfigInfos.builder()
                 .id(validConfigUuid)
@@ -435,19 +434,10 @@ class SingleLineDiagramTest {
                 .positions(List.of())
                 .build();
 
-        NadConfigInfos configWithInvalidVl = NadConfigInfos.builder()
-                .id(configWithInvalidVlUuid)
-                .voltageLevelIds(List.of("notFound"))
-                .scalingFactor(0)
-                .positions(List.of())
-                .build();
-
         given(networkStoreService.getNetwork(networkUuid, PreloadingStrategy.COLLECTION))
                 .willReturn(createNetwork());
         given(nadConfigRepository.findWithVoltageLevelIdsById(validConfigUuid))
                 .willReturn(Optional.of(validConfig.toEntity()));
-        given(nadConfigRepository.findWithVoltageLevelIdsById(configWithInvalidVlUuid))
-                .willReturn(Optional.of(configWithInvalidVl.toEntity()));
 
         NadRequestInfos requestWithValidConfig = NadRequestInfos.builder()
                 .filterUuid(null)
@@ -456,7 +446,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptyList())
                 .voltageLevelToOmitIds(Collections.emptyList())
                 .positions(Collections.emptyList())
-                .withGeoData(false) // what if true ? TODO : failing with true geadata
+                .withGeoData(false)
                 .build();
 
         MvcResult validResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -473,6 +463,76 @@ class SingleLineDiagramTest {
         assertTrue(validResponseContent.contains("metadata"));
         assertTrue(validResponseContent.contains("additionalMetadata"));
         assertTrue(validResponseContent.contains("<?xml"));
+    }
+
+    @Test
+    void testNetworkAreaDiagramWithConfigNeverFetchGeodata() throws Exception {
+        UUID networkUuid = UUID.randomUUID();
+        UUID nadConfigUuid = UUID.randomUUID();
+
+        NadConfigInfos nadConfig = NadConfigInfos.builder()
+                .id(nadConfigUuid)
+                .voltageLevelIds(List.of("vlFr1A"))
+                .scalingFactor(0)
+                .positions(List.of())
+                .build();
+
+        given(networkStoreService.getNetwork(networkUuid, PreloadingStrategy.COLLECTION))
+                .willReturn(createNetwork());
+        given(nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid))
+                .willReturn(Optional.of(nadConfig.toEntity()));
+
+        NadRequestInfos requestWithValidConfig = NadRequestInfos.builder()
+                .filterUuid(null)
+                .nadConfigUuid(nadConfigUuid)
+                .voltageLevelIds(Collections.emptyList())
+                .voltageLevelToExpandIds(Collections.emptyList())
+                .voltageLevelToOmitIds(Collections.emptyList())
+                .positions(Collections.emptyList())
+                .withGeoData(true)
+                .build();
+
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestWithValidConfig)))
+                .andExpect(status().isOk());
+
+        verify(geoDataService, times(0)).getSubstationsGraphics(any(), any(), any());
+    }
+
+    @Test
+    void testNetworkAreaDiagramWithInvalidConfig() throws Exception {
+        UUID networkUuid = UUID.randomUUID();
+        UUID configWithInvalidVlUuid = UUID.randomUUID();
+
+        NadConfigInfos configWithInvalidVl = NadConfigInfos.builder()
+                .id(configWithInvalidVlUuid)
+                .voltageLevelIds(List.of("notFound"))
+                .scalingFactor(0)
+                .positions(List.of())
+                .build();
+
+        given(networkStoreService.getNetwork(networkUuid, PreloadingStrategy.COLLECTION))
+                .willReturn(createNetwork());
+        given(nadConfigRepository.findWithVoltageLevelIdsById(configWithInvalidVlUuid))
+                .willReturn(Optional.of(configWithInvalidVl.toEntity()));
+
+        NadRequestInfos requestWithValidConfig = NadRequestInfos.builder()
+                .filterUuid(null)
+                .nadConfigUuid(configWithInvalidVlUuid)
+                .voltageLevelIds(Collections.emptyList())
+                .voltageLevelToExpandIds(Collections.emptyList())
+                .voltageLevelToOmitIds(Collections.emptyList())
+                .positions(Collections.emptyList())
+                .withGeoData(false)
+                .build();
+
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestWithValidConfig)))
+                .andExpect(status().isNotFound());
     }
 
     private void testGenerateNadBasedOnGeoData(boolean withGeoData) throws Exception {

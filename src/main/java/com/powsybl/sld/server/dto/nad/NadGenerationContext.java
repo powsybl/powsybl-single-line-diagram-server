@@ -28,7 +28,7 @@ public class NadGenerationContext {
     private Network network;
     private UUID networkUuid;
     private String variantId;
-    private Boolean withGeoData;
+    private Boolean shouldFetchGeoData;
     private Integer scalingFactor;
 
     @Builder.Default

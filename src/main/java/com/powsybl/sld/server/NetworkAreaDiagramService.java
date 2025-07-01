@@ -184,7 +184,7 @@ class NetworkAreaDiagramService {
                             .networkUuid(networkUuid)
                             .variantId(variantId)
                             .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION))
-                            .withGeoData(nadRequestInfos.getWithGeoData())
+                            .shouldFetchGeoData(nadRequestInfos.getNadConfigUuid() == null && nadRequestInfos.getWithGeoData())
                             .positions(nadRequestInfos.getPositions())
                             .build();
 
@@ -242,7 +242,7 @@ class NetworkAreaDiagramService {
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork()));
 
         // Set style provider factory either with geographical data or with provided positions (if any)
-        if (Boolean.TRUE.equals(nadGenerationContext.getWithGeoData()) && nadGenerationContext.getPositions().isEmpty()) {
+        if (Boolean.TRUE.equals(nadGenerationContext.getShouldFetchGeoData()) && nadGenerationContext.getPositions().isEmpty()) {
             nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
         } else {
             nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
