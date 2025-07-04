@@ -193,7 +193,15 @@ class NetworkAreaDiagramService {
                         NadConfigInfos nadConfigInfos = self.getNetworkAreaDiagramConfig(nadRequestInfos.getNadConfigUuid());
 
                         nadGenerationContext.getVoltageLevelIds().addAll(nadConfigInfos.getVoltageLevelIds());
-                        nadGenerationContext.getPositions().addAll(nadConfigInfos.getPositions());
+
+                        //add only voltage levels that are not present in the context
+                        Set<String> existingVoltageLevelIds = nadGenerationContext.getPositions().stream()
+                                .map(NadVoltageLevelPositionInfos::getVoltageLevelId)
+                                .collect(Collectors.toSet());
+                        nadConfigInfos.getPositions().stream()
+                                .filter(position -> !existingVoltageLevelIds.contains(position.getVoltageLevelId()))
+                                .forEach(nadGenerationContext.getPositions()::add);
+
                         nadGenerationContext.setScalingFactor(nadConfigInfos.getScalingFactor());
                     }
 
