@@ -146,8 +146,6 @@ class NetworkAreaDiagramServiceTest {
 
     }
 
-
-
     @Test
     void testUpdateNadConfigNotFound() {
         NadConfigInfos configInfos = new NadConfigInfos();
