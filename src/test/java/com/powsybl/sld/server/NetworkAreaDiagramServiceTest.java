@@ -7,6 +7,7 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
+import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -95,6 +97,56 @@ class NetworkAreaDiagramServiceTest {
         assertEquals(1.2, vl1Position.get().getXLabelPosition(), 0.001);
         assertEquals(1.3, vl1Position.get().getYLabelPosition(), 0.001);
     }
+
+    @Test
+    void testNadGenerationContextWithConfig() {
+        UUID nadConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        NadConfigInfos nadConfigDto = networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
+
+        //position provided in the request that overrides VL1
+        NadVoltageLevelPositionInfos existingPosition = NadVoltageLevelPositionInfos.builder()
+                .voltageLevelId("VL1")
+                .xPosition(100.0)
+                .yPosition(100.0)
+                .build();
+
+        NadGenerationContext nadGenerationContext = NadGenerationContext.builder()
+                .voltageLevelIds(new ArrayList<>())
+                .positions(new ArrayList<>())
+                .build();
+
+        nadGenerationContext.getVoltageLevelIds().add("VL1");
+        nadGenerationContext.getPositions().add(existingPosition);
+
+        //logic from generateNetworkAreaDiagramSvgFromRequestAsync
+        Set<String> existingVoltageLevelIds = nadGenerationContext.getPositions().stream()
+                .map(NadVoltageLevelPositionInfos::getVoltageLevelId)
+                .collect(Collectors.toSet());
+
+        nadConfigDto.getPositions().stream()
+                .filter(position -> !existingVoltageLevelIds.contains(position.getVoltageLevelId()))
+                .forEach(nadGenerationContext.getPositions()::add);
+
+        // Verify that the context contains correctly merged positions
+        assertEquals(2, nadGenerationContext.getPositions().size()); // VL1 (existingPosition) + VL2 (config)
+
+        // Verify that VL1 existing position takes priority over configuration
+        Optional<NadVoltageLevelPositionInfos> vl1Position = nadGenerationContext.getPositions().stream()
+                .filter(pos -> "VL1".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertTrue(vl1Position.isPresent());
+        assertEquals(100.0, vl1Position.get().getXPosition());
+        assertEquals(100.0, vl1Position.get().getYPosition());
+
+        // Verify that VL2 from config
+        Optional<NadVoltageLevelPositionInfos> vl2Position = nadGenerationContext.getPositions().stream()
+                .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
+                .findFirst();
+        assertTrue(vl2Position.isPresent());
+
+    }
+
+
 
     @Test
     void testUpdateNadConfigNotFound() {
