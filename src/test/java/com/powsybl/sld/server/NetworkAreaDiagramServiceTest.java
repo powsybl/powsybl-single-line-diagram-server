@@ -138,7 +138,7 @@ class NetworkAreaDiagramServiceTest {
         assertEquals(100.0, vl1Position.get().getXPosition());
         assertEquals(100.0, vl1Position.get().getYPosition());
 
-        // Verify that VL2 from config
+        // Verify VL2 from config
         Optional<NadVoltageLevelPositionInfos> vl2Position = nadGenerationContext.getPositions().stream()
                 .filter(pos -> "VL2".equals(pos.getVoltageLevelId()))
                 .findFirst();
