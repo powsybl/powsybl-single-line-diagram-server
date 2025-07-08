@@ -32,6 +32,7 @@ import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
+import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
@@ -463,6 +464,110 @@ class SingleLineDiagramTest {
         assertTrue(validResponseContent.contains("metadata"));
         assertTrue(validResponseContent.contains("additionalMetadata"));
         assertTrue(validResponseContent.contains("<?xml"));
+    }
+
+    @Test
+    void testNetworkAreaDiagramWithPositionsFromUser() throws Exception {
+        // We want to test if the user's defined positions are not overridden by the nad config's positions.
+        UUID networkUuid = UUID.randomUUID();
+        UUID validConfigUuid = UUID.randomUUID();
+
+        // First test, with positions from the nad config
+        NadVoltageLevelPositionInfos positionFromConfig = NadVoltageLevelPositionInfos.builder()
+                .voltageLevelId("vlFr1A")
+                .xPosition(75416.26)
+                .yPosition(12326.69)
+                .build();
+        NadConfigInfos nadConfig = NadConfigInfos.builder()
+                .id(validConfigUuid)
+                .voltageLevelIds(List.of("vlFr1A"))
+                .scalingFactor(0)
+                .positions(List.of(positionFromConfig))
+                .build();
+
+        given(networkStoreService.getNetwork(networkUuid, PreloadingStrategy.COLLECTION))
+                .willReturn(createNetwork());
+        given(nadConfigRepository.findWithVoltageLevelIdsById(validConfigUuid))
+                .willReturn(Optional.of(nadConfig.toEntity()));
+
+        NadRequestInfos requestWithPositionFromNadConfig = NadRequestInfos.builder()
+                .filterUuid(null)
+                .nadConfigUuid(validConfigUuid)
+                .voltageLevelIds(Collections.emptyList())
+                .voltageLevelToExpandIds(Collections.emptyList())
+                .voltageLevelToOmitIds(Collections.emptyList())
+                .positions(Collections.emptyList())
+                .withGeoData(false)
+                .build();
+
+        MvcResult firstResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestWithPositionFromNadConfig)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+
+        String firstResultContent = firstResult.getResponse().getContentAsString();
+
+        assertTrue(firstResultContent.contains("75416.26")); // Positions from the nad config
+        assertTrue(firstResultContent.contains("12326.69"));
+
+        // Second test, with positions from the user
+        NadVoltageLevelPositionInfos positionFromUser = NadVoltageLevelPositionInfos.builder()
+                .voltageLevelId("vlFr1A")
+                .xPosition(88588.25)
+                .yPosition(99199.85)
+                .build();
+
+        NadRequestInfos requestWithPositionsFromUser = NadRequestInfos.builder()
+                .filterUuid(null)
+                .nadConfigUuid(null)
+                .voltageLevelIds(List.of("vlFr1A"))
+                .voltageLevelToExpandIds(Collections.emptyList())
+                .voltageLevelToOmitIds(Collections.emptyList())
+                .positions(List.of(positionFromUser))
+                .withGeoData(false)
+                .build();
+
+        MvcResult secondResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestWithPositionsFromUser)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+
+        String secondResultContent = secondResult.getResponse().getContentAsString();
+
+        assertTrue(secondResultContent.contains("88588.25")); // Positions from the user
+        assertTrue(secondResultContent.contains("99199.85"));
+
+        // final test, with positions from both the nad config and the user
+        NadRequestInfos requestWithPositionsFromBoth = NadRequestInfos.builder()
+                .filterUuid(null)
+                .nadConfigUuid(validConfigUuid)
+                .voltageLevelIds(List.of("vlFr1A"))
+                .voltageLevelToExpandIds(Collections.emptyList())
+                .voltageLevelToOmitIds(Collections.emptyList())
+                .positions(List.of(positionFromUser))
+                .withGeoData(false)
+                .build();
+
+        MvcResult thirdResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestWithPositionsFromBoth)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
+                .andReturn();
+
+        String thirdResultContent = thirdResult.getResponse().getContentAsString();
+
+        assertTrue(thirdResultContent.contains("88588.25")); // Positions from the user
+        assertTrue(thirdResultContent.contains("99199.85"));
+        assertFalse(thirdResultContent.contains("75416.26")); // We do not want the positions from the nad config
+        assertFalse(thirdResultContent.contains("12326.69"));
     }
 
     @Test

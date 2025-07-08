@@ -194,7 +194,7 @@ class NetworkAreaDiagramService {
 
                         nadGenerationContext.getVoltageLevelIds().addAll(nadConfigInfos.getVoltageLevelIds());
 
-                        //add only voltage levels that are not present in the context
+                        // Add voltage level positions that are not already present
                         Set<String> existingVoltageLevelIds = nadGenerationContext.getPositions().stream()
                                 .map(NadVoltageLevelPositionInfos::getVoltageLevelId)
                                 .collect(Collectors.toSet());
