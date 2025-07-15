@@ -274,7 +274,7 @@ public class SingleLineDiagramController {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, body = {}", networkUuid, sanitizeParam(nadRequestInfos.toString()));
         }
-        return networkAreaDiagramService.generateNetworkAreaDiagramSvgFromRequestAsync(networkUuid, variantId, nadRequestInfos);
+        return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, nadRequestInfos);
     }
 
     @PostMapping(value = "/network-area-diagram/config", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -302,17 +302,6 @@ public class SingleLineDiagramController {
             @RequestBody NadConfigInfos nadConfigInfos) {
         networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigUuid, nadConfigInfos);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping(value = "/network-area-diagram/config/{nadConfigUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get a network area diagram config")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "The network area diagram config was returned"),
-        @ApiResponse(responseCode = "404", description = "The network area diagram config was not found"),
-    })
-    public ResponseEntity<NadConfigInfos> getNetworkAreaDiagramConfig(
-            @Parameter(description = "Network Area Diagram config UUID") @PathVariable("nadConfigUuid") UUID nadConfigUuid) {
-        return ResponseEntity.ok().body(networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigUuid));
     }
 
     @DeleteMapping(value = "/network-area-diagram/config/{nadConfigUuid}")

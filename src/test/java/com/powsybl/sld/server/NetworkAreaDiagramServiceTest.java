@@ -154,6 +154,7 @@ class NetworkAreaDiagramServiceTest {
         newPositionVl3.setYLabelPosition(3.11);
 
         NadVoltageLevelPositionInfos updatedVl2 = new NadVoltageLevelPositionInfos();
+        updatedVl2.setVoltageLevelId("VL2");
         updatedVl2.setId(vl2Position.get().getId());
         updatedVl2.setXPosition(65.0);
 

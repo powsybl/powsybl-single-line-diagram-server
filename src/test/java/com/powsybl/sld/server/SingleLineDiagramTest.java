@@ -652,7 +652,7 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(List.of("vlFr1A"))
                 .build();
 
-        networkAreaDiagramService.generateNetworkAreaDiagramSvgFromRequestAsync(testNetworkId, VARIANT_2_ID, nadRequestInfos);
+        networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, nadRequestInfos);
         if (withGeoData) {
             //initialize with geographical data
             verify(geoDataService, times(1)).getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"));
