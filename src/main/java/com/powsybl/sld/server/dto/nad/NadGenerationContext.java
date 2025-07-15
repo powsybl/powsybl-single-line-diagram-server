@@ -11,9 +11,7 @@ import com.powsybl.nad.NadParameters;
 import com.powsybl.nad.build.iidm.VoltageLevelFilter;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Charly Boutier <charly.boutier at rte-france.com>
@@ -35,7 +33,7 @@ public class NadGenerationContext {
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
 
     @Builder.Default
-    private List<String> voltageLevelIds = new ArrayList<>();
+    private Set<String> voltageLevelIds = new HashSet<>();
 
     private VoltageLevelFilter voltageLevelFilter;
 

@@ -91,7 +91,6 @@ class NetworkAreaDiagramService {
 
     @Transactional
     public UUID createNetworkAreaDiagramConfig(NadConfigInfos nadConfigInfos) {
-        // TODO At the moment, it is possible to insert multiple positions with the same voltageLevelId. That should probably be fixed.
         return nadConfigRepository.save(nadConfigInfos.toEntity()).getId();
     }
 
@@ -115,7 +114,7 @@ class NetworkAreaDiagramService {
 
     private void updateNadConfig(@NonNull NadConfigEntity entity, @NonNull NadConfigInfos nadConfigInfos) {
         Optional.ofNullable(nadConfigInfos.getVoltageLevelIds()).ifPresent(voltageLevels ->
-            entity.setVoltageLevelIds(new ArrayList<>(voltageLevels))
+            entity.setVoltageLevelIds(new HashSet<>(voltageLevels))
         );
         Optional.ofNullable(nadConfigInfos.getScalingFactor()).ifPresent(entity::setScalingFactor);
 
@@ -163,11 +162,11 @@ class NetworkAreaDiagramService {
         return nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).toDto();
     }
 
-    private List<String> getVoltageLevelIdsFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
+    private Set<String> getVoltageLevelIdsFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
         List<IdentifiableAttributes> filterContent = filterService.exportFilter(networkUuid, variantId, filterUuid);
         return filterContent.stream()
             .map(IdentifiableAttributes::getId)
-            .toList();
+            .collect(Collectors.toSet());
     }
 
     @Transactional
@@ -222,8 +221,13 @@ class NetworkAreaDiagramService {
         // Filter out of scope voltage levels
         nadGenerationContext.setVoltageLevelIds(nadGenerationContext.getVoltageLevelIds().stream()
             .filter(vl -> nadGenerationContext.getNetwork().getVoltageLevel(vl) != null)
-            .toList());
-        nadGenerationContext.setVoltageLevelFilter(VoltageLevelFilter.createVoltageLevelsFilter(nadGenerationContext.getNetwork(), nadGenerationContext.getVoltageLevelIds()));
+            .collect(Collectors.toSet()));
+        nadGenerationContext.setVoltageLevelFilter(
+                VoltageLevelFilter.createVoltageLevelsFilter(
+                        nadGenerationContext.getNetwork(),
+                        new ArrayList<>(nadGenerationContext.getVoltageLevelIds())
+                )
+        );
 
         // Build Powsybl parameters
         buildGraphicalParameters(nadGenerationContext);
@@ -264,7 +268,7 @@ class NetworkAreaDiagramService {
         // To do so, we create a filter with a depth=1 that will include these out of bound voltage levels.
         List<VoltageLevel> extendedVoltageLevelFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(
                 nadGenerationContext.getNetwork(),
-                nadGenerationContext.getVoltageLevelIds(),
+                new ArrayList<>(nadGenerationContext.getVoltageLevelIds()),
                 1).getVoltageLevels().stream().toList();
 
         List<Substation> extendedSubstations = extendedVoltageLevelFilter.stream()
@@ -360,13 +364,14 @@ class NetworkAreaDiagramService {
         return coordinates.size() / (width * height);
     }
 
-    private List<String> getExpandedVoltageLevelIds(@NonNull List<String> voltageLevelIds, Network network) {
+    private Set<String> getExpandedVoltageLevelIds(@NonNull Set<String> voltageLevelIds, Network network) {
         if (voltageLevelIds.isEmpty()) {
             return voltageLevelIds;
         }
-        return VoltageLevelFilter.createVoltageLevelsDepthFilter(network, voltageLevelIds, 1)
+        return VoltageLevelFilter.createVoltageLevelsDepthFilter(network, new ArrayList<>(voltageLevelIds), 1)
                         .getVoltageLevels().stream()
-                        .map(VoltageLevel::getId).toList();
+                        .map(VoltageLevel::getId)
+                        .collect(Collectors.toSet());
     }
 
     private SvgAndMetadata drawSvgAndBuildMetadata(NadGenerationContext nadGenerationContext) {

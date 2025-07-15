@@ -335,9 +335,9 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .nadConfigUuid(null)
                 .filterUuid(null)
-                .voltageLevelIds(List.of("vlFr1A"))
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Set.of("vlFr1A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .withGeoData(true)
                 .build();
@@ -358,9 +358,9 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestInfosNotFound = NadRequestInfos.builder()
                 .nadConfigUuid(null)
                 .filterUuid(null)
-                .voltageLevelIds(List.of("ThisVlDoesNotExist"))
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Set.of("ThisVlDoesNotExist"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .withGeoData(true)
                 .build();
@@ -388,9 +388,9 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestWithValidFilter = NadRequestInfos.builder()
                 .filterUuid(filterUuid)
                 .nadConfigUuid(null)
-                .voltageLevelIds(Collections.emptyList())
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .build();
 
@@ -410,9 +410,9 @@ class SingleLineDiagramTest {
         NadRequestInfos invalidFilterNadRequestJson = NadRequestInfos.builder()
                 .filterUuid(filterUuidNotFound)
                 .nadConfigUuid(null)
-                .voltageLevelIds(Collections.emptyList())
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .build();
 
@@ -430,7 +430,7 @@ class SingleLineDiagramTest {
 
         NadConfigInfos validConfig = NadConfigInfos.builder()
                 .id(validConfigUuid)
-                .voltageLevelIds(List.of("vlFr1A"))
+                .voltageLevelIds(Set.of("vlFr1A"))
                 .scalingFactor(0)
                 .positions(List.of())
                 .build();
@@ -443,9 +443,9 @@ class SingleLineDiagramTest {
         NadRequestInfos requestWithValidConfig = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(validConfigUuid)
-                .voltageLevelIds(Collections.emptyList())
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .withGeoData(false)
                 .build();
@@ -480,7 +480,7 @@ class SingleLineDiagramTest {
                 .build();
         NadConfigInfos nadConfig = NadConfigInfos.builder()
                 .id(validConfigUuid)
-                .voltageLevelIds(List.of("vlFr1A"))
+                .voltageLevelIds(Set.of("vlFr1A"))
                 .scalingFactor(0)
                 .positions(List.of(positionFromConfig))
                 .build();
@@ -493,9 +493,9 @@ class SingleLineDiagramTest {
         NadRequestInfos requestWithPositionFromNadConfig = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(validConfigUuid)
-                .voltageLevelIds(Collections.emptyList())
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .withGeoData(false)
                 .build();
@@ -523,9 +523,9 @@ class SingleLineDiagramTest {
         NadRequestInfos requestWithPositionsFromUser = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(null)
-                .voltageLevelIds(List.of("vlFr1A"))
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Set.of("vlFr1A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(List.of(positionFromUser))
                 .withGeoData(false)
                 .build();
@@ -547,9 +547,9 @@ class SingleLineDiagramTest {
         NadRequestInfos requestWithPositionsFromBoth = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(validConfigUuid)
-                .voltageLevelIds(List.of("vlFr1A"))
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Set.of("vlFr1A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(List.of(positionFromUser))
                 .withGeoData(false)
                 .build();
@@ -577,7 +577,7 @@ class SingleLineDiagramTest {
 
         NadConfigInfos nadConfig = NadConfigInfos.builder()
                 .id(nadConfigUuid)
-                .voltageLevelIds(List.of("vlFr1A"))
+                .voltageLevelIds(Set.of("vlFr1A"))
                 .scalingFactor(0)
                 .positions(List.of())
                 .build();
@@ -590,9 +590,9 @@ class SingleLineDiagramTest {
         NadRequestInfos requestWithValidConfig = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(nadConfigUuid)
-                .voltageLevelIds(Collections.emptyList())
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .withGeoData(true)
                 .build();
@@ -613,7 +613,7 @@ class SingleLineDiagramTest {
 
         NadConfigInfos configWithInvalidVl = NadConfigInfos.builder()
                 .id(configWithInvalidVlUuid)
-                .voltageLevelIds(List.of("notFound"))
+                .voltageLevelIds(Set.of("notFound"))
                 .scalingFactor(0)
                 .positions(List.of())
                 .build();
@@ -626,9 +626,9 @@ class SingleLineDiagramTest {
         NadRequestInfos requestWithValidConfig = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(configWithInvalidVlUuid)
-                .voltageLevelIds(Collections.emptyList())
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .withGeoData(false)
                 .build();
@@ -649,7 +649,7 @@ class SingleLineDiagramTest {
                 .filterUuid(null)
                 .nadConfigUuid(null)
                 .withGeoData(withGeoData)
-                .voltageLevelIds(List.of("vlFr1A"))
+                .voltageLevelIds(Set.of("vlFr1A"))
                 .build();
 
         networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, nadRequestInfos);
@@ -704,9 +704,9 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .nadConfigUuid(null)
                 .filterUuid(null)
-                .voltageLevelIds(List.of("vlFr1A"))
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Set.of("vlFr1A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .withGeoData(false)
                 .build();
@@ -729,9 +729,9 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestInfosExtendedVl = NadRequestInfos.builder()
                 .nadConfigUuid(null)
                 .filterUuid(null)
-                .voltageLevelIds(Collections.emptyList())
-                .voltageLevelToExpandIds(List.of("vlFr1A"))
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Set.of("vlFr1A"))
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .withGeoData(false)
                 .build();
@@ -764,9 +764,9 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestNoOmition = NadRequestInfos.builder()
                 .filterUuid(filterUuid)
                 .nadConfigUuid(null)
-                .voltageLevelIds(List.of("vlEs1B"))
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Set.of("vlEs1B"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .withGeoData(false)
                 .build();
@@ -788,9 +788,9 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestWithOmition = NadRequestInfos.builder()
                 .filterUuid(filterUuid)
                 .nadConfigUuid(null)
-                .voltageLevelIds(List.of("vlEs1B"))
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(List.of("vlFr2A"))
+                .voltageLevelIds(Set.of("vlEs1B"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Set.of("vlFr2A"))
                 .positions(Collections.emptyList())
                 .withGeoData(false)
                 .build();
@@ -827,9 +827,9 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestWithOmitionAndExtension = NadRequestInfos.builder()
                 .filterUuid(filterUuid) // Adds vlFr1A, vlFr2A
                 .nadConfigUuid(null)
-                .voltageLevelIds(List.of("vlEs1B")) // Adds vlEs1B
-                .voltageLevelToExpandIds(List.of("vlFr1A")) // Adds vlFr2A (vlFr1A's neighour)
-                .voltageLevelToOmitIds(List.of("vlFr2A"))
+                .voltageLevelIds(Set.of("vlEs1B")) // Adds vlEs1B
+                .voltageLevelToExpandIds(Set.of("vlFr1A")) // Adds vlFr2A (vlFr1A's neighour)
+                .voltageLevelToOmitIds(Set.of("vlFr2A"))
                 .positions(Collections.emptyList())
                 .withGeoData(false)
                 .build();
@@ -1114,9 +1114,9 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .nadConfigUuid(null)
                 .filterUuid(null)
-                .voltageLevelIds(List.of("vlFr1A", "vlNotFound1"))
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Set.of("vlFr1A", "vlNotFound1"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .build();
 
@@ -1134,9 +1134,9 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestInfosVlNotFound = NadRequestInfos.builder()
                 .nadConfigUuid(null)
                 .filterUuid(null)
-                .voltageLevelIds(List.of("vlNotFound1", "vlNotFound2"))
-                .voltageLevelToExpandIds(Collections.emptyList())
-                .voltageLevelToOmitIds(Collections.emptyList())
+                .voltageLevelIds(Set.of("vlNotFound1", "vlNotFound2"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .build();
 

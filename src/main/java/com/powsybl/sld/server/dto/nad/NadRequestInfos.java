@@ -8,9 +8,7 @@ package com.powsybl.sld.server.dto.nad;
 
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,11 +19,11 @@ public class NadRequestInfos {
     private UUID nadConfigUuid;
     private UUID filterUuid;
     @Builder.Default
-    private List<String> voltageLevelIds = new ArrayList<>();
+    private Set<String> voltageLevelIds = new HashSet<>();
     @Builder.Default
-    private List<String> voltageLevelToExpandIds = new ArrayList<>();
+    private Set<String> voltageLevelToExpandIds = new HashSet<>();
     @Builder.Default
-    private List<String> voltageLevelToOmitIds = new ArrayList<>();
+    private Set<String> voltageLevelToOmitIds = new HashSet<>();
     @Builder.Default
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
     @Builder.Default

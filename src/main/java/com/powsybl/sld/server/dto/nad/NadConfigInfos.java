@@ -9,9 +9,7 @@ package com.powsybl.sld.server.dto.nad;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import lombok.*;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Charly Boutier <charly.boutier at rte-france.com>
@@ -24,7 +22,7 @@ import java.util.UUID;
 public class NadConfigInfos {
     private UUID id;
     @Builder.Default
-    private List<String> voltageLevelIds = new ArrayList<>();
+    private Set<String> voltageLevelIds = new HashSet<>();
     private Integer scalingFactor;
     @Builder.Default
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();

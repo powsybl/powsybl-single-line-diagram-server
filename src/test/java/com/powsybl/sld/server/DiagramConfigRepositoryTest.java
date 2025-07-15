@@ -41,7 +41,7 @@ class DiagramConfigRepositoryTest {
 
     NadConfigEntity createNadConfigEntity() {
         return NadConfigEntity.builder()
-                .voltageLevelIds(List.of("VL1", "VL2"))
+                .voltageLevelIds(Set.of("VL1", "VL2"))
                 .scalingFactor(0)
                 .positions(
                         List.of(

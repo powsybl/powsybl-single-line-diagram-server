@@ -65,7 +65,7 @@ class NetworkAreaDiagramServiceTest {
         positions.add(vlPositionInfos2);
 
         return NadConfigInfos.builder()
-                .voltageLevelIds(List.of("VL1"))
+                .voltageLevelIds(Set.of("VL1"))
                 .scalingFactor(300000)
                 .positions(positions)
                 .build();
@@ -143,7 +143,7 @@ class NetworkAreaDiagramServiceTest {
         // Update
         NadConfigInfos nadConfigUpdate = new NadConfigInfos();
         nadConfigUpdate.setScalingFactor(600000);
-        nadConfigUpdate.setVoltageLevelIds(List.of("VL1", "VL2"));
+        nadConfigUpdate.setVoltageLevelIds(Set.of("VL1", "VL2"));
 
         ArrayList<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
         NadVoltageLevelPositionInfos newPositionVl3 = new NadVoltageLevelPositionInfos();
