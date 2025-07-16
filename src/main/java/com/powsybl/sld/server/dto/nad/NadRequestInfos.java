@@ -6,33 +6,26 @@
  */
 package com.powsybl.sld.server.dto.nad;
 
-import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import lombok.*;
 
 import java.util.*;
 
-/**
- * @author Charly Boutier <charly.boutier at rte-france.com>
- */
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
 @Setter
-public class NadConfigInfos {
-    private UUID id;
+public class NadRequestInfos {
+    private UUID nadConfigUuid;
+    private UUID filterUuid;
     @Builder.Default
     private Set<String> voltageLevelIds = new HashSet<>();
-    private Integer scalingFactor;
+    @Builder.Default
+    private Set<String> voltageLevelToExpandIds = new HashSet<>();
+    @Builder.Default
+    private Set<String> voltageLevelToOmitIds = new HashSet<>();
     @Builder.Default
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
-
-    public NadConfigEntity toEntity() {
-        return NadConfigEntity.builder()
-                .id(id)
-                .voltageLevelIds(voltageLevelIds)
-                .scalingFactor(scalingFactor)
-                .positions(positions.stream().map(NadVoltageLevelPositionInfos::toEntity).toList())
-                .build();
-    }
+    @Builder.Default
+    private Boolean withGeoData = true;
 }

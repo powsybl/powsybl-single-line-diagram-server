@@ -6,7 +6,9 @@
  */
 package com.powsybl.sld.server.dto.nad;
 
-import com.powsybl.sld.server.entities.nad.NadConfigEntity;
+import com.powsybl.iidm.network.Network;
+import com.powsybl.nad.NadParameters;
+import com.powsybl.nad.build.iidm.VoltageLevelFilter;
 import lombok.*;
 
 import java.util.*;
@@ -19,20 +21,21 @@ import java.util.*;
 @Builder
 @Getter
 @Setter
-public class NadConfigInfos {
-    private UUID id;
-    @Builder.Default
-    private Set<String> voltageLevelIds = new HashSet<>();
+public class NadGenerationContext {
+
+    private Network network;
+    private UUID networkUuid;
+    private String variantId;
+    private boolean shouldFetchGeoData;
     private Integer scalingFactor;
+
     @Builder.Default
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
 
-    public NadConfigEntity toEntity() {
-        return NadConfigEntity.builder()
-                .id(id)
-                .voltageLevelIds(voltageLevelIds)
-                .scalingFactor(scalingFactor)
-                .positions(positions.stream().map(NadVoltageLevelPositionInfos::toEntity).toList())
-                .build();
-    }
+    @Builder.Default
+    private Set<String> voltageLevelIds = new HashSet<>();
+
+    private VoltageLevelFilter voltageLevelFilter;
+
+    private NadParameters nadParameters;
 }

@@ -10,9 +10,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
-import com.powsybl.sld.server.dto.nad.ElementParametersInfos;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
-import com.powsybl.sld.server.utils.ResourceUtils;
+import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,10 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 import static com.powsybl.sld.server.NetworkAreaDiagramService.*;
@@ -273,27 +269,12 @@ public class SingleLineDiagramController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
     public @ResponseBody String generateNetworkAreaDiagramSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @RequestBody List<String> voltageLevelsIds,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-            @Parameter(description = "depth") @RequestParam(name = "depth", required = false) int depth,
-            @Parameter(description = "Initialize NAD with Geographical Data") @RequestParam(name = "withGeoData", defaultValue = "true") boolean withGeoData) {
+            @RequestBody NadRequestInfos nadRequestInfos) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, voltageLevelsIds = {}, depth = {}", networkUuid, sanitizeParam(voltageLevelsIds.toString()), depth);
+            LOGGER.debug("generateNetworkAreaDiagramSvg request received with parameter networkUuid = {}, body = {}", networkUuid, sanitizeParam(nadRequestInfos.toString()));
         }
-        return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, voltageLevelsIds, depth, withGeoData);
-    }
-
-    @GetMapping(value = "/network-area-diagram/{networkUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get network area diagram image using an element")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
-    public @ResponseBody String generateNetworkAreaDiagramSvgFromElement(
-            @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
-            @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
-            @Parameter(description = "Element parameters") @RequestParam(name = "elementParams") String stringElementParams) {
-        ElementParametersInfos elementParams = ResourceUtils.fromStringToElementParametersInfos(
-                URLDecoder.decode(stringElementParams, StandardCharsets.UTF_8),
-                new ObjectMapper());
-        return networkAreaDiagramService.generateNetworkAreaDiagramSvgFromElement(networkUuid, variantId, elementParams);
+        return networkAreaDiagramService.generateNetworkAreaDiagramSvgAsync(networkUuid, variantId, nadRequestInfos);
     }
 
     @PostMapping(value = "/network-area-diagram/config", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -321,17 +302,6 @@ public class SingleLineDiagramController {
             @RequestBody NadConfigInfos nadConfigInfos) {
         networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigUuid, nadConfigInfos);
         return ResponseEntity.ok().build();
-    }
-
-    @GetMapping(value = "/network-area-diagram/config/{nadConfigUuid}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Get a network area diagram config")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "The network area diagram config was returned"),
-        @ApiResponse(responseCode = "404", description = "The network area diagram config was not found"),
-    })
-    public ResponseEntity<NadConfigInfos> getNetworkAreaDiagramConfig(
-            @Parameter(description = "Network Area Diagram config UUID") @PathVariable("nadConfigUuid") UUID nadConfigUuid) {
-        return ResponseEntity.ok().body(networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigUuid));
     }
 
     @DeleteMapping(value = "/network-area-diagram/config/{nadConfigUuid}")
