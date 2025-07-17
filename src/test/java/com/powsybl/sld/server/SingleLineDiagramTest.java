@@ -60,8 +60,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.util.*;
 
-import static com.powsybl.sld.library.ComponentTypeName.ARROW_ACTIVE;
-import static com.powsybl.sld.library.ComponentTypeName.ARROW_REACTIVE;
+import static com.powsybl.sld.library.SldComponentTypeName.ARROW_ACTIVE;
+import static com.powsybl.sld.library.SldComponentTypeName.ARROW_REACTIVE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;

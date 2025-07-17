@@ -7,14 +7,14 @@
 package com.powsybl.sld.server;
 
 import com.google.auto.service.AutoService;
-import com.powsybl.sld.library.ComponentLibrary;
-import com.powsybl.sld.library.ResourcesComponentLibrary;
+import com.powsybl.sld.library.SldComponentLibrary;
+import com.powsybl.sld.library.SldResourcesComponentLibrary;
 
 /**
  * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
  */
-@AutoService(ComponentLibrary.class)
-public class GridSuiteAndConvergenceComponentLibrary extends ResourcesComponentLibrary {
+@AutoService(SldComponentLibrary.class)
+public class GridSuiteAndConvergenceComponentLibrary extends SldResourcesComponentLibrary {
     public static final String NAME = "GridSuiteAndConvergence";
 
     public GridSuiteAndConvergenceComponentLibrary() {
