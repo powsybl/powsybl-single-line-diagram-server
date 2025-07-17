@@ -10,7 +10,7 @@ import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.ConnectablePosition;
 import com.powsybl.sld.layout.LayoutParameters;
-import com.powsybl.sld.library.ComponentLibrary;
+import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.model.coordinate.Direction;
 import com.powsybl.sld.model.nodes.BusNode;
 import com.powsybl.sld.model.nodes.EquipmentNode;
@@ -38,7 +38,7 @@ public class PositionDiagramLabelProvider extends CommonLabelProvider {
     private final Network network;
     private final String voltageLevelId;
 
-    public PositionDiagramLabelProvider(Network network, ComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters, String voltageLevelId) {
+    public PositionDiagramLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters, String voltageLevelId) {
         super(network, componentLibrary, layoutParameters, svgParameters);
         this.network = network;
         this.voltageLevelId = voltageLevelId;

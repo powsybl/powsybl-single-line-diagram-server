@@ -15,7 +15,7 @@ import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.layout.*;
-import com.powsybl.sld.library.ComponentLibrary;
+import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.server.dto.EquipmentInfos;
 import com.powsybl.sld.server.dto.SubstationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
@@ -82,7 +82,7 @@ class SingleLineDiagramService {
         try (var svgWriter = new StringWriter();
              var metadataWriter = new StringWriter()) {
 
-            ComponentLibrary compLibrary = ComponentLibrary.find(diagParams.getComponentLibrary())
+            SldComponentLibrary compLibrary = SldComponentLibrary.find(diagParams.getComponentLibrary())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found"));
 
             SvgParameters svgParameters = new SvgParameters(SVG_PARAMETERS);
@@ -147,6 +147,6 @@ class SingleLineDiagramService {
     }
 
     Collection<String> getAvailableSvgComponentLibraries() {
-        return ComponentLibrary.findAll().stream().map(ComponentLibrary::getName).collect(Collectors.toList());
+        return SldComponentLibrary.findAll().stream().map(SldComponentLibrary::getName).collect(Collectors.toList());
     }
 }
