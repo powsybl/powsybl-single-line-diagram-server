@@ -13,7 +13,6 @@ import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadEquipmentPositionInfos;
-import com.powsybl.sld.server.utils.ResourceUtils;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import static com.powsybl.sld.server.NetworkAreaDiagramService.*;
