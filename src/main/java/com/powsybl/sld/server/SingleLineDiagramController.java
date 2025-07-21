@@ -343,10 +343,10 @@ public class SingleLineDiagramController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping(value = "/network-area-diagram/positions", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/network-area-diagram/cvg/positions", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Save CVG positions")
     @ApiResponse(responseCode = "200", description = "The CVG positions have been saved")
-    public ResponseEntity<Void> createNetworkAreaDiagramConfig(@RequestBody List<NadEquipmentPositionInfos> nadEquipmentPositionInfos) {
+    public ResponseEntity<Void> createNetworkAreaDiagramCVGPositions(@RequestBody List<NadEquipmentPositionInfos> nadEquipmentPositionInfos) {
         networkAreaDiagramService.saveCVGPositions(nadEquipmentPositionInfos);
         return ResponseEntity.ok().build();
 
