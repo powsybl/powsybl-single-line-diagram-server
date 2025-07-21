@@ -26,7 +26,7 @@ public class NadConfigEntity {
 
     public NadConfigEntity(NadConfigEntity origin) {
         this.scalingFactor = origin.getScalingFactor();
-        this.voltageLevelIds = new ArrayList<>();
+        this.voltageLevelIds = new HashSet<>();
         this.voltageLevelIds.addAll(origin.getVoltageLevelIds());
         this.positions = new ArrayList<>();
         origin.getPositions().forEach(position -> this.positions.add(new NadVoltageLevelPositionEntity(position)));
@@ -43,7 +43,7 @@ public class NadConfigEntity {
             indexes = @Index(name = "nad_config_voltage_level_index", columnList = "nad_config_entity_id")
     )
     @Builder.Default
-    private List<String> voltageLevelIds = new ArrayList<>();
+    private Set<String> voltageLevelIds = new HashSet<>();
 
     @Column(name = "scalingFactor")
     private Integer scalingFactor;
