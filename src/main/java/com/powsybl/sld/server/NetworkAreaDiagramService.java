@@ -26,10 +26,12 @@ import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.dto.nad.ElementParametersInfos;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
+import com.powsybl.sld.server.dto.nad.NadEquipmentPositionInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
+import com.powsybl.sld.server.repository.NadEquipmentRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.ResourceUtils;
 import jakarta.validation.constraints.NotNull;
@@ -69,6 +71,7 @@ class NetworkAreaDiagramService {
     private final NetworkAreaExecutionService diagramExecutionService;
 
     private final NadConfigRepository nadConfigRepository;
+    private final NadEquipmentRepository nadEquipmentRepository;
     private final NetworkAreaDiagramService self;
 
     private final ObjectMapper objectMapper;
@@ -77,7 +80,7 @@ class NetworkAreaDiagramService {
                                      GeoDataService geoDataService,
                                      FilterService filterService,
                                      NetworkAreaExecutionService diagramExecutionService,
-                                     NadConfigRepository nadConfigRepository,
+                                     NadConfigRepository nadConfigRepository, NadEquipmentRepository nadEquipmentRepository,
                                      @Lazy NetworkAreaDiagramService networkAreaDiagramService,
                                      ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
@@ -85,6 +88,7 @@ class NetworkAreaDiagramService {
         this.filterService = filterService;
         this.diagramExecutionService = diagramExecutionService;
         this.nadConfigRepository = nadConfigRepository;
+        this.nadEquipmentRepository = nadEquipmentRepository;
         this.self = networkAreaDiagramService;
         this.objectMapper = objectMapper;
     }
@@ -394,5 +398,10 @@ class NetworkAreaDiagramService {
         metadata.put("scalingFactor", scalingFactor);
 
         return metadata;
+    }
+
+    @Transactional
+    public void saveCVGPositions(List<NadEquipmentPositionInfos> cvgPositions) {
+        nadEquipmentRepository.saveAll(cvgPositions.stream().map(NadEquipmentPositionInfos::toEntity).toList());
     }
 }

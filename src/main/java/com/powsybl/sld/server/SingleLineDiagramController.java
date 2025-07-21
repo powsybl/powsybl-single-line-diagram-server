@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.ElementParametersInfos;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
+import com.powsybl.sld.server.dto.nad.NadEquipmentPositionInfos;
 import com.powsybl.sld.server.utils.ResourceUtils;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
@@ -340,5 +341,14 @@ public class SingleLineDiagramController {
     public ResponseEntity<Void> deleteNetworkAreaDiagramConfig(@Parameter(description = "Network Area Diagram config UUID") @PathVariable("nadConfigUuid") UUID nadConfigUuid) {
         networkAreaDiagramService.deleteNetworkAreaDiagramConfig(nadConfigUuid);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/network-area-diagram/positions", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Save CVG positions")
+    @ApiResponse(responseCode = "200", description = "The CVG positions have been saved")
+    public ResponseEntity<Void> createNetworkAreaDiagramConfig(@RequestBody List<NadEquipmentPositionInfos> nadEquipmentPositionInfos) {
+        networkAreaDiagramService.saveCVGPositions(nadEquipmentPositionInfos);
+        return ResponseEntity.ok().build();
+
     }
 }
