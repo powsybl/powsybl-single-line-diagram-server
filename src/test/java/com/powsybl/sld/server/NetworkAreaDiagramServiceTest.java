@@ -8,6 +8,7 @@ package com.powsybl.sld.server;
 
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
+import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 
 import jakarta.transaction.Transactional;
@@ -321,7 +322,7 @@ class NetworkAreaDiagramServiceTest {
 
         // Verify each config was saved correctly
         List<NadConfigInfos> savedConfigs = nadConfigRepository.findAll().stream()
-            .map(entity -> entity.toDto())
+            .map(NadConfigEntity::toDto)
             .toList();
 
         assertEquals(3, savedConfigs.size());
