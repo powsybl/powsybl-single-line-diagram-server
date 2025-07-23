@@ -6,6 +6,7 @@
  */
 package com.powsybl.sld.server.dto.nad;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import lombok.*;
 
@@ -22,9 +23,13 @@ import java.util.UUID;
 public class NadVoltageLevelPositionInfos {
     private UUID id;
     private String voltageLevelId;
+    @JsonProperty("xPosition")
     private Double xPosition;
+    @JsonProperty("yPosition")
     private Double yPosition;
+    @JsonProperty("xLabelPosition")
     private Double xLabelPosition;
+    @JsonProperty("yLabelPosition")
     private Double yLabelPosition;
 
     public NadVoltageLevelPositionEntity toEntity() {

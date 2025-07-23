@@ -32,8 +32,16 @@ public class NadConfigEntity {
         origin.getPositions().forEach(position -> this.positions.add(new NadVoltageLevelPositionEntity(position)));
     }
 
+    // Replace the default ID generation strategy with a custom one
+    // to be able to set the ID manually (from the DTO)
+    @PrePersist
+    private void ensureId() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID();
+        }
+    }
+
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id")
     private UUID id;
 

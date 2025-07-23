@@ -95,6 +95,20 @@ class NetworkAreaDiagramService {
     }
 
     @Transactional
+    public void createMultipleNetworkAreaDiagramConfigs(List<NadConfigInfos> nadConfigs) {
+        List<NadConfigEntity> configs = nadConfigs.stream()
+            .map(NadConfigInfos::toEntity)
+            .toList();
+
+        nadConfigRepository.saveAll(configs);
+    }
+
+    @Transactional
+    public void deleteMultipleNetworkAreaDiagramConfigs(List<UUID> configUuids) {
+        nadConfigRepository.deleteAllById(configUuids);
+    }
+
+    @Transactional
     public UUID duplicateNetworkAreaDiagramConfig(UUID originNadConfigUuid) {
         Optional<NadConfigEntity> nadConfigEntityOpt = nadConfigRepository.findById(originNadConfigUuid);
         if (nadConfigEntityOpt.isEmpty()) {
