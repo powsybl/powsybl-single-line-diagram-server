@@ -9,6 +9,9 @@ package com.powsybl.sld.server;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.repository.NadConfigRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -291,5 +294,125 @@ class NetworkAreaDiagramServiceTest {
         networkAreaDiagramService.deleteNetworkAreaDiagramConfig(nadConfigId);
 
         assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId), HttpStatus.NOT_FOUND.toString());
+    }
+
+    @Test
+    @Transactional
+    void testCreateMultipleNetworkAreaDiagramConfigs() {
+        // Create multiple configs
+        NadConfigInfos config1 = createNadConfigDto();
+
+        NadConfigInfos config2 = createNadConfigDto();
+        config2.setVoltageLevelIds(Set.of("VL2", "VL3"));
+
+        NadConfigInfos config3 = createNadConfigDto();
+        config3.setVoltageLevelIds(Set.of("VL4"));
+
+        List<NadConfigInfos> configs = List.of(config1, config2, config3);
+
+        // Verify repository is empty before creation
+        assertEquals(0, nadConfigRepository.count());
+
+        // Create multiple configs
+        networkAreaDiagramService.createMultipleNetworkAreaDiagramConfigs(configs);
+
+        // Verify all configs were created
+        assertEquals(3, nadConfigRepository.count());
+
+        // Verify each config was saved correctly
+        List<NadConfigInfos> savedConfigs = nadConfigRepository.findAll().stream()
+            .map(entity -> entity.toDto())
+            .toList();
+
+        assertEquals(3, savedConfigs.size());
+
+        // Check that the configs have different IDs (UUIDs were generated or preserved)
+        Set<UUID> configIds = savedConfigs.stream()
+            .map(NadConfigInfos::getId)
+            .collect(java.util.stream.Collectors.toSet());
+        assertEquals(3, configIds.size()); // All IDs should be unique
+    }
+
+    @Test
+    void testCreateMultipleNetworkAreaDiagramConfigsWithProvidedUUIDs() {
+        // Test that provided UUIDs are preserved
+        UUID predefinedId1 = UUID.randomUUID();
+        UUID predefinedId2 = UUID.randomUUID();
+
+        NadConfigInfos config1 = createNadConfigDto();
+        config1.setId(predefinedId1);
+
+        NadConfigInfos config2 = createNadConfigDto();
+        config2.setId(predefinedId2);
+
+        List<NadConfigInfos> configs = List.of(config1, config2);
+
+        networkAreaDiagramService.createMultipleNetworkAreaDiagramConfigs(configs);
+
+        // Verify configs were saved with the provided UUIDs
+        NadConfigInfos savedConfig1 = networkAreaDiagramService.getNetworkAreaDiagramConfig(predefinedId1);
+        NadConfigInfos savedConfig2 = networkAreaDiagramService.getNetworkAreaDiagramConfig(predefinedId2);
+
+        assertEquals(predefinedId1, savedConfig1.getId());
+        assertEquals(predefinedId2, savedConfig2.getId());
+    }
+
+    @Test
+    void testDeleteMultipleNetworkAreaDiagramConfigs() {
+        // Create multiple configs first
+        UUID config1Id = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        UUID config2Id = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        UUID config3Id = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+
+        // Verify all configs exist
+        assertEquals(3, nadConfigRepository.count());
+        assertDoesNotThrow(() -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config1Id));
+        assertDoesNotThrow(() -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config2Id));
+        assertDoesNotThrow(() -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config3Id));
+
+        // Delete multiple configs
+        List<UUID> configsToDelete = List.of(config1Id, config3Id);
+        networkAreaDiagramService.deleteMultipleNetworkAreaDiagramConfigs(configsToDelete);
+
+        // Verify only config2 remains
+        assertEquals(1, nadConfigRepository.count());
+        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config1Id));
+        assertDoesNotThrow(() -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config2Id));
+        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config3Id));
+    }
+
+    @Test
+    void testDeleteMultipleNetworkAreaDiagramConfigsEmptyList() {
+        // Create some configs first
+        networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+
+        assertEquals(2, nadConfigRepository.count());
+
+        // Delete with empty list should not affect anything
+        networkAreaDiagramService.deleteMultipleNetworkAreaDiagramConfigs(List.of());
+
+        // Verify no configs were deleted
+        assertEquals(2, nadConfigRepository.count());
+    }
+
+    @Test
+    void testDeleteMultipleNetworkAreaDiagramConfigsNonExistentIds() {
+        // Create one config
+        UUID existingConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
+        assertEquals(1, nadConfigRepository.count());
+
+        // Try to delete a mix of existing and non-existent IDs
+        UUID nonExistentId1 = UUID.randomUUID();
+        UUID nonExistentId2 = UUID.randomUUID();
+
+        List<UUID> configsToDelete = List.of(existingConfigId, nonExistentId1, nonExistentId2);
+
+        // This should not throw an exception and should delete the existing config
+        assertDoesNotThrow(() -> networkAreaDiagramService.deleteMultipleNetworkAreaDiagramConfigs(configsToDelete));
+
+        // Verify the existing config was deleted
+        assertEquals(0, nadConfigRepository.count());
+        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(existingConfigId));
     }
 }
