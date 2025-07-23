@@ -1,6 +1,5 @@
-{
-  "components": [
-    {
+[
+  {
       "type": "LOCK",
       "anchorPoints" : [],
       "size": {
@@ -31,4 +30,3 @@
       "styleClass": "sld-lock"
     }
   ]
-}
