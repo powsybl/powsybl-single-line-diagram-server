@@ -95,12 +95,15 @@ class NetworkAreaDiagramService {
     }
 
     @Transactional
-    public void createMultipleNetworkAreaDiagramConfigs(List<NadConfigInfos> nadConfigs) {
+    public List<UUID> createMultipleNetworkAreaDiagramConfigs(List<NadConfigInfos> nadConfigs) {
         List<NadConfigEntity> configs = nadConfigs.stream()
             .map(NadConfigInfos::toEntity)
             .toList();
 
-        nadConfigRepository.saveAll(configs);
+        List<NadConfigEntity> savedConfigs = nadConfigRepository.saveAll(configs);
+        return savedConfigs.stream()
+            .map(NadConfigEntity::getId)
+            .toList();
     }
 
     @Transactional
@@ -116,7 +119,9 @@ class NetworkAreaDiagramService {
         }
 
         NadConfigEntity nadConfigEntityToDuplicate = nadConfigEntityOpt.get();
-        return nadConfigRepository.save(new NadConfigEntity(nadConfigEntityToDuplicate)).getId();
+        NadConfigEntity duplicateEntity = new NadConfigEntity(nadConfigEntityToDuplicate);
+        duplicateEntity.setId(UUID.randomUUID()); // Assign new ID for the duplicate
+        return nadConfigRepository.save(duplicateEntity).getId();
     }
 
     @Transactional

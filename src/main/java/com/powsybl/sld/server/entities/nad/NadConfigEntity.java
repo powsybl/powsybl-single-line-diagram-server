@@ -22,7 +22,7 @@ import java.util.*;
 @Entity
 @Builder
 @Table(name = "nadConfig")
-public class NadConfigEntity {
+public class NadConfigEntity extends AbstractManuallyAssignedIdentifierEntity<UUID> {
 
     public NadConfigEntity(NadConfigEntity origin) {
         this.scalingFactor = origin.getScalingFactor();
@@ -32,18 +32,10 @@ public class NadConfigEntity {
         origin.getPositions().forEach(position -> this.positions.add(new NadVoltageLevelPositionEntity(position)));
     }
 
-    // Replace the default ID generation strategy with a custom one
-    // to be able to set the ID manually (from the DTO)
-    @PrePersist
-    private void ensureId() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
-    }
-
     @Id
+    @Builder.Default
     @Column(name = "id")
-    private UUID id;
+    private UUID id = UUID.randomUUID();
 
     @ElementCollection
     @CollectionTable(name = "nadConfigVoltageLevel",

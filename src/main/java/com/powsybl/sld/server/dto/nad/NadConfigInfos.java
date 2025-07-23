@@ -29,7 +29,7 @@ public class NadConfigInfos {
 
     public NadConfigEntity toEntity() {
         return NadConfigEntity.builder()
-                .id(id)
+                .id(id != null ? id : UUID.randomUUID())
                 .voltageLevelIds(voltageLevelIds)
                 .scalingFactor(scalingFactor)
                 .positions(positions.stream().map(NadVoltageLevelPositionInfos::toEntity).toList())

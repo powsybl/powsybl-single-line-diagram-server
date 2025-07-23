@@ -23,6 +23,8 @@ import java.util.UUID;
 public class NadVoltageLevelPositionInfos {
     private UUID id;
     private String voltageLevelId;
+    // As this attribute has only one lower case letter at its start (xXXXX), the getters is parsed as getXPosition and the field for Jackson is parsed as xposition
+    // while we expect xPosition. JsonProperty let fix the json field to xPosition
     @JsonProperty("xPosition")
     private Double xPosition;
     @JsonProperty("yPosition")

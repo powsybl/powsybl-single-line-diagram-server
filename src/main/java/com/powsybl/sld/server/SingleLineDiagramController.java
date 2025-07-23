@@ -288,9 +288,8 @@ public class SingleLineDiagramController {
     @PostMapping("/network-area-diagram/configs")
     @Operation(summary = "Create multiple network area diagram configs")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The created configs UUIDs")})
-    public ResponseEntity<Void> createMultipleNetworkAreaDiagramConfigs(@RequestBody List<NadConfigInfos> nadConfigs) {
-        networkAreaDiagramService.createMultipleNetworkAreaDiagramConfigs(nadConfigs);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<List<UUID>> createMultipleNetworkAreaDiagramConfigs(@RequestBody List<NadConfigInfos> nadConfigs) {
+        return ResponseEntity.ok().body(networkAreaDiagramService.createMultipleNetworkAreaDiagramConfigs(nadConfigs));
     }
 
     @DeleteMapping("/network-area-diagram/configs")
