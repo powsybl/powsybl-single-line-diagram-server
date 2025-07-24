@@ -95,7 +95,7 @@ class NetworkAreaDiagramService {
     }
 
     @Transactional
-    public List<UUID> createMultipleNetworkAreaDiagramConfigs(List<NadConfigInfos> nadConfigs) {
+    public List<UUID> createNetworkAreaDiagramConfigs(List<NadConfigInfos> nadConfigs) {
         List<NadConfigEntity> configs = nadConfigs.stream()
             .map(NadConfigInfos::toEntity)
             .toList();
@@ -107,7 +107,7 @@ class NetworkAreaDiagramService {
     }
 
     @Transactional
-    public void deleteMultipleNetworkAreaDiagramConfigs(List<UUID> configUuids) {
+    public void deleteNetworkAreaDiagramConfigs(List<UUID> configUuids) {
         nadConfigRepository.deleteAllById(configUuids);
     }
 

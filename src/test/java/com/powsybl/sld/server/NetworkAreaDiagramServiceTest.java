@@ -315,7 +315,7 @@ class NetworkAreaDiagramServiceTest {
         assertEquals(0, nadConfigRepository.count());
 
         // Create multiple configs
-        networkAreaDiagramService.createMultipleNetworkAreaDiagramConfigs(configs);
+        networkAreaDiagramService.createNetworkAreaDiagramConfigs(configs);
 
         // Verify all configs were created
         assertEquals(3, nadConfigRepository.count());
@@ -348,7 +348,7 @@ class NetworkAreaDiagramServiceTest {
 
         List<NadConfigInfos> configs = List.of(config1, config2);
 
-        networkAreaDiagramService.createMultipleNetworkAreaDiagramConfigs(configs);
+        networkAreaDiagramService.createNetworkAreaDiagramConfigs(configs);
 
         // Verify configs were saved with the provided UUIDs
         NadConfigInfos savedConfig1 = networkAreaDiagramService.getNetworkAreaDiagramConfig(predefinedId1);
@@ -373,7 +373,7 @@ class NetworkAreaDiagramServiceTest {
 
         // Delete multiple configs
         List<UUID> configsToDelete = List.of(config1Id, config3Id);
-        networkAreaDiagramService.deleteMultipleNetworkAreaDiagramConfigs(configsToDelete);
+        networkAreaDiagramService.deleteNetworkAreaDiagramConfigs(configsToDelete);
 
         // Verify only config2 remains
         assertEquals(1, nadConfigRepository.count());
@@ -391,7 +391,7 @@ class NetworkAreaDiagramServiceTest {
         assertEquals(2, nadConfigRepository.count());
 
         // Delete with empty list should not affect anything
-        networkAreaDiagramService.deleteMultipleNetworkAreaDiagramConfigs(List.of());
+        networkAreaDiagramService.deleteNetworkAreaDiagramConfigs(List.of());
 
         // Verify no configs were deleted
         assertEquals(2, nadConfigRepository.count());
@@ -403,14 +403,14 @@ class NetworkAreaDiagramServiceTest {
         UUID existingConfigId = networkAreaDiagramService.createNetworkAreaDiagramConfig(createNadConfigDto());
         assertEquals(1, nadConfigRepository.count());
 
-        // Try to delete a mix of existing and non-existent IDs
+        // Try to delete a mix of existing and non-existing IDs
         UUID nonExistentId1 = UUID.randomUUID();
         UUID nonExistentId2 = UUID.randomUUID();
 
         List<UUID> configsToDelete = List.of(existingConfigId, nonExistentId1, nonExistentId2);
 
         // This should not throw an exception and should delete the existing config
-        assertDoesNotThrow(() -> networkAreaDiagramService.deleteMultipleNetworkAreaDiagramConfigs(configsToDelete));
+        assertDoesNotThrow(() -> networkAreaDiagramService.deleteNetworkAreaDiagramConfigs(configsToDelete));
 
         // Verify the existing config was deleted
         assertEquals(0, nadConfigRepository.count());

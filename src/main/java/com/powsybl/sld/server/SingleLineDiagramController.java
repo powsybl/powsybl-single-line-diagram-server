@@ -289,14 +289,14 @@ public class SingleLineDiagramController {
     @Operation(summary = "Create multiple network area diagram configs")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The created configs UUIDs")})
     public ResponseEntity<List<UUID>> createMultipleNetworkAreaDiagramConfigs(@RequestBody List<NadConfigInfos> nadConfigs) {
-        return ResponseEntity.ok().body(networkAreaDiagramService.createMultipleNetworkAreaDiagramConfigs(nadConfigs));
+        return ResponseEntity.ok().body(networkAreaDiagramService.createNetworkAreaDiagramConfigs(nadConfigs));
     }
 
     @DeleteMapping("/network-area-diagram/configs")
     @Operation(summary = "Delete multiple network area diagram configs")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The configs were deleted successfully")})
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram configs were successfully deleted")})
     public ResponseEntity<Void> deleteMultipleNetworkAreaDiagramConfigs(@RequestBody List<UUID> configUuids) {
-        networkAreaDiagramService.deleteMultipleNetworkAreaDiagramConfigs(configUuids);
+        networkAreaDiagramService.deleteNetworkAreaDiagramConfigs(configUuids);
         return ResponseEntity.ok().build();
     }
 
