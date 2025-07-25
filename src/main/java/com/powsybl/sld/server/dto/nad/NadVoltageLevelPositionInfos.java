@@ -6,6 +6,7 @@
  */
 package com.powsybl.sld.server.dto.nad;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import lombok.*;
 
@@ -22,9 +23,15 @@ import java.util.UUID;
 public class NadVoltageLevelPositionInfos {
     private UUID id;
     private String voltageLevelId;
+    // As this attribute only has one lower case letter at its start (xXxxx), the getter is parsed as getXPosition and the field for Jackson is parsed as xposition
+    // while we expect xPosition. JsonProperty let fix the json field to xPosition
+    @JsonProperty("xPosition")
     private Double xPosition;
+    @JsonProperty("yPosition")
     private Double yPosition;
+    @JsonProperty("xLabelPosition")
     private Double xLabelPosition;
+    @JsonProperty("yLabelPosition")
     private Double yLabelPosition;
 
     public NadVoltageLevelPositionEntity toEntity() {

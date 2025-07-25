@@ -95,6 +95,23 @@ class NetworkAreaDiagramService {
     }
 
     @Transactional
+    public List<UUID> createNetworkAreaDiagramConfigs(List<NadConfigInfos> nadConfigs) {
+        List<NadConfigEntity> configs = nadConfigs.stream()
+            .map(NadConfigInfos::toEntity)
+            .toList();
+
+        List<NadConfigEntity> savedConfigs = nadConfigRepository.saveAll(configs);
+        return savedConfigs.stream()
+            .map(NadConfigEntity::getId)
+            .toList();
+    }
+
+    @Transactional
+    public void deleteNetworkAreaDiagramConfigs(List<UUID> configUuids) {
+        nadConfigRepository.deleteAllById(configUuids);
+    }
+
+    @Transactional
     public UUID duplicateNetworkAreaDiagramConfig(UUID originNadConfigUuid) {
         Optional<NadConfigEntity> nadConfigEntityOpt = nadConfigRepository.findById(originNadConfigUuid);
         if (nadConfigEntityOpt.isEmpty()) {
@@ -102,7 +119,9 @@ class NetworkAreaDiagramService {
         }
 
         NadConfigEntity nadConfigEntityToDuplicate = nadConfigEntityOpt.get();
-        return nadConfigRepository.save(new NadConfigEntity(nadConfigEntityToDuplicate)).getId();
+        NadConfigEntity duplicateEntity = new NadConfigEntity(nadConfigEntityToDuplicate);
+        duplicateEntity.setId(UUID.randomUUID()); // Assign new ID for the duplicate
+        return nadConfigRepository.save(duplicateEntity).getId();
     }
 
     @Transactional

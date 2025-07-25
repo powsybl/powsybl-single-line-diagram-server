@@ -66,6 +66,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -1174,6 +1175,60 @@ class SingleLineDiagramTest {
 
     private static String toString(String resourceName) throws IOException {
         return new String(ByteStreams.toByteArray(Objects.requireNonNull(SingleLineDiagramTest.class.getResourceAsStream(resourceName))), StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void testCreateMultipleNetworkAreaDiagramConfigs() throws Exception {
+        NadConfigInfos config1 = NadConfigInfos.builder()
+                .voltageLevelIds(Set.of("vlFr1A"))
+                .scalingFactor(100000)
+                .positions(Collections.emptyList())
+                .build();
+
+        NadConfigInfos config2 = NadConfigInfos.builder()
+                .voltageLevelIds(Set.of("vlFr2A"))
+                .scalingFactor(200000)
+                .positions(Collections.emptyList())
+                .build();
+
+        List<NadConfigInfos> configs = List.of(config1, config2);
+
+        mvc.perform(post("/v1/network-area-diagram/configs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(configs)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testCreateMultipleNetworkAreaDiagramConfigsWithEmptyList() throws Exception {
+        List<NadConfigInfos> emptyConfigs = Collections.emptyList();
+
+        mvc.perform(post("/v1/network-area-diagram/configs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(emptyConfigs)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testDeleteMultipleNetworkAreaDiagramConfigs() throws Exception {
+        UUID uuid1 = UUID.randomUUID();
+        UUID uuid2 = UUID.randomUUID();
+        List<UUID> configUuids = List.of(uuid1, uuid2);
+
+        mvc.perform(delete("/v1/network-area-diagram/configs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(configUuids)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testDeleteMultipleNetworkAreaDiagramConfigsWithEmptyList() throws Exception {
+        List<UUID> emptyUuids = Collections.emptyList();
+
+        mvc.perform(delete("/v1/network-area-diagram/configs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(emptyUuids)))
+                .andExpect(status().isOk());
     }
 
     /*
