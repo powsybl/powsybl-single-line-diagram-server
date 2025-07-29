@@ -34,6 +34,7 @@ import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.repository.NadConfigRepository;
+import com.powsybl.sld.server.utils.NadGenerationMode;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
@@ -339,7 +340,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(true)
+                .nadGenerationMode(NadGenerationMode.GEOGRAPHICAL_COORDINATES)
                 .build();
 
         MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -362,7 +363,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(true)
+                .nadGenerationMode(NadGenerationMode.GEOGRAPHICAL_COORDINATES)
                 .build();
 
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -392,6 +393,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult validResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -447,7 +449,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult validResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -497,7 +499,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult firstResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -527,7 +529,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(List.of(positionFromUser))
-                .withGeoData(false)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult secondResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -551,7 +553,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(List.of(positionFromUser))
-                .withGeoData(false)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult thirdResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -594,7 +596,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(true)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -630,7 +632,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -640,7 +642,7 @@ class SingleLineDiagramTest {
                 .andExpect(status().isNotFound());
     }
 
-    private void testGenerateNadBasedOnGeoData(boolean withGeoData) throws Exception {
+    private void testNadGeneration(NadGenerationMode nadGenerationMode) throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
@@ -648,12 +650,13 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(null)
-                .withGeoData(withGeoData)
+                //.withGeoData()
+                .nadGenerationMode(nadGenerationMode)
                 .voltageLevelIds(Set.of("vlFr1A"))
                 .build();
 
         networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, nadRequestInfos);
-        if (withGeoData) {
+        if (nadGenerationMode.equals(NadGenerationMode.GEOGRAPHICAL_COORDINATES)) {
             //initialize with geographical data
             verify(geoDataService, times(1)).getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"));
         } else {
@@ -664,12 +667,12 @@ class SingleLineDiagramTest {
 
     @Test
     void testGenerateNadWithoutGeoData() throws Exception {
-        testGenerateNadBasedOnGeoData(false);
+        testNadGeneration(NadGenerationMode.CUSTOM_COORDINATES);
     }
 
     @Test
     void testGenerateNadWithGeoData() throws Exception {
-        testGenerateNadBasedOnGeoData(true);
+        testNadGeneration(NadGenerationMode.GEOGRAPHICAL_COORDINATES);
     }
 
     Network createNetworkWithDepth() {
@@ -708,7 +711,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -733,7 +736,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Set.of("vlFr1A"))
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult resultExtendedVl = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -768,7 +771,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult resultNoOmition = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -792,7 +795,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Set.of("vlFr2A"))
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult resultWithOmition = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -831,7 +834,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Set.of("vlFr1A")) // Adds vlFr2A (vlFr1A's neighour)
                 .voltageLevelToOmitIds(Set.of("vlFr2A"))
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult resultWithOmitionAndExtension = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1118,6 +1121,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
+                .nadGenerationMode(NadGenerationMode.PROVIDED_POSITIONS)
                 .build();
 
         MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)

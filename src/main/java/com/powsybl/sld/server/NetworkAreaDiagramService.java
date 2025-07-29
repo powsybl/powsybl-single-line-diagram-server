@@ -28,12 +28,10 @@ import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
-import com.powsybl.sld.server.dto.nad.NadEquipmentPositionInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
-import com.powsybl.sld.server.repository.NadEquipmentRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.ResourceUtils;
 import lombok.NonNull;
@@ -71,7 +69,6 @@ class NetworkAreaDiagramService {
     private final NetworkAreaExecutionService diagramExecutionService;
 
     private final NadConfigRepository nadConfigRepository;
-    private final NadEquipmentRepository nadEquipmentRepository;
     private final NetworkAreaDiagramService self;
 
     private final ObjectMapper objectMapper;
@@ -80,7 +77,7 @@ class NetworkAreaDiagramService {
                                      GeoDataService geoDataService,
                                      FilterService filterService,
                                      NetworkAreaExecutionService diagramExecutionService,
-                                     NadConfigRepository nadConfigRepository, NadEquipmentRepository nadEquipmentRepository,
+                                     NadConfigRepository nadConfigRepository,
                                      @Lazy NetworkAreaDiagramService networkAreaDiagramService,
                                      ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
@@ -88,7 +85,6 @@ class NetworkAreaDiagramService {
         this.filterService = filterService;
         this.diagramExecutionService = diagramExecutionService;
         this.nadConfigRepository = nadConfigRepository;
-        this.nadEquipmentRepository = nadEquipmentRepository;
         this.self = networkAreaDiagramService;
         this.objectMapper = objectMapper;
     }
@@ -189,8 +185,10 @@ class NetworkAreaDiagramService {
             .networkUuid(networkUuid)
             .variantId(variantId)
             .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION))
-            .shouldFetchGeoData(nadRequestInfos.getNadConfigUuid() == null && nadRequestInfos.getWithGeoData())
+            .nadGenerationMode(nadRequestInfos.getNadGenerationMode())
+            .customNadConfigUuid(nadRequestInfos.getCustomNadConfigUuid())
             .positions(nadRequestInfos.getPositions())
+            .nadGenerationMode(nadRequestInfos.getNadGenerationMode())
             .build();
 
         // NadConfig fetching
@@ -256,11 +254,26 @@ class NetworkAreaDiagramService {
         nadParameters.setLayoutParameters(layoutParameters);
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork()));
 
-        // Set style provider factory either with geographical data or with provided positions (if any)
-        if (nadGenerationContext.isShouldFetchGeoData() && nadGenerationContext.getPositions().isEmpty()) {
-            nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
-        } else {
-            nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
+        // Refactor with switch based on NadGenerationMode
+        switch (nadGenerationContext.getNadGenerationMode()) {
+            case GEOGRAPHICAL_COORDINATES -> {
+                if (nadGenerationContext.getPositions().isEmpty()) {
+                    // Use geographical layout
+                    nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
+                }
+            }
+            case CUSTOM_COORDINATES -> {
+                // get positions from DB based on the study nad config.
+                // this nad config is only used to get the custom coordinates from DB
+                Optional<NadConfigEntity> customCoordinatesNadConfig = nadConfigRepository.findById(nadGenerationContext.getCustomNadConfigUuid());
+                List<NadVoltageLevelPositionEntity> nadVoltageLevelPositionInfos = customCoordinatesNadConfig.map(NadConfigEntity::getPositions).orElse(Collections.emptyList());
+                List<NadVoltageLevelPositionInfos> positions = nadVoltageLevelPositionInfos.stream().map(NadVoltageLevelPositionEntity::toDto).toList();
+                nadGenerationContext.setPositions(positions);
+                nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
+
+            }
+
+            default -> nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
         }
 
         nadGenerationContext.setNadParameters(nadParameters);
@@ -438,10 +451,5 @@ class NetworkAreaDiagramService {
         metadata.put("scalingFactor", nadGenerationContext.getScalingFactor());
 
         return metadata;
-    }
-
-    @Transactional
-    public void saveCVGPositions(List<NadEquipmentPositionInfos> cvgPositions) {
-        nadEquipmentRepository.saveAll(cvgPositions.stream().map(NadEquipmentPositionInfos::toEntity).toList());
     }
 }
