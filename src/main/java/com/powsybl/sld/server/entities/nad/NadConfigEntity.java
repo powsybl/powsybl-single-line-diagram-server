@@ -22,7 +22,7 @@ import java.util.*;
 @Entity
 @Builder
 @Table(name = "nadConfig")
-public class NadConfigEntity {
+public class NadConfigEntity extends AbstractManuallyAssignedIdentifierEntity<UUID> {
 
     public NadConfigEntity(NadConfigEntity origin) {
         this.scalingFactor = origin.getScalingFactor();
@@ -33,9 +33,9 @@ public class NadConfigEntity {
     }
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Builder.Default
     @Column(name = "id")
-    private UUID id;
+    private UUID id = UUID.randomUUID();
 
     @ElementCollection
     @CollectionTable(name = "nadConfigVoltageLevel",

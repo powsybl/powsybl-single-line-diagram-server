@@ -3,7 +3,7 @@ package com.powsybl.sld.server;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.sld.layout.LayoutParameters;
-import com.powsybl.sld.library.ComponentLibrary;
+import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.svg.BusLegendInfo;
 import com.powsybl.sld.svg.DefaultLabelProvider;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class CommonLabelProvider extends DefaultLabelProvider {
-    public CommonLabelProvider(Network network, ComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
+    public CommonLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
         super(network, componentLibrary, layoutParameters, svgParameters);
     }
 

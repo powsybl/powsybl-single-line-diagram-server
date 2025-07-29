@@ -28,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import static com.powsybl.sld.server.NetworkAreaDiagramService.*;
@@ -282,6 +283,21 @@ public class SingleLineDiagramController {
     @ApiResponse(responseCode = "200", description = "The network area diagram config has been created")
     public ResponseEntity<UUID> createNetworkAreaDiagramConfig(@RequestBody NadConfigInfos nadConfigInfos) {
         return ResponseEntity.ok().body(networkAreaDiagramService.createNetworkAreaDiagramConfig(nadConfigInfos));
+    }
+
+    @PostMapping("/network-area-diagram/configs")
+    @Operation(summary = "Create multiple network area diagram configs")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The created configs UUIDs")})
+    public ResponseEntity<List<UUID>> createMultipleNetworkAreaDiagramConfigs(@RequestBody List<NadConfigInfos> nadConfigs) {
+        return ResponseEntity.ok().body(networkAreaDiagramService.createNetworkAreaDiagramConfigs(nadConfigs));
+    }
+
+    @DeleteMapping("/network-area-diagram/configs")
+    @Operation(summary = "Delete multiple network area diagram configs")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram configs were successfully deleted")})
+    public ResponseEntity<Void> deleteMultipleNetworkAreaDiagramConfigs(@RequestBody List<UUID> configUuids) {
+        networkAreaDiagramService.deleteNetworkAreaDiagramConfigs(configUuids);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/network-area-diagram/config", params = "duplicateFrom", consumes = MediaType.APPLICATION_JSON_VALUE)
