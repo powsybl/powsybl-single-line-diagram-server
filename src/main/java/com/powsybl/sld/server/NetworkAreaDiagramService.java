@@ -279,6 +279,8 @@ class NetworkAreaDiagramService {
                 if (nadGenerationContext.getPositions().isEmpty()) {
                     // Use geographical layout
                     nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
+                } else {
+                    nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
                 }
             }
             case CUSTOM_COORDINATES -> {
