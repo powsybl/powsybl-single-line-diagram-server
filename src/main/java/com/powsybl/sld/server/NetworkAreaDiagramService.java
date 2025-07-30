@@ -204,8 +204,10 @@ class NetworkAreaDiagramService {
             .networkUuid(networkUuid)
             .variantId(variantId)
             .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION))
-            .shouldFetchGeoData(nadRequestInfos.getNadConfigUuid() == null && nadRequestInfos.getWithGeoData())
+            .nadGenerationMode(nadRequestInfos.getNadGenerationMode())
+            .customNadConfigUuid(nadRequestInfos.getCustomNadConfigUuid())
             .positions(nadRequestInfos.getPositions())
+            .nadGenerationMode(nadRequestInfos.getNadGenerationMode())
             .build();
 
         // NadConfig fetching
@@ -271,11 +273,28 @@ class NetworkAreaDiagramService {
         nadParameters.setLayoutParameters(layoutParameters);
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork()));
 
-        // Set style provider factory either with geographical data or with provided positions (if any)
-        if (nadGenerationContext.isShouldFetchGeoData() && nadGenerationContext.getPositions().isEmpty()) {
-            nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
-        } else {
-            nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
+        // Refactor with switch based on NadGenerationMode
+        switch (nadGenerationContext.getNadGenerationMode()) {
+            case GEOGRAPHICAL_COORDINATES -> {
+                if (nadGenerationContext.getPositions().isEmpty()) {
+                    // Use geographical layout
+                    nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
+                } else {
+                    nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
+                }
+            }
+            case CUSTOM_COORDINATES -> {
+                // get positions from DB based on the study nad config.
+                // this nad config is only used to get the custom coordinates from DB
+                Optional<NadConfigEntity> customCoordinatesNadConfig = nadConfigRepository.findById(nadGenerationContext.getCustomNadConfigUuid());
+                List<NadVoltageLevelPositionEntity> nadVoltageLevelPositionInfos = customCoordinatesNadConfig.map(NadConfigEntity::getPositions).orElse(Collections.emptyList());
+                List<NadVoltageLevelPositionInfos> positions = nadVoltageLevelPositionInfos.stream().map(NadVoltageLevelPositionEntity::toDto).toList();
+                nadGenerationContext.setPositions(positions);
+                nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
+
+            }
+
+            default -> nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
         }
 
         nadGenerationContext.setNadParameters(nadParameters);
