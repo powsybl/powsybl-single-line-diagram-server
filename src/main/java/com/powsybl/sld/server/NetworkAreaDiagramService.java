@@ -33,18 +33,21 @@ import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
+import com.powsybl.sld.server.utils.FileValidator;
+import com.powsybl.sld.server.utils.InputUtils;
 import com.powsybl.sld.server.utils.ResourceUtils;
 import lombok.NonNull;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
+import org.supercsv.io.CsvMapReader;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.UncheckedIOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -204,10 +207,9 @@ class NetworkAreaDiagramService {
             .networkUuid(networkUuid)
             .variantId(variantId)
             .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION))
-            .nadGenerationMode(nadRequestInfos.getNadGenerationMode())
-            .customNadConfigUuid(nadRequestInfos.getCustomNadConfigUuid())
+            .nadPositionsGenerationMode(nadRequestInfos.getNadPositionsGenerationMode())
+            .positionsConfigUuid(nadRequestInfos.getPositionsConfigUuid())
             .positions(nadRequestInfos.getPositions())
-            .nadGenerationMode(nadRequestInfos.getNadGenerationMode())
             .build();
 
         // NadConfig fetching
@@ -273,31 +275,35 @@ class NetworkAreaDiagramService {
         nadParameters.setLayoutParameters(layoutParameters);
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork()));
 
-        // Refactor with switch based on NadGenerationMode
-        switch (nadGenerationContext.getNadGenerationMode()) {
-            case GEOGRAPHICAL_COORDINATES -> {
-                if (nadGenerationContext.getPositions().isEmpty()) {
-                    // Use geographical layout
-                    nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
-                } else {
-                    nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
-                }
-            }
-            case CUSTOM_COORDINATES -> {
-                // get positions from DB based on the study nad config.
-                // this nad config is only used to get the custom coordinates from DB
-                Optional<NadConfigEntity> customCoordinatesNadConfig = nadConfigRepository.findById(nadGenerationContext.getCustomNadConfigUuid());
-                List<NadVoltageLevelPositionEntity> nadVoltageLevelPositionInfos = customCoordinatesNadConfig.map(NadConfigEntity::getPositions).orElse(Collections.emptyList());
-                List<NadVoltageLevelPositionInfos> positions = nadVoltageLevelPositionInfos.stream().map(NadVoltageLevelPositionEntity::toDto).toList();
-                nadGenerationContext.setPositions(positions);
-                nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
-
-            }
+        switch (nadGenerationContext.getNadPositionsGenerationMode()) {
+            case GEOGRAPHICAL_COORDINATES -> handleGeographicalCoordinates(nadGenerationContext, nadParameters);
+            case PROVIDED -> // get positions from DB based on the positions config uuid.The retrieved positions include the coordinates that were previously saved using csv file.
+                    handleProvidedPositions(nadGenerationContext, nadParameters);
 
             default -> nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
         }
 
         nadGenerationContext.setNadParameters(nadParameters);
+    }
+
+    private void handleGeographicalCoordinates(NadGenerationContext nadGenerationContext, NadParameters nadParameters) {
+        if (nadGenerationContext.getPositions().isEmpty()) {
+            // Use geographical layout
+            nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
+        } else {
+            nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
+        }
+    }
+
+    private void handleProvidedPositions(NadGenerationContext nadGenerationContext, NadParameters nadParameters) {
+        Optional<NadConfigEntity> customCoordinatesNadConfig = nadConfigRepository.findById(nadGenerationContext.getPositionsConfigUuid());
+        List<NadVoltageLevelPositionEntity> nadVoltageLevelPositionInfos = customCoordinatesNadConfig.map(NadConfigEntity::getPositions).orElse(Collections.emptyList());
+        if (nadVoltageLevelPositionInfos.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Non existing voltage level position was found!");
+        }
+        List<NadVoltageLevelPositionInfos> positions = nadVoltageLevelPositionInfos.stream().map(NadVoltageLevelPositionEntity::toDto).toList();
+        nadGenerationContext.setPositions(positions);
+        nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
     }
 
     private LayoutFactory prepareGeographicalLayoutFactory(NadGenerationContext nadGenerationContext) {
@@ -472,5 +478,57 @@ class NetworkAreaDiagramService {
         metadata.put("scalingFactor", nadGenerationContext.getScalingFactor());
 
         return metadata;
+    }
+
+    public UUID createPositionsFromCsv(MultipartFile file) {
+        if (!FileValidator.hasCSVFormat(file)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid CSV format!");
+        }
+
+        List<NadVoltageLevelPositionInfos> positions = getPositionsFromCsv(file);
+        if (positions.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No positions found!");
+        }
+        NadConfigInfos nadConfigInfos = NadConfigInfos.builder().positions(positions).build();
+        return self.createNetworkAreaDiagramConfig(nadConfigInfos);
+    }
+
+    private List<NadVoltageLevelPositionInfos> parsePositions(BufferedReader bufferedReader) {
+        List<NadVoltageLevelPositionInfos> nadVoltageLevelPositionInfos = new ArrayList<>();
+
+        try (CsvMapReader mapReader = new CsvMapReader(bufferedReader, FileValidator.CSV_PREFERENCE)) {
+            final String[] headers = mapReader.getHeader(true);
+            Map<String, String> row;
+            while ((row = mapReader.read(headers)) != null) {
+                String id = row.get(FileValidator.VOLTAGE_LEVEL_ID);
+                double xPosition = Double.parseDouble(row.get(FileValidator.X_POSITION));
+                double yPosition = Double.parseDouble(row.get(FileValidator.Y_POSITION));
+                double xLabelPosition = Double.parseDouble(row.get(FileValidator.X_LABEL_POSITION));
+                double yLabelPosition = Double.parseDouble(row.get(FileValidator.Y_LABEL_POSITION));
+                NadVoltageLevelPositionInfos positionInfos = NadVoltageLevelPositionInfos.builder()
+                        .voltageLevelId(id)
+                        .xPosition(xPosition)
+                        .yPosition(yPosition)
+                        .xLabelPosition(xLabelPosition)
+                        .yLabelPosition(yLabelPosition)
+                        .build();
+                nadVoltageLevelPositionInfos.add(positionInfos);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return nadVoltageLevelPositionInfos;
+    }
+
+    private List<NadVoltageLevelPositionInfos> getPositionsFromCsv(MultipartFile file) {
+        try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(InputUtils.toBomInputStream(file.getInputStream()), StandardCharsets.UTF_8))) {
+            if (FileValidator.validateHeaders(file)) {
+                return parsePositions(fileReader);
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The headers are invalid!");
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

@@ -6,7 +6,7 @@
  */
 package com.powsybl.sld.server.dto.nad;
 
-import com.powsybl.sld.server.utils.NadGenerationMode;
+import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import lombok.*;
 
 import java.util.*;
@@ -27,6 +27,6 @@ public class NadRequestInfos {
     private Set<String> voltageLevelToOmitIds = new HashSet<>();
     @Builder.Default
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
-    private NadGenerationMode nadGenerationMode;
-    private UUID customNadConfigUuid;
+    private NadPositionsGenerationMode nadPositionsGenerationMode;
+    private UUID positionsConfigUuid;
 }

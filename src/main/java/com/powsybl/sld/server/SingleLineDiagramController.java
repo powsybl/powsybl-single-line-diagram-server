@@ -26,6 +26,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
 import java.util.List;
@@ -326,5 +327,13 @@ public class SingleLineDiagramController {
     public ResponseEntity<Void> deleteNetworkAreaDiagramConfig(@Parameter(description = "Network Area Diagram config UUID") @PathVariable("nadConfigUuid") UUID nadConfigUuid) {
         networkAreaDiagramService.deleteNetworkAreaDiagramConfig(nadConfigUuid);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping(value = "/network-area-diagram/config/positions", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get positions coordinates from given CSV file and store them on the DB")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of positions has been successfully stored")
+    })
+    public ResponseEntity<UUID> createPositionsFromCsv(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok().body(networkAreaDiagramService.createPositionsFromCsv(file));
     }
 }

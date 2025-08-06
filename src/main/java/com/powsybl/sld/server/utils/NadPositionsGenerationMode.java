@@ -9,8 +9,8 @@ package com.powsybl.sld.server.utils;
 /**
  * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
-public enum NadGenerationMode {
+public enum NadPositionsGenerationMode {
     GEOGRAPHICAL_COORDINATES,
-    CUSTOM_COORDINATES,
-    PROVIDED_POSITIONS
+    AUTOMATIC,
+    PROVIDED
 }
