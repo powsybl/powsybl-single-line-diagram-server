@@ -33,6 +33,7 @@ import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
+import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
@@ -40,6 +41,7 @@ import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,10 +52,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -668,7 +674,7 @@ class SingleLineDiagramTest {
 
     @Test
     void testGenerateNadWithoutGeoData() throws Exception {
-        testNadGeneration(NadPositionsGenerationMode.PROVIDED);
+        testNadGeneration(NadPositionsGenerationMode.AUTOMATIC);
     }
 
     @Test
@@ -749,6 +755,52 @@ class SingleLineDiagramTest {
         assertTrue(stringResultExtendedVl.contains("\"additionalMetadata\":{\"nbVoltageLevels\":2"));
         assertTrue(stringResultExtendedVl.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
         assertTrue(stringResultExtendedVl.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+    }
+
+    @Test
+    void testCreatePositionsFromCsv() throws Exception {
+        when(nadConfigRepository.save(any(NadConfigEntity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
+        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testCreatePositionsFromInvalidCsvContentType() throws Exception {
+        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
+        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "invalidContentType", voltageLevelBytes);
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason("Invalid CSV format!"));
+    }
+
+    @Test
+    void testCreatePositionsFromInvalidCsvHeader() throws Exception {
+        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions-invalid-header.csv")));
+        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason("The headers are invalid!"));
+    }
+
+    @Test
+    void testCreatePositionsFromEmptyCsv() throws Exception {
+        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions-empty.csv")));
+        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason("No positions found!"));
     }
 
     @Test
