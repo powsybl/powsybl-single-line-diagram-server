@@ -51,6 +51,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <liquibase-hibernate-package>com.powsybl.sld.server</liquibase-hibernate-package>
         <powsybl-ws-dependencies.version>2.23.0</powsybl-ws-dependencies.version>
+        <supercsv.version>2.4.0</supercsv.version>
     </properties>
 
     <build>
@@ -100,6 +101,12 @@
                 <groupId>com.vladmihalcea</groupId>
                 <artifactId>db-util</artifactId>
                 <version>${db-util.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.sf.supercsv</groupId>
+                <artifactId>super-csv</artifactId>
+                <version>${supercsv.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -195,6 +202,10 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-guava</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.supercsv</groupId>
+            <artifactId>super-csv</artifactId>
         </dependency>
     </dependencies>
 </project>
