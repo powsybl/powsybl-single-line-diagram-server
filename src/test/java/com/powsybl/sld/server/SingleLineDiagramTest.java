@@ -654,10 +654,28 @@ class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
 
+        UUID nadConfigUuid = UUID.randomUUID();
+        NadVoltageLevelPositionInfos vlPositionInfos = NadVoltageLevelPositionInfos.builder()
+                .voltageLevelId("vlFr1A")
+                .xPosition(1.0)
+                .yPosition(1.1)
+                .xLabelPosition(1.2)
+                .yLabelPosition(1.3)
+                .build();
+
+        NadConfigInfos validConfig = NadConfigInfos.builder()
+                .id(nadConfigUuid)
+                .voltageLevelIds(Set.of("vlFr1A"))
+                .scalingFactor(0)
+                .positions(List.of(vlPositionInfos))
+                .build();
+
+        given(nadConfigRepository.findById(any())).willReturn(Optional.of(validConfig.toEntity()));
+
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(null)
-                //.withGeoData()
+                .positionsConfigUuid(nadConfigUuid)
                 .nadPositionsGenerationMode(nadPositionsGenerationMode)
                 .voltageLevelIds(Set.of("vlFr1A"))
                 .build();
@@ -675,6 +693,11 @@ class SingleLineDiagramTest {
     @Test
     void testGenerateNadWithoutGeoData() throws Exception {
         testNadGeneration(NadPositionsGenerationMode.AUTOMATIC);
+    }
+
+    @Test
+    void testGenerateNadWithProviderData() throws Exception {
+        testNadGeneration(NadPositionsGenerationMode.PROVIDED);
     }
 
     @Test
