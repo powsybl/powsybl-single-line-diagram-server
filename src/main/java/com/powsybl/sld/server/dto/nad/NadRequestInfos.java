@@ -28,5 +28,5 @@ public class NadRequestInfos {
     @Builder.Default
     private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
     private NadPositionsGenerationMode nadPositionsGenerationMode;
-    private UUID positionsConfigUuid;
+    private UUID nadPositionsConfigUuid;
 }

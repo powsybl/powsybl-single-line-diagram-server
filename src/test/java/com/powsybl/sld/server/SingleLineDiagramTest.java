@@ -675,7 +675,7 @@ class SingleLineDiagramTest {
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(null)
-                .positionsConfigUuid(nadConfigUuid)
+                .nadPositionsConfigUuid(nadConfigUuid)
                 .nadPositionsGenerationMode(nadPositionsGenerationMode)
                 .voltageLevelIds(Set.of("vlFr1A"))
                 .build();

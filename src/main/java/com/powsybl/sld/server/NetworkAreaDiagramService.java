@@ -208,7 +208,7 @@ class NetworkAreaDiagramService {
             .variantId(variantId)
             .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION))
             .nadPositionsGenerationMode(nadRequestInfos.getNadPositionsGenerationMode())
-            .positionsConfigUuid(nadRequestInfos.getPositionsConfigUuid())
+            .nadPositionsConfigUuid(nadRequestInfos.getNadPositionsConfigUuid())
             .positions(nadRequestInfos.getPositions())
             .build();
 
@@ -296,10 +296,10 @@ class NetworkAreaDiagramService {
     }
 
     private void handleConfiguredPositions(NadGenerationContext nadGenerationContext, NadParameters nadParameters) {
-        if (nadGenerationContext.getPositionsConfigUuid() == null) {
+        if (nadGenerationContext.getNadPositionsConfigUuid() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Configured positions uuid is null!");
         }
-        Optional<NadConfigEntity> customCoordinatesNadConfig = nadConfigRepository.findById(nadGenerationContext.getPositionsConfigUuid());
+        Optional<NadConfigEntity> customCoordinatesNadConfig = nadConfigRepository.findById(nadGenerationContext.getNadPositionsConfigUuid());
         List<NadVoltageLevelPositionEntity> nadVoltageLevelPositionInfos = customCoordinatesNadConfig.map(NadConfigEntity::getPositions).orElse(List.of());
         if (nadVoltageLevelPositionInfos.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No configured positions found!");
