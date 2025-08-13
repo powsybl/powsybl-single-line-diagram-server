@@ -12,5 +12,5 @@ package com.powsybl.sld.server.utils;
 public enum NadPositionsGenerationMode {
     GEOGRAPHICAL_COORDINATES,
     AUTOMATIC,
-    PROVIDED
+    CONFIGURED
 }

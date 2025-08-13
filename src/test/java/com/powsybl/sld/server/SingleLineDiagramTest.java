@@ -697,7 +697,7 @@ class SingleLineDiagramTest {
 
     @Test
     void testGenerateNadWithProviderData() throws Exception {
-        testNadGeneration(NadPositionsGenerationMode.PROVIDED);
+        testNadGeneration(NadPositionsGenerationMode.CONFIGURED);
     }
 
     @Test

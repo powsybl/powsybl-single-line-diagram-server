@@ -277,8 +277,8 @@ class NetworkAreaDiagramService {
 
         switch (nadGenerationContext.getNadPositionsGenerationMode()) {
             case GEOGRAPHICAL_COORDINATES -> handleGeographicalCoordinates(nadGenerationContext, nadParameters);
-            case PROVIDED -> // get positions from DB based on the positions config uuid.The retrieved positions include the coordinates that were previously saved using csv file.
-                    handleProvidedPositions(nadGenerationContext, nadParameters);
+            case CONFIGURED -> // get positions from DB based on the positions config uuid.The retrieved positions include the coordinates that were previously saved using csv file.
+                    handleConfiguredPositions(nadGenerationContext, nadParameters);
 
             default -> nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
         }
@@ -295,7 +295,7 @@ class NetworkAreaDiagramService {
         }
     }
 
-    private void handleProvidedPositions(NadGenerationContext nadGenerationContext, NadParameters nadParameters) {
+    private void handleConfiguredPositions(NadGenerationContext nadGenerationContext, NadParameters nadParameters) {
         Optional<NadConfigEntity> customCoordinatesNadConfig = nadConfigRepository.findById(nadGenerationContext.getPositionsConfigUuid());
         List<NadVoltageLevelPositionEntity> nadVoltageLevelPositionInfos = customCoordinatesNadConfig.map(NadConfigEntity::getPositions).orElse(Collections.emptyList());
         if (nadVoltageLevelPositionInfos.isEmpty()) {
