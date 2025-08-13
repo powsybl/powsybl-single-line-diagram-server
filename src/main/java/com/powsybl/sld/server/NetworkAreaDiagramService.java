@@ -296,10 +296,13 @@ class NetworkAreaDiagramService {
     }
 
     private void handleConfiguredPositions(NadGenerationContext nadGenerationContext, NadParameters nadParameters) {
+        if (nadGenerationContext.getPositionsConfigUuid() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Configured positions uuid is null!");
+        }
         Optional<NadConfigEntity> customCoordinatesNadConfig = nadConfigRepository.findById(nadGenerationContext.getPositionsConfigUuid());
-        List<NadVoltageLevelPositionEntity> nadVoltageLevelPositionInfos = customCoordinatesNadConfig.map(NadConfigEntity::getPositions).orElse(Collections.emptyList());
+        List<NadVoltageLevelPositionEntity> nadVoltageLevelPositionInfos = customCoordinatesNadConfig.map(NadConfigEntity::getPositions).orElse(List.of());
         if (nadVoltageLevelPositionInfos.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Non existing voltage level position was found!");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No configured positions found!");
         }
         List<NadVoltageLevelPositionInfos> positions = nadVoltageLevelPositionInfos.stream().map(NadVoltageLevelPositionEntity::toDto).toList();
         nadGenerationContext.setPositions(positions);
@@ -480,7 +483,7 @@ class NetworkAreaDiagramService {
         return metadata;
     }
 
-    public UUID createPositionsFromCsv(MultipartFile file) {
+    public UUID createNadPositionsConfigFromCsv(MultipartFile file) {
         if (!FileValidator.hasCSVFormat(file)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid CSV format!");
         }
@@ -489,15 +492,14 @@ class NetworkAreaDiagramService {
         if (positions.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No positions found!");
         }
-        NadConfigInfos nadConfigInfos = NadConfigInfos.builder().positions(positions).build();
-        return self.createNetworkAreaDiagramConfig(nadConfigInfos);
+
+        return self.createNetworkAreaDiagramConfig(NadConfigInfos.builder().positions(positions).build());
     }
 
     private List<NadVoltageLevelPositionInfos> parsePositions(BufferedReader bufferedReader) {
-        List<NadVoltageLevelPositionInfos> nadVoltageLevelPositionInfos = new ArrayList<>();
-
         try (CsvMapReader mapReader = new CsvMapReader(bufferedReader, FileValidator.CSV_PREFERENCE)) {
             final String[] headers = mapReader.getHeader(true);
+            List<NadVoltageLevelPositionInfos> nadVoltageLevelPositionInfos = new ArrayList<>(mapReader.getRowNumber());
             Map<String, String> row;
             while ((row = mapReader.read(headers)) != null) {
                 String id = row.get(FileValidator.VOLTAGE_LEVEL_ID);
@@ -514,10 +516,10 @@ class NetworkAreaDiagramService {
                         .build();
                 nadVoltageLevelPositionInfos.add(positionInfos);
             }
+            return nadVoltageLevelPositionInfos;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        return nadVoltageLevelPositionInfos;
     }
 
     private List<NadVoltageLevelPositionInfos> getPositionsFromCsv(MultipartFile file) {
