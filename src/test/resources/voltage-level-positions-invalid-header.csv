@@ -1,3 +1,3 @@
-﻿voltageLevelId;equipmentType;xPosition;yPosition;xLabelPosition;xyLabelPosition
-AAR 6;4;176187;-1524509;176187;-1524508
-ABD 6;4;76393;-1700247;71982;-1704028
+﻿voltageLevelId;xPosition;yPosition;xLabelPosition;xyLabelPosition
+AAR 6;176187;-1524509;176187;-1524508
+ABD 6;76393;-1700247;71982;-1704028

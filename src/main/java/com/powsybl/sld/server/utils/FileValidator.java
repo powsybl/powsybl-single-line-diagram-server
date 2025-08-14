@@ -32,12 +32,11 @@ public final class FileValidator {
     static final String TYPE = "text/csv";
 
     public static final String VOLTAGE_LEVEL_ID = "voltageLevelId";
-    public static final String EQUIPMENT_TYPE = "equipmentType";
     public static final String X_POSITION = "xPosition";
     public static final String Y_POSITION = "yPosition";
     public static final String X_LABEL_POSITION = "xLabelPosition";
     public static final String Y_LABEL_POSITION = "yLabelPosition";
-    private static final List<String> POSITIONS_EXPECTED_HEADERS = List.of(VOLTAGE_LEVEL_ID, EQUIPMENT_TYPE, X_POSITION, Y_POSITION, X_LABEL_POSITION, Y_LABEL_POSITION);
+    private static final List<String> POSITIONS_EXPECTED_HEADERS = List.of(VOLTAGE_LEVEL_ID, X_POSITION, Y_POSITION, X_LABEL_POSITION, Y_LABEL_POSITION);
 
     public static boolean validateHeaders(MultipartFile file) {
         try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(InputUtils.toBomInputStream(file.getInputStream()), StandardCharsets.UTF_8));
