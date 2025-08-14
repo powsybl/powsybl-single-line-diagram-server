@@ -6,28 +6,22 @@
  */
 package com.powsybl.sld.server.utils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 import org.supercsv.io.CsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 
 /**
  * @author AJELLAL Ali <ali.ajellal@rte-france.com>
  */
-public final class FileValidator {
+public final class CsvFileValidator {
 
-    private FileValidator() {
+    private CsvFileValidator() {
     }
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileValidator.class);
     public static final CsvPreference CSV_PREFERENCE = new CsvPreference.Builder('"', ';', System.lineSeparator()).build();
     static final String TYPE = "text/csv";
 
@@ -38,18 +32,15 @@ public final class FileValidator {
     public static final String Y_LABEL_POSITION = "yLabelPosition";
     private static final List<String> POSITIONS_EXPECTED_HEADERS = List.of(VOLTAGE_LEVEL_ID, X_POSITION, Y_POSITION, X_LABEL_POSITION, Y_LABEL_POSITION);
 
-    public static boolean validateHeaders(MultipartFile file) {
-        try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(InputUtils.toBomInputStream(file.getInputStream()), StandardCharsets.UTF_8));
-             CsvMapReader mapReader = new CsvMapReader(fileReader, CSV_PREFERENCE)) {
-            final List<String> headers = List.of(mapReader.getHeader(true));
-            return new HashSet<>(headers).containsAll(POSITIONS_EXPECTED_HEADERS);
-        } catch (IOException e) {
-            LOGGER.error(e.getMessage());
-            return false;
+    public static String[] getHeaders(CsvMapReader mapReader) throws IOException {
+        final String[] headers = mapReader.getHeader(true);
+        if (!new HashSet<>(List.of(headers)).containsAll(POSITIONS_EXPECTED_HEADERS)) {
+            return new String[0];
         }
+        return headers;
     }
 
     public static boolean hasCSVFormat(MultipartFile file) {
-        return FileValidator.TYPE.equals(file.getContentType());
+        return CsvFileValidator.TYPE.equals(file.getContentType());
     }
 }

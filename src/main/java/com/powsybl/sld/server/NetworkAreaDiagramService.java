@@ -33,10 +33,13 @@ import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
-import com.powsybl.sld.server.utils.FileValidator;
-import com.powsybl.sld.server.utils.InputUtils;
+import com.powsybl.sld.server.utils.CsvFileValidator;
 import com.powsybl.sld.server.utils.ResourceUtils;
 import lombok.NonNull;
+import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.input.BOMInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -57,6 +60,8 @@ import java.util.stream.Collectors;
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class NetworkAreaDiagramService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NetworkAreaDiagramService.class);
+
     private static final int DEFAULT_SCALING_FACTOR = 450000;
     private static final int MIN_SCALING_FACTOR = 50000;
     private static final int MAX_SCALING_FACTOR = 600000;
@@ -484,53 +489,54 @@ class NetworkAreaDiagramService {
     }
 
     public UUID createNadPositionsConfigFromCsv(MultipartFile file) {
-        if (!FileValidator.hasCSVFormat(file)) {
+        if (!CsvFileValidator.hasCSVFormat(file)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid CSV format!");
         }
 
-        List<NadVoltageLevelPositionInfos> positions = getPositionsFromCsv(file);
-        if (positions.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No positions found!");
+        List<NadVoltageLevelPositionInfos> positions;
+        try {
+            positions = getPositionsFromCsv(file);
+            if (positions.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No positions found!");
+            }
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The csv is invalid!");
         }
 
         return self.createNetworkAreaDiagramConfig(NadConfigInfos.builder().positions(positions).build());
     }
 
-    private List<NadVoltageLevelPositionInfos> parsePositions(BufferedReader bufferedReader) {
-        try (CsvMapReader mapReader = new CsvMapReader(bufferedReader, FileValidator.CSV_PREFERENCE)) {
-            final String[] headers = mapReader.getHeader(true);
-            List<NadVoltageLevelPositionInfos> nadVoltageLevelPositionInfos = new ArrayList<>(mapReader.getRowNumber());
-            Map<String, String> row;
-            while ((row = mapReader.read(headers)) != null) {
-                String id = row.get(FileValidator.VOLTAGE_LEVEL_ID);
-                double xPosition = Double.parseDouble(row.get(FileValidator.X_POSITION));
-                double yPosition = Double.parseDouble(row.get(FileValidator.Y_POSITION));
-                double xLabelPosition = Double.parseDouble(row.get(FileValidator.X_LABEL_POSITION));
-                double yLabelPosition = Double.parseDouble(row.get(FileValidator.Y_LABEL_POSITION));
-                NadVoltageLevelPositionInfos positionInfos = NadVoltageLevelPositionInfos.builder()
-                        .voltageLevelId(id)
-                        .xPosition(xPosition)
-                        .yPosition(yPosition)
-                        .xLabelPosition(xLabelPosition)
-                        .yLabelPosition(yLabelPosition)
-                        .build();
-                nadVoltageLevelPositionInfos.add(positionInfos);
-            }
-            return nadVoltageLevelPositionInfos;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+    private List<NadVoltageLevelPositionInfos> parsePositions(CsvMapReader mapReader) throws IOException {
+        String[] headers = CsvFileValidator.getHeaders(mapReader);
+        if (headers.length == 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The csv headers are invalid!");
         }
+        List<NadVoltageLevelPositionInfos> nadVoltageLevelPositionInfos = new ArrayList<>(mapReader.getRowNumber());
+        Map<String, String> row;
+        while ((row = mapReader.read(headers)) != null) {
+            String id = row.get(CsvFileValidator.VOLTAGE_LEVEL_ID);
+            double xPosition = Double.parseDouble(row.get(CsvFileValidator.X_POSITION));
+            double yPosition = Double.parseDouble(row.get(CsvFileValidator.Y_POSITION));
+            double xLabelPosition = Double.parseDouble(row.get(CsvFileValidator.X_LABEL_POSITION));
+            double yLabelPosition = Double.parseDouble(row.get(CsvFileValidator.Y_LABEL_POSITION));
+            NadVoltageLevelPositionInfos positionInfos = NadVoltageLevelPositionInfos.builder()
+                .voltageLevelId(id)
+                .xPosition(xPosition)
+                .yPosition(yPosition)
+                .xLabelPosition(xLabelPosition)
+                .yLabelPosition(yLabelPosition)
+                .build();
+            nadVoltageLevelPositionInfos.add(positionInfos);
+        }
+        return nadVoltageLevelPositionInfos;
     }
 
-    private List<NadVoltageLevelPositionInfos> getPositionsFromCsv(MultipartFile file) {
-        try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(InputUtils.toBomInputStream(file.getInputStream()), StandardCharsets.UTF_8))) {
-            if (FileValidator.validateHeaders(file)) {
-                return parsePositions(fileReader);
-            } else {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The headers are invalid!");
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+    private List<NadVoltageLevelPositionInfos> getPositionsFromCsv(MultipartFile file) throws IOException {
+        try (BOMInputStream bomInputStream = BOMInputStream.builder().setInputStream(file.getInputStream()).setByteOrderMarks(ByteOrderMark.UTF_8).get();
+            BufferedReader fileReader = new BufferedReader(new InputStreamReader(bomInputStream, StandardCharsets.UTF_8));
+            CsvMapReader mapReader = new CsvMapReader(fileReader, CsvFileValidator.CSV_PREFERENCE)) {
+            return parsePositions(mapReader);
         }
     }
 }

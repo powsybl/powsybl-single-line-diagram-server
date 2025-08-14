@@ -812,7 +812,7 @@ class SingleLineDiagramTest {
                         .file(file)
                         .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andExpect(status().isBadRequest())
-                .andExpect(status().reason("The headers are invalid!"));
+                .andExpect(status().reason("The csv headers are invalid!"));
     }
 
     @Test
