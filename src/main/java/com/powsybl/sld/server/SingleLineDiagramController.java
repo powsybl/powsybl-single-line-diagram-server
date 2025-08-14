@@ -333,7 +333,8 @@ public class SingleLineDiagramController {
     @Operation(summary = "Get positions coordinates from given CSV file and store them on the DB")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The list of positions has been successfully stored")
     })
-    public ResponseEntity<UUID> createNadPositionsConfigFromCsv(@RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok().body(networkAreaDiagramService.createNadPositionsConfigFromCsv(file));
+    public ResponseEntity<Void> createNadPositionsConfigFromCsv(@RequestParam("file") MultipartFile file) {
+        networkAreaDiagramService.createNadPositionsConfigFromCsv(file);
+        return ResponseEntity.ok().build();
     }
 }

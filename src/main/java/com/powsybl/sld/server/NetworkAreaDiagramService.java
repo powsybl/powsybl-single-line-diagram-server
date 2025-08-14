@@ -30,8 +30,10 @@ import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
+import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
+import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.CsvFileValidator;
 import com.powsybl.sld.server.utils.ResourceUtils;
@@ -77,6 +79,7 @@ class NetworkAreaDiagramService {
     private final NetworkAreaExecutionService diagramExecutionService;
 
     private final NadConfigRepository nadConfigRepository;
+    private final NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository;
     private final NetworkAreaDiagramService self;
 
     private final ObjectMapper objectMapper;
@@ -86,6 +89,7 @@ class NetworkAreaDiagramService {
                                      FilterService filterService,
                                      NetworkAreaExecutionService diagramExecutionService,
                                      NadConfigRepository nadConfigRepository,
+                                     NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository,
                                      @Lazy NetworkAreaDiagramService networkAreaDiagramService,
                                      ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
@@ -93,6 +97,7 @@ class NetworkAreaDiagramService {
         this.filterService = filterService;
         this.diagramExecutionService = diagramExecutionService;
         this.nadConfigRepository = nadConfigRepository;
+        this.nadVoltageLevelConfiguredPositionRepository = nadVoltageLevelConfiguredPositionRepository;
         this.self = networkAreaDiagramService;
         this.objectMapper = objectMapper;
     }
@@ -213,7 +218,6 @@ class NetworkAreaDiagramService {
             .variantId(variantId)
             .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION))
             .nadPositionsGenerationMode(nadRequestInfos.getNadPositionsGenerationMode())
-            .nadPositionsConfigUuid(nadRequestInfos.getNadPositionsConfigUuid())
             .positions(nadRequestInfos.getPositions())
             .build();
 
@@ -301,15 +305,11 @@ class NetworkAreaDiagramService {
     }
 
     private void handleConfiguredPositions(NadGenerationContext nadGenerationContext, NadParameters nadParameters) {
-        if (nadGenerationContext.getNadPositionsConfigUuid() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Configured positions uuid is null!");
-        }
-        Optional<NadConfigEntity> customCoordinatesNadConfig = nadConfigRepository.findById(nadGenerationContext.getNadPositionsConfigUuid());
-        List<NadVoltageLevelPositionEntity> nadVoltageLevelPositionInfos = customCoordinatesNadConfig.map(NadConfigEntity::getPositions).orElse(List.of());
+        List<NadVoltageLevelConfiguredPositionEntity> nadVoltageLevelPositionInfos = nadVoltageLevelConfiguredPositionRepository.findAll();
         if (nadVoltageLevelPositionInfos.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No configured positions found!");
         }
-        List<NadVoltageLevelPositionInfos> positions = nadVoltageLevelPositionInfos.stream().map(NadVoltageLevelPositionEntity::toDto).toList();
+        List<NadVoltageLevelPositionInfos> positions = nadVoltageLevelPositionInfos.stream().map(NadVoltageLevelConfiguredPositionEntity::toDto).toList();
         nadGenerationContext.setPositions(positions);
         nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
     }
@@ -488,7 +488,8 @@ class NetworkAreaDiagramService {
         return metadata;
     }
 
-    public UUID createNadPositionsConfigFromCsv(MultipartFile file) {
+    @Transactional
+    public void createNadPositionsConfigFromCsv(MultipartFile file) {
         if (!CsvFileValidator.hasCSVFormat(file)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid CSV format!");
         }
@@ -504,7 +505,8 @@ class NetworkAreaDiagramService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The csv is invalid!");
         }
 
-        return self.createNetworkAreaDiagramConfig(NadConfigInfos.builder().positions(positions).build());
+        nadVoltageLevelConfiguredPositionRepository.deleteAll();
+        nadVoltageLevelConfiguredPositionRepository.saveAll(positions.stream().map(NadVoltageLevelPositionInfos::toConfiguredPositionEntity).toList());
     }
 
     private List<NadVoltageLevelPositionInfos> parsePositions(CsvMapReader mapReader) throws IOException {

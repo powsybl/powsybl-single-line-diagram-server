@@ -7,7 +7,6 @@
 package com.powsybl.sld.server.entities.nad;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,18 +14,13 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
- * @author Charly Boutier <charly.boutier at rte-france.com>
+ * @author Slimane Amar <slimane.amar at rte-france.com>
  */
 @AllArgsConstructor
 @Getter
 @Setter
 @SuperBuilder
 @Entity
-@Table(name = "nadVoltageLevelPosition", indexes = {
-    @Index(name = "nadConfigEntity_positions_index", columnList = "nad_config_id")
-})
-public class NadVoltageLevelPositionEntity extends AbstractNadVoltageLevelPositionEntity {
-    public NadVoltageLevelPositionEntity(NadVoltageLevelPositionEntity origin) {
-        super(origin);
-    }
+@Table(name = "nadVoltageLevelConfiguredPosition")
+public class NadVoltageLevelConfiguredPositionEntity extends AbstractNadVoltageLevelPositionEntity {
 }

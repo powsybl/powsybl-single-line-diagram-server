@@ -7,6 +7,7 @@
 package com.powsybl.sld.server.dto.nad;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import lombok.*;
 
@@ -43,5 +44,16 @@ public class NadVoltageLevelPositionInfos {
                 .xLabelPosition(xLabelPosition)
                 .yLabelPosition(yLabelPosition)
                 .build();
+    }
+
+    public NadVoltageLevelConfiguredPositionEntity toConfiguredPositionEntity() {
+        return NadVoltageLevelConfiguredPositionEntity.builder()
+            .id(id)
+            .voltageLevelId(voltageLevelId)
+            .xPosition(xPosition)
+            .yPosition(yPosition)
+            .xLabelPosition(xLabelPosition)
+            .yLabelPosition(yLabelPosition)
+            .build();
     }
 }

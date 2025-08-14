@@ -1,0 +1,17 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="amarsli (generated)" id="1755169012059-1">
+        <createTable tableName="nad_voltage_level_configured_position">
+            <column name="id" type="UUID">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="nad_voltage_level_configured_positionPK"/>
+            </column>
+            <column name="voltage_level_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="x_label_position" type="FLOAT(53)"/>
+            <column name="x_position" type="FLOAT(53)"/>
+            <column name="y_label_position" type="FLOAT(53)"/>
+            <column name="y_position" type="FLOAT(53)"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

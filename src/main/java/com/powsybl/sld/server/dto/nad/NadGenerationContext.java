@@ -28,7 +28,6 @@ public class NadGenerationContext {
     private UUID networkUuid;
     private String variantId;
     private NadPositionsGenerationMode nadPositionsGenerationMode;
-    private UUID nadPositionsConfigUuid;
     private Integer scalingFactor;
 
     @Builder.Default

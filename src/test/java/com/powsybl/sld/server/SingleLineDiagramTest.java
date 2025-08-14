@@ -35,6 +35,7 @@ import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
+import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
@@ -45,6 +46,8 @@ import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -73,9 +76,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -98,6 +99,9 @@ class SingleLineDiagramTest {
 
     @MockBean
     private NadConfigRepository nadConfigRepository;
+
+    @MockBean
+    private NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository;
 
     @MockBean
     private PositionDiagramLabelProvider positionDiagramLabelProvider;
@@ -649,12 +653,13 @@ class SingleLineDiagramTest {
                 .andExpect(status().isNotFound());
     }
 
-    private void testNadGeneration(NadPositionsGenerationMode nadPositionsGenerationMode) throws Exception {
+    @ParameterizedTest
+    @EnumSource(value = NadPositionsGenerationMode.class, names = {"AUTOMATIC", "GEOGRAPHICAL_COORDINATES", "CONFIGURED"})
+    void testNadGeneration(NadPositionsGenerationMode nadPositionsGenerationMode) throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
 
-        UUID nadConfigUuid = UUID.randomUUID();
         NadVoltageLevelPositionInfos vlPositionInfos = NadVoltageLevelPositionInfos.builder()
                 .voltageLevelId("vlFr1A")
                 .xPosition(1.0)
@@ -664,18 +669,18 @@ class SingleLineDiagramTest {
                 .build();
 
         NadConfigInfos validConfig = NadConfigInfos.builder()
-                .id(nadConfigUuid)
+                .id(UUID.randomUUID())
                 .voltageLevelIds(Set.of("vlFr1A"))
                 .scalingFactor(0)
                 .positions(List.of(vlPositionInfos))
                 .build();
 
         given(nadConfigRepository.findById(any())).willReturn(Optional.of(validConfig.toEntity()));
+        given(nadVoltageLevelConfiguredPositionRepository.findAll()).willReturn(List.of(vlPositionInfos.toConfiguredPositionEntity()));
 
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(null)
-                .nadPositionsConfigUuid(nadConfigUuid)
                 .nadPositionsGenerationMode(nadPositionsGenerationMode)
                 .voltageLevelIds(Set.of("vlFr1A"))
                 .build();
@@ -688,21 +693,6 @@ class SingleLineDiagramTest {
             //initialize without geographical data
             verify(geoDataService, times(0)).getSubstationsGraphics(any(), any(), any());
         }
-    }
-
-    @Test
-    void testGenerateNadWithoutGeoData() throws Exception {
-        testNadGeneration(NadPositionsGenerationMode.AUTOMATIC);
-    }
-
-    @Test
-    void testGenerateNadWithProviderData() throws Exception {
-        testNadGeneration(NadPositionsGenerationMode.CONFIGURED);
-    }
-
-    @Test
-    void testGenerateNadWithGeoData() throws Exception {
-        testNadGeneration(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES);
     }
 
     Network createNetworkWithDepth() {
