@@ -33,7 +33,7 @@ import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
-import com.powsybl.sld.server.entities.nad.NadConfigEntity;
+import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
@@ -119,12 +119,28 @@ class SingleLineDiagramTest {
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_NOT_FOUND_ID = "variant_notFound";
     private FileSystem fileSystem;
+    private List<NadVoltageLevelPositionInfos> positions;
 
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         Files.createDirectory(fileSystem.getPath("tmp"));
+
+        positions = new ArrayList<>();
+        when(nadVoltageLevelConfiguredPositionRepository.count()).thenAnswer(invocation -> (long) positions.size());
+        doAnswer(invocation -> {
+            positions.clear();
+            return null;
+        }).when(nadVoltageLevelConfiguredPositionRepository).deleteAll();
+
+        doAnswer(invocation -> {
+            List<NadVoltageLevelConfiguredPositionEntity> entities = invocation.getArgument(0);
+            positions.addAll(entities.stream()
+                    .map(NadVoltageLevelConfiguredPositionEntity::toDto)
+                    .toList());
+            return entities;
+        }).when(nadVoltageLevelConfiguredPositionRepository).saveAll(anyList());
     }
 
     @AfterEach
@@ -772,8 +788,6 @@ class SingleLineDiagramTest {
 
     @Test
     void testCreatePositionsFromCsv() throws Exception {
-        when(nadConfigRepository.save(any(NadConfigEntity.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
 
         byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
         MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
@@ -814,6 +828,35 @@ class SingleLineDiagramTest {
                         .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andExpect(status().isBadRequest())
                 .andExpect(status().reason("No positions found!"));
+    }
+
+    @Test
+    void testCreatingPositionsFromCsvMultipleTimes() throws Exception {
+
+        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
+        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
+        int expectedRowCount = 5;
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isOk());
+
+        // Verify the mock repository methods were called as expected
+        verify(nadVoltageLevelConfiguredPositionRepository, times(1)).deleteAll();
+        verify(nadVoltageLevelConfiguredPositionRepository, times(1)).saveAll(anyList());
+
+        // Verify the number of rows after the first call
+        var actualRowCount = nadVoltageLevelConfiguredPositionRepository.count();
+        assertEquals(expectedRowCount, actualRowCount);
+
+        // Verify the number of rows after the second call.
+        // It should still be the same as the first call because the table is cleared.
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isOk());
+        actualRowCount = nadVoltageLevelConfiguredPositionRepository.count();
+        assertEquals(expectedRowCount, actualRowCount);
     }
 
     @Test
