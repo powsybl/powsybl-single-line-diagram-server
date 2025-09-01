@@ -50,7 +50,7 @@
         <db-util.version>1.0.5</db-util.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <liquibase-hibernate-package>com.powsybl.sld.server</liquibase-hibernate-package>
-        <powsybl-ws-dependencies.version>2.23.0</powsybl-ws-dependencies.version>
+        <powsybl-ws-dependencies.version>2.24.0</powsybl-ws-dependencies.version>
     </properties>
 
     <build>
