@@ -307,7 +307,7 @@ class NetworkAreaDiagramService {
     private void handleConfiguredPositions(NadGenerationContext nadGenerationContext, NadParameters nadParameters) {
         List<NadVoltageLevelConfiguredPositionEntity> nadVoltageLevelPositionInfos = nadVoltageLevelConfiguredPositionRepository.findAll();
         if (nadVoltageLevelPositionInfos.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No configured positions found!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No configured positions found!");
         }
         List<NadVoltageLevelPositionInfos> positions = nadVoltageLevelPositionInfos.stream().map(NadVoltageLevelConfiguredPositionEntity::toDto).toList();
         nadGenerationContext.setPositions(positions);

@@ -761,6 +761,29 @@ class SingleLineDiagramTest {
     }
 
     @Test
+    void testNetworkAreaDiagramGenerationWithEmptyVoltageLevelPositions() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetworkWithDepth());
+
+        NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(Set.of("vlFr1A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .positions(Collections.emptyList())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.CONFIGURED)
+                .build();
+
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+    }
+
+    @Test
     void testNetworkAreaDiagramExtension() throws Exception {
         UUID testNetworkId = UUID.randomUUID();
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetworkWithDepth());
