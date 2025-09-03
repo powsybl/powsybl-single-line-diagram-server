@@ -33,15 +33,21 @@ import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
+import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
+import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
+import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -49,10 +55,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -66,9 +76,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -93,6 +101,9 @@ class SingleLineDiagramTest {
     private NadConfigRepository nadConfigRepository;
 
     @MockBean
+    private NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository;
+
+    @MockBean
     private PositionDiagramLabelProvider positionDiagramLabelProvider;
 
     @MockBean
@@ -108,12 +119,28 @@ class SingleLineDiagramTest {
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_NOT_FOUND_ID = "variant_notFound";
     private FileSystem fileSystem;
+    private List<NadVoltageLevelPositionInfos> positions;
 
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         fileSystem = Jimfs.newFileSystem(Configuration.unix());
         Files.createDirectory(fileSystem.getPath("tmp"));
+
+        positions = new ArrayList<>();
+        when(nadVoltageLevelConfiguredPositionRepository.count()).thenAnswer(invocation -> (long) positions.size());
+        doAnswer(invocation -> {
+            positions.clear();
+            return null;
+        }).when(nadVoltageLevelConfiguredPositionRepository).deleteAll();
+
+        doAnswer(invocation -> {
+            List<NadVoltageLevelConfiguredPositionEntity> entities = invocation.getArgument(0);
+            positions.addAll(entities.stream()
+                    .map(NadVoltageLevelConfiguredPositionEntity::toDto)
+                    .toList());
+            return entities;
+        }).when(nadVoltageLevelConfiguredPositionRepository).saveAll(anyList());
     }
 
     @AfterEach
@@ -340,7 +367,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(true)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
                 .build();
 
         MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -363,7 +390,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(true)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
                 .build();
 
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -393,6 +420,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult validResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -448,7 +476,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult validResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -498,7 +526,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult firstResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -528,7 +556,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(List.of(positionFromUser))
-                .withGeoData(false)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult secondResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -552,7 +580,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(List.of(positionFromUser))
-                .withGeoData(false)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult thirdResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -595,7 +623,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(true)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -631,7 +659,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -641,36 +669,46 @@ class SingleLineDiagramTest {
                 .andExpect(status().isNotFound());
     }
 
-    private void testGenerateNadBasedOnGeoData(boolean withGeoData) throws Exception {
+    @ParameterizedTest
+    @EnumSource(value = NadPositionsGenerationMode.class, names = {"AUTOMATIC", "GEOGRAPHICAL_COORDINATES", "CONFIGURED"})
+    void testNadGeneration(NadPositionsGenerationMode nadPositionsGenerationMode) throws Exception {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"))).willReturn(toString(GEO_DATA_SUBSTATIONS));
 
+        NadVoltageLevelPositionInfos vlPositionInfos = NadVoltageLevelPositionInfos.builder()
+                .voltageLevelId("vlFr1A")
+                .xPosition(1.0)
+                .yPosition(1.1)
+                .xLabelPosition(1.2)
+                .yLabelPosition(1.3)
+                .build();
+
+        NadConfigInfos validConfig = NadConfigInfos.builder()
+                .id(UUID.randomUUID())
+                .voltageLevelIds(Set.of("vlFr1A"))
+                .scalingFactor(0)
+                .positions(List.of(vlPositionInfos))
+                .build();
+
+        given(nadConfigRepository.findById(any())).willReturn(Optional.of(validConfig.toEntity()));
+        given(nadVoltageLevelConfiguredPositionRepository.findAll()).willReturn(List.of(vlPositionInfos.toConfiguredPositionEntity()));
+
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .filterUuid(null)
                 .nadConfigUuid(null)
-                .withGeoData(withGeoData)
+                .nadPositionsGenerationMode(nadPositionsGenerationMode)
                 .voltageLevelIds(Set.of("vlFr1A"))
                 .build();
 
         networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, nadRequestInfos);
-        if (withGeoData) {
+        if (nadPositionsGenerationMode.equals(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)) {
             //initialize with geographical data
             verify(geoDataService, times(1)).getSubstationsGraphics(testNetworkId, VARIANT_2_ID, List.of("subFr1"));
         } else {
             //initialize without geographical data
             verify(geoDataService, times(0)).getSubstationsGraphics(any(), any(), any());
         }
-    }
-
-    @Test
-    void testGenerateNadWithoutGeoData() throws Exception {
-        testGenerateNadBasedOnGeoData(false);
-    }
-
-    @Test
-    void testGenerateNadWithGeoData() throws Exception {
-        testGenerateNadBasedOnGeoData(true);
     }
 
     Network createNetworkWithDepth() {
@@ -709,7 +747,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -720,6 +758,29 @@ class SingleLineDiagramTest {
         String stringResult = result.getResponse().getContentAsString();
         assertTrue(stringResult.contains("\"additionalMetadata\":{\"nbVoltageLevels\":1"));
         assertTrue(stringResult.contains("\"voltageLevels\":[{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
+    }
+
+    @Test
+    void testNetworkAreaDiagramGenerationWithEmptyVoltageLevelPositions() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetworkWithDepth());
+
+        NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(Set.of("vlFr1A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .positions(Collections.emptyList())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.CONFIGURED)
+                .build();
+
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
     }
 
     @Test
@@ -734,7 +795,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Set.of("vlFr1A"))
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult resultExtendedVl = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -746,6 +807,79 @@ class SingleLineDiagramTest {
         assertTrue(stringResultExtendedVl.contains("\"additionalMetadata\":{\"nbVoltageLevels\":2"));
         assertTrue(stringResultExtendedVl.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
         assertTrue(stringResultExtendedVl.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+    }
+
+    @Test
+    void testCreatePositionsFromCsv() throws Exception {
+
+        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
+        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void testCreatePositionsFromInvalidCsvContentType() throws Exception {
+        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
+        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "invalidContentType", voltageLevelBytes);
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason("Invalid CSV format!"));
+    }
+
+    @Test
+    void testCreatePositionsFromInvalidCsvHeader() throws Exception {
+        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions-invalid-header.csv")));
+        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason("The csv headers are invalid!"));
+    }
+
+    @Test
+    void testCreatePositionsFromEmptyCsv() throws Exception {
+        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions-empty.csv")));
+        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(status().reason("No positions found!"));
+    }
+
+    @Test
+    void testCreatingPositionsFromCsvMultipleTimes() throws Exception {
+
+        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
+        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
+        int expectedRowCount = 5;
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isOk());
+
+        // Verify the mock repository methods were called as expected
+        verify(nadVoltageLevelConfiguredPositionRepository, times(1)).deleteAll();
+        verify(nadVoltageLevelConfiguredPositionRepository, times(1)).saveAll(anyList());
+
+        // Verify the number of rows after the first call
+        var actualRowCount = nadVoltageLevelConfiguredPositionRepository.count();
+        assertEquals(expectedRowCount, actualRowCount);
+
+        // Verify the number of rows after the second call.
+        // It should still be the same as the first call because the table is cleared.
+        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
+                        .file(file)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isOk());
+        actualRowCount = nadVoltageLevelConfiguredPositionRepository.count();
+        assertEquals(expectedRowCount, actualRowCount);
     }
 
     @Test
@@ -769,7 +903,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult resultNoOmition = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -793,7 +927,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Set.of("vlFr2A"))
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult resultWithOmition = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -832,7 +966,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Set.of("vlFr1A")) // Adds vlFr2A (vlFr1A's neighour)
                 .voltageLevelToOmitIds(Set.of("vlFr2A"))
                 .positions(Collections.emptyList())
-                .withGeoData(false)
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult resultWithOmitionAndExtension = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1119,6 +1253,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
         MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)

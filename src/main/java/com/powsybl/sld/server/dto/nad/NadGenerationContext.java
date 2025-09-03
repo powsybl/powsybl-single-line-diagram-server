@@ -9,6 +9,7 @@ package com.powsybl.sld.server.dto.nad;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.nad.NadParameters;
 import com.powsybl.nad.build.iidm.VoltageLevelFilter;
+import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import lombok.*;
 
 import java.util.*;
@@ -26,7 +27,7 @@ public class NadGenerationContext {
     private Network network;
     private UUID networkUuid;
     private String variantId;
-    private boolean shouldFetchGeoData;
+    private NadPositionsGenerationMode nadPositionsGenerationMode;
     private Integer scalingFactor;
 
     @Builder.Default
