@@ -36,6 +36,7 @@ import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.CsvFileValidator;
+import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import com.powsybl.sld.server.utils.ResourceUtils;
 import lombok.NonNull;
 import org.apache.commons.io.ByteOrderMark;
@@ -217,7 +218,8 @@ class NetworkAreaDiagramService {
             .networkUuid(networkUuid)
             .variantId(variantId)
             .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION))
-            .nadPositionsGenerationMode(nadRequestInfos.getNadPositionsGenerationMode())
+            // If we already have a NAD config UUID, it means the NAD was already generated,so we keep the automatic generation mode.
+            .nadPositionsGenerationMode(nadRequestInfos.getNadConfigUuid() == null ? nadRequestInfos.getNadPositionsGenerationMode() : NadPositionsGenerationMode.AUTOMATIC)
             .positions(nadRequestInfos.getPositions())
             .build();
 
