@@ -223,21 +223,9 @@ class NetworkAreaDiagramService {
             .positions(nadRequestInfos.getPositions())
             .build();
 
-        // NadConfig fetching
+        // Positions config fetching
         if (nadRequestInfos.getNadConfigUuid() != null) {
-            NadConfigInfos nadConfigInfos = getNetworkAreaDiagramConfig(nadRequestInfos.getNadConfigUuid());
-
-            nadGenerationContext.getVoltageLevelIds().addAll(nadConfigInfos.getVoltageLevelIds());
-
-            // Add voltage level positions that are not already present
-            Set<String> existingVoltageLevelIds = nadGenerationContext.getPositions().stream()
-                .map(NadVoltageLevelPositionInfos::getVoltageLevelId)
-                .collect(Collectors.toSet());
-            nadConfigInfos.getPositions().stream()
-                .filter(position -> !existingVoltageLevelIds.contains(position.getVoltageLevelId()))
-                .forEach(nadGenerationContext.getPositions()::add);
-
-            nadGenerationContext.setScalingFactor(nadConfigInfos.getScalingFactor());
+            handleNadConfigPositions(nadRequestInfos.getNadConfigUuid(), nadGenerationContext);
         } else if (nadRequestInfos.getNadPositionsGenerationMode() == NadPositionsGenerationMode.CONFIGURED) {
             handleConfiguredPositions(nadGenerationContext);
         }
@@ -298,11 +286,28 @@ class NetworkAreaDiagramService {
         nadGenerationContext.setNadParameters(nadParameters);
     }
 
+    private void handleNadConfigPositions(UUID nadConfigUuid, NadGenerationContext nadGenerationContext) {
+        NadConfigInfos nadConfigInfos = getNetworkAreaDiagramConfig(nadConfigUuid);
+
+        nadGenerationContext.getVoltageLevelIds().addAll(nadConfigInfos.getVoltageLevelIds());
+
+        // Add voltage level positions that are not already present
+        Set<String> existingVoltageLevelIds = nadGenerationContext.getPositions().stream()
+            .map(NadVoltageLevelPositionInfos::getVoltageLevelId)
+            .collect(Collectors.toSet());
+        nadConfigInfos.getPositions().stream()
+            .filter(position -> !existingVoltageLevelIds.contains(position.getVoltageLevelId()))
+            .forEach(nadGenerationContext.getPositions()::add);
+
+        nadGenerationContext.setScalingFactor(nadConfigInfos.getScalingFactor());
+    }
+
     private void handleConfiguredPositions(NadGenerationContext nadGenerationContext) {
         // Add voltage level positions that are not already present
         Set<String> existingVoltageLevelIds = nadGenerationContext.getPositions().stream()
                 .map(NadVoltageLevelPositionInfos::getVoltageLevelId)
                 .collect(Collectors.toSet());
+
         // Get the VL positions that were previously saved using csv file.
         List<NadVoltageLevelConfiguredPositionEntity> nadVoltageLevelPositionInfos = nadVoltageLevelConfiguredPositionRepository.findAll();
         if (nadVoltageLevelPositionInfos.isEmpty()) {
