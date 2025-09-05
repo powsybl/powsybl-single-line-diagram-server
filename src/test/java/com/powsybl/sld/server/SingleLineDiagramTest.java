@@ -56,6 +56,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -980,6 +981,30 @@ class SingleLineDiagramTest {
         assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
         assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
         assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlEs1B\",\"name\":\"vlEs1B\",\"substationId\":\"subEs1\""));
+    }
+
+    @Test
+    void testNetworkAreaDiagramTooManyVoltageLevels() throws Exception {
+        ReflectionTestUtils.setField(networkAreaDiagramService, "maxVoltageLevels", 2);
+
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+
+        NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(Set.of("vlFr1A", "vlFr1B", "vlFr2A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .positions(Collections.emptyList())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .build();
+
+        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(status().isForbidden())
+                .andReturn();
     }
 
     @Test
