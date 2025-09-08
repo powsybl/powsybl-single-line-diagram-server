@@ -261,7 +261,7 @@ class NetworkAreaDiagramService {
         buildGraphicalParameters(nadGenerationContext);
 
         int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
-        if (nadGenerationContext.getVoltageLevelIds().size() > maxVoltageLevels) {
+        if (nbVoltageLevels > maxVoltageLevels) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, String.format("You need to reduce the number of voltage levels to be displayed in the nodal image (current %s, maximum %s)", nbVoltageLevels, maxVoltageLevels));
         }
 
