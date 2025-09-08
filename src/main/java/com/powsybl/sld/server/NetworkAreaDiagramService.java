@@ -67,7 +67,7 @@ class NetworkAreaDiagramService {
     private static final Logger LOGGER = LoggerFactory.getLogger(NetworkAreaDiagramService.class);
 
     @Value("${diagram-server.nad.max-voltage-levels}")
-    protected int maxVoltageLevels;
+    private int maxVoltageLevels;
 
     private static final int DEFAULT_SCALING_FACTOR = 450000;
     private static final int MIN_SCALING_FACTOR = 50000;
@@ -260,8 +260,9 @@ class NetworkAreaDiagramService {
         // Build Powsybl parameters
         buildGraphicalParameters(nadGenerationContext);
 
+        int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
         if (nadGenerationContext.getVoltageLevelIds().size() > maxVoltageLevels) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "too many voltage levels");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, String.format("You need to reduce the number of voltage levels to be displayed in the nodal image (current %s, maximum %s)", nbVoltageLevels, maxVoltageLevels));
         }
 
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));

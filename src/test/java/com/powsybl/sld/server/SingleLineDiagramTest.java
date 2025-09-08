@@ -114,7 +114,7 @@ class SingleLineDiagramTest {
     @MockBean
     private FilterService filterService;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
@@ -985,26 +985,29 @@ class SingleLineDiagramTest {
 
     @Test
     void testNetworkAreaDiagramTooManyVoltageLevels() throws Exception {
-        ReflectionTestUtils.setField(networkAreaDiagramService, "maxVoltageLevels", 2);
+        int maxVls = 2;
+        ReflectionTestUtils.setField(networkAreaDiagramService, "maxVoltageLevels", maxVls);
 
         UUID testNetworkId = UUID.randomUUID();
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
 
+        Set vlIds = Set.of("vlFr1A", "vlFr1B", "vlFr2A");
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
-                .nadConfigUuid(null)
-                .filterUuid(null)
-                .voltageLevelIds(Set.of("vlFr1A", "vlFr1B", "vlFr2A"))
-                .voltageLevelToExpandIds(Collections.emptySet())
-                .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
-                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .build();
+            .nadConfigUuid(null)
+            .filterUuid(null)
+            .voltageLevelIds(vlIds)
+            .voltageLevelToExpandIds(Collections.emptySet())
+            .voltageLevelToOmitIds(Collections.emptySet())
+            .positions(Collections.emptyList())
+            .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+            .build();
 
-        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
-                .andExpect(status().isForbidden())
-                .andReturn();
+        String errorMessage = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(nadRequestInfos)))
+            .andExpect(status().isForbidden())
+            .andReturn().getResponse().getErrorMessage();
+        assertEquals(String.format("You need to reduce the number of voltage levels to be displayed in the nodal image (current %s, maximum %s)", vlIds.size(), maxVls), errorMessage);
     }
 
     @Test
