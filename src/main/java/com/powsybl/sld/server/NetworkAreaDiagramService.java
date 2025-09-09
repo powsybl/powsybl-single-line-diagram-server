@@ -73,6 +73,8 @@ class NetworkAreaDiagramService {
     private static final int MIN_SCALING_FACTOR = 50000;
     private static final int MAX_SCALING_FACTOR = 600000;
     private static final double RADIUS_FACTOR = 300;
+    private static final double DEFAULT_X_LABEL_POSITION = 100.0;
+    private static final double DEFAULT_Y_LABEL_POSITION = -40.0;
 
     static final String SVG_TAG = "svg";
     static final String METADATA = "metadata";
@@ -365,12 +367,26 @@ class NetworkAreaDiagramService {
     }
 
     private LayoutFactory prepareFixedLayoutFactory(NadGenerationContext nadGenerationContext) {
-        Map<String, Point> positionsForFixedLayout = nadGenerationContext.getPositions().stream()
-            .collect(Collectors.toMap(
-                NadVoltageLevelPositionInfos::getVoltageLevelId,
-                info -> new Point(info.getXPosition(), info.getYPosition())
-            ));
-        return new FixedLayoutFactory(positionsForFixedLayout, BasicForceLayout::new);
+        Map<String, Point> positionsForFixedLayout = new HashMap<>();
+        Map<String, TextPosition> textNodesPositionsForFixedLayout = new HashMap<>();
+
+        nadGenerationContext.getPositions().forEach(info -> {
+            positionsForFixedLayout.put(
+                    info.getVoltageLevelId(),
+                    new Point(info.getXPosition(), info.getYPosition())
+            );
+            textNodesPositionsForFixedLayout.put(
+                    info.getVoltageLevelId(),
+                    new TextPosition(
+                            new Point(
+                                    Optional.ofNullable(info.getXLabelPosition()).orElse(DEFAULT_X_LABEL_POSITION),
+                                    Optional.ofNullable(info.getYLabelPosition()).orElse(DEFAULT_Y_LABEL_POSITION)),
+                            new Point(0, 0)
+                    )
+            );
+        });
+
+        return new FixedLayoutFactory(positionsForFixedLayout, textNodesPositionsForFixedLayout, BasicForceLayout::new);
     }
 
     private String processSvgAndMetadata(SvgAndMetadata svgAndMetadata) {
