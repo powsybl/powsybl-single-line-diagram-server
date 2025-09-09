@@ -1007,7 +1007,7 @@ class SingleLineDiagramTest {
                 .content(objectMapper.writeValueAsString(nadRequestInfos)))
             .andExpect(status().isForbidden())
             .andReturn().getResponse().getErrorMessage();
-        assertEquals(String.format("You need to reduce the number of voltage levels to be displayed in the nodal image (current %s, maximum %s)", vlIds.size(), maxVls), errorMessage);
+        assertEquals(String.format("You need to reduce the number of voltage levels to be displayed in the network area diagram (current %s, maximum %s)", vlIds.size(), maxVls), errorMessage);
     }
 
     @Test
