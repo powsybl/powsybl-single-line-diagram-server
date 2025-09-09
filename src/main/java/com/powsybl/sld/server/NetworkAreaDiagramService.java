@@ -43,6 +43,7 @@ import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -64,6 +65,9 @@ import java.util.stream.Collectors;
 @Service
 class NetworkAreaDiagramService {
     private static final Logger LOGGER = LoggerFactory.getLogger(NetworkAreaDiagramService.class);
+
+    @Value("${diagram-server.nad.max-voltage-levels}")
+    private int maxVoltageLevels;
 
     private static final int DEFAULT_SCALING_FACTOR = 450000;
     private static final int MIN_SCALING_FACTOR = 50000;
@@ -255,6 +259,11 @@ class NetworkAreaDiagramService {
 
         // Build Powsybl parameters
         buildGraphicalParameters(nadGenerationContext);
+
+        int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
+        if (nbVoltageLevels > maxVoltageLevels) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, String.format("You need to reduce the number of voltage levels to be displayed in the nodal image (current %s, maximum %s)", nbVoltageLevels, maxVoltageLevels));
+        }
 
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
