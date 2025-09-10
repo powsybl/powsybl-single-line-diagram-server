@@ -69,7 +69,7 @@ public class SingleLineDiagramController {
     @GetMapping(value = "/svg/{networkUuid}/{voltageLevelId}", produces = IMAGE_SVG_PLUS_XML)
     @Operation(summary = "Get voltage level image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage level SVG")})
-    public @ResponseBody String getVoltageLevelSvg(
+    public String getVoltageLevelSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
@@ -97,7 +97,7 @@ public class SingleLineDiagramController {
     @GetMapping(value = "/metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get the voltage level svg metadata")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage level SVG metadata")})
-    public @ResponseBody String getVoltageLevelMetadata(
+    public String getVoltageLevelMetadata(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
@@ -126,7 +126,7 @@ public class SingleLineDiagramController {
     @GetMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get voltage level svg and metadata")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage level svg and metadata")})
-    public @ResponseBody String getVoltageLevelFullSvg(
+    public String getVoltageLevelFullSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
@@ -164,7 +164,7 @@ public class SingleLineDiagramController {
     @GetMapping(value = "/substation-svg/{networkUuid}/{substationId}", produces = IMAGE_SVG_PLUS_XML)
     @Operation(summary = "Get substation image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The substation svg")})
-    public @ResponseBody String getSubstationSvg(
+    public String getSubstationSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Substation ID") @PathVariable("substationId") String substationId,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
@@ -193,7 +193,7 @@ public class SingleLineDiagramController {
     @GetMapping(value = "/substation-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get substation svg metadata")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The substation svg metadata")})
-    public @ResponseBody String getSubstationMetadata(
+    public String getSubstationMetadata(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Substation ID") @PathVariable("substationId") String substationId,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
@@ -222,7 +222,7 @@ public class SingleLineDiagramController {
     @GetMapping(value = "substation-svg-and-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get substation svg and metadata")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The substation svg and metadata")})
-    public @ResponseBody String getSubstationFullSvg(
+    public String getSubstationFullSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Substation ID") @PathVariable("substationId") String substationId,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
@@ -269,7 +269,7 @@ public class SingleLineDiagramController {
     @PostMapping(value = "/network-area-diagram/{networkUuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get network area diagram image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
-    public @ResponseBody String generateNetworkAreaDiagramSvg(
+    public String generateNetworkAreaDiagramSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @RequestBody NadRequestInfos nadRequestInfos) {
