@@ -378,7 +378,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(result))
+        result = mvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -404,8 +404,8 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfosNotFound)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().isNotFound());
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isNotFound()).andReturn();
     }
 
     @Test
@@ -437,7 +437,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestWithValidFilter)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(validResult))
+        validResult = mvc.perform(asyncDispatch(validResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -462,8 +462,8 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(invalidFilterNadRequestJson)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().isNotFound());
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isNotFound()).andReturn();
     }
 
     @Test
@@ -499,7 +499,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(validResult))
+        validResult = mvc.perform(asyncDispatch(validResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -552,7 +552,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(requestWithPositionFromNadConfig)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(firstResult))
+        firstResult = mvc.perform(asyncDispatch(firstResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -585,7 +585,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(requestWithPositionsFromUser)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(secondResult))
+        secondResult = mvc.perform(asyncDispatch(secondResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -612,7 +612,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(requestWithPositionsFromBoth)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(thirdResult))
+        thirdResult = mvc.perform(asyncDispatch(thirdResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -658,8 +658,8 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().isOk());
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isOk()).andReturn();
 
         verify(geoDataService, times(0)).getSubstationsGraphics(any(), any(), any());
     }
@@ -697,8 +697,8 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().isNotFound());
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isNotFound()).andReturn();
     }
 
     @ParameterizedTest
@@ -787,7 +787,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(result))
+        result = mvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andReturn();
         String stringResult = result.getResponse().getContentAsString();
@@ -815,7 +815,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(mvcResult))
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
@@ -841,7 +841,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfosExtendedVl)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(resultExtendedVl))
+        resultExtendedVl = mvc.perform(asyncDispatch(resultExtendedVl))
                 .andExpect(status().isOk())
                 .andReturn();
         String stringResultExtendedVl = resultExtendedVl.getResponse().getContentAsString();
@@ -953,7 +953,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestNoOmition)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(resultNoOmition))
+        resultNoOmition = mvc.perform(asyncDispatch(resultNoOmition))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -980,7 +980,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestWithOmition)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(resultWithOmition))
+        resultWithOmition = mvc.perform(asyncDispatch(resultWithOmition))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -1021,7 +1021,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestWithOmitionAndExtension)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(resultWithOmitionAndExtension))
+        resultWithOmitionAndExtension = mvc.perform(asyncDispatch(resultWithOmitionAndExtension))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -1056,9 +1056,10 @@ class SingleLineDiagramTest {
                 .content(objectMapper.writeValueAsString(nadRequestInfos)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        String errorMessage = mvc.perform(asyncDispatch(mvcResult))
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
             .andExpect(status().isForbidden())
-            .andReturn().getResponse().getErrorMessage();
+            .andReturn();
+        String errorMessage = mvcResult.getResponse().getErrorMessage();
         assertEquals(String.format("You need to reduce the number of voltage levels to be displayed in the network area diagram (current %s, maximum %s)", vlIds.size(), maxVls), errorMessage);
     }
 
@@ -1342,7 +1343,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(result))
+        result = mvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andReturn();
         String stringResult = result.getResponse().getContentAsString();
@@ -1365,8 +1366,8 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfosVlNotFound)))
                 .andExpect(request().asyncStarted())
                 .andReturn();
-        mvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().isNotFound());
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isNotFound()).andReturn();
     }
 
     @Test
