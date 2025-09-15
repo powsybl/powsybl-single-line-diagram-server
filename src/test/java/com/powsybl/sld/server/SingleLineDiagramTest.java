@@ -56,6 +56,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -113,7 +114,7 @@ class SingleLineDiagramTest {
     @MockBean
     private FilterService filterService;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
@@ -506,6 +507,8 @@ class SingleLineDiagramTest {
                 .voltageLevelId("vlFr1A")
                 .xPosition(75416.26)
                 .yPosition(12326.69)
+                .xLabelPosition(846.1)
+                .yLabelPosition(791.1)
                 .build();
         NadConfigInfos nadConfig = NadConfigInfos.builder()
                 .id(validConfigUuid)
@@ -541,12 +544,16 @@ class SingleLineDiagramTest {
 
         assertTrue(firstResultContent.contains("75416.26")); // Positions from the nad config
         assertTrue(firstResultContent.contains("12326.69"));
+        assertTrue(firstResultContent.contains("846.1"));
+        assertTrue(firstResultContent.contains("791.1"));
 
         // Second test, with positions from the user
         NadVoltageLevelPositionInfos positionFromUser = NadVoltageLevelPositionInfos.builder()
                 .voltageLevelId("vlFr1A")
                 .xPosition(88588.25)
                 .yPosition(99199.85)
+                .xLabelPosition(641.2)
+                .yLabelPosition(932.2)
                 .build();
 
         NadRequestInfos requestWithPositionsFromUser = NadRequestInfos.builder()
@@ -571,6 +578,8 @@ class SingleLineDiagramTest {
 
         assertTrue(secondResultContent.contains("88588.25")); // Positions from the user
         assertTrue(secondResultContent.contains("99199.85"));
+        assertTrue(secondResultContent.contains("641.2"));
+        assertTrue(secondResultContent.contains("932.2"));
 
         // final test, with positions from both the nad config and the user
         NadRequestInfos requestWithPositionsFromBoth = NadRequestInfos.builder()
@@ -980,6 +989,33 @@ class SingleLineDiagramTest {
         assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
         assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
         assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlEs1B\",\"name\":\"vlEs1B\",\"substationId\":\"subEs1\""));
+    }
+
+    @Test
+    void testNetworkAreaDiagramTooManyVoltageLevels() throws Exception {
+        int maxVls = 2;
+        ReflectionTestUtils.setField(networkAreaDiagramService, "maxVoltageLevels", maxVls);
+
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+
+        Set vlIds = Set.of("vlFr1A", "vlFr1B", "vlFr2A");
+        NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+            .nadConfigUuid(null)
+            .filterUuid(null)
+            .voltageLevelIds(vlIds)
+            .voltageLevelToExpandIds(Collections.emptySet())
+            .voltageLevelToOmitIds(Collections.emptySet())
+            .positions(Collections.emptyList())
+            .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+            .build();
+
+        String errorMessage = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(nadRequestInfos)))
+            .andExpect(status().isForbidden())
+            .andReturn().getResponse().getErrorMessage();
+        assertEquals(String.format("You need to reduce the number of voltage levels to be displayed in the network area diagram (current %s, maximum %s)", vlIds.size(), maxVls), errorMessage);
     }
 
     @Test

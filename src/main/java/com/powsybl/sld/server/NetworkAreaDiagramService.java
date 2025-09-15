@@ -44,6 +44,7 @@ import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -65,6 +66,9 @@ import java.util.stream.Collectors;
 @Service
 class NetworkAreaDiagramService {
     private static final Logger LOGGER = LoggerFactory.getLogger(NetworkAreaDiagramService.class);
+
+    @Value("${diagram-server.nad.max-voltage-levels}")
+    private int maxVoltageLevels;
 
     private static final int DEFAULT_SCALING_FACTOR = 450000;
     private static final int MIN_SCALING_FACTOR = 50000;
@@ -257,6 +261,11 @@ class NetworkAreaDiagramService {
         // Build Powsybl parameters
         buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getLimitViolationInfos());
 
+        int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
+        if (nbVoltageLevels > maxVoltageLevels) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, String.format("You need to reduce the number of voltage levels to be displayed in the network area diagram (current %s, maximum %s)", nbVoltageLevels, maxVoltageLevels));
+        }
+
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
 
@@ -358,12 +367,24 @@ class NetworkAreaDiagramService {
     }
 
     private LayoutFactory prepareFixedLayoutFactory(NadGenerationContext nadGenerationContext) {
-        Map<String, Point> positionsForFixedLayout = nadGenerationContext.getPositions().stream()
-            .collect(Collectors.toMap(
-                NadVoltageLevelPositionInfos::getVoltageLevelId,
-                info -> new Point(info.getXPosition(), info.getYPosition())
-            ));
-        return new FixedLayoutFactory(positionsForFixedLayout, BasicForceLayout::new);
+        Map<String, Point> positionsForFixedLayout = new HashMap<>();
+        Map<String, TextPosition> textNodesPositionsForFixedLayout = new HashMap<>();
+
+        nadGenerationContext.getPositions().forEach(info -> {
+            positionsForFixedLayout.put(
+                    info.getVoltageLevelId(),
+                    new Point(info.getXPosition(), info.getYPosition())
+            );
+            textNodesPositionsForFixedLayout.put(
+                    info.getVoltageLevelId(),
+                    new TextPosition(
+                            new Point(info.getXLabelPosition(), info.getYLabelPosition()),
+                            new Point(0, 0) // We do not display the edge connections
+                    )
+            );
+        });
+
+        return new FixedLayoutFactory(positionsForFixedLayout, textNodesPositionsForFixedLayout, BasicForceLayout::new);
     }
 
     private String processSvgAndMetadata(SvgAndMetadata svgAndMetadata) {
