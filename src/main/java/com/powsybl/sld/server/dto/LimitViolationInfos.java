@@ -14,13 +14,11 @@ import lombok.NoArgsConstructor;
 /**
  * @author Ayoub LABIDI <ayoub.labidi at rte-france.com>
  */
-
 @Builder
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 public class LimitViolationInfos {
-
-    private String branchId;
+    private String equipmentId;
     private String limitName;
 }

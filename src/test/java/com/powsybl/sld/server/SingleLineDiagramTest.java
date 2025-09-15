@@ -18,6 +18,7 @@ import com.powsybl.iidm.network.extensions.BusbarSectionPositionAdder;
 import com.powsybl.iidm.network.extensions.ConnectablePosition;
 import com.powsybl.iidm.network.extensions.ConnectablePositionAdder;
 import com.powsybl.iidm.network.extensions.SubstationPosition;
+import com.powsybl.nad.svg.StyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.SingleLineDiagram;
@@ -28,6 +29,7 @@ import com.powsybl.sld.library.ConvergenceComponentLibrary;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
+import com.powsybl.sld.server.dto.LimitViolationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
@@ -73,8 +75,10 @@ import java.util.*;
 
 import static com.powsybl.sld.library.SldComponentTypeName.ARROW_ACTIVE;
 import static com.powsybl.sld.library.SldComponentTypeName.ARROW_REACTIVE;
+import static com.powsybl.sld.svg.styles.StyleClassConstants.OVERLOAD_STYLE_CLASS;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -819,6 +823,125 @@ class SingleLineDiagramTest {
     }
 
     @Test
+    void testNetworkAreaDiagramWithViolationDefaultClass() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+
+        NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(Set.of("vlFr3A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .positions(Collections.emptyList())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .limitViolationInfos(Set.of(
+                    LimitViolationInfos.builder()
+                        .equipmentId("twt1")
+                        .limitName(null)
+                        .build()
+                ))
+                .build();
+
+        MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String body = result.getResponse().getContentAsString();
+        assertTrue(body.contains(StyleProvider.LINE_OVERLOADED_CLASS));
+    }
+
+    @Test
+    void testNetworkAreaDiagramWithViolationSanitizedClass() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+
+        NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(Set.of("vlFr3A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .positions(Collections.emptyList())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .limitViolationInfos(Set.of(
+                    LimitViolationInfos.builder()
+                        .equipmentId("twt1")
+                        .limitName("IT20")
+                        .build()
+                ))
+                .build();
+
+        MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .param("variantId", VARIANT_2_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String body = result.getResponse().getContentAsString();
+        assertTrue(body.contains("-it20"));
+    }
+
+    @Test
+    void testSingleLineDiagramWithViolationDefaultClass() {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetworkWithDepth());
+
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
+                .useName(true)
+                .labelCentered(false)
+                .diagonalLabel(true)
+                .topologicalColoring(true)
+                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
+                .substationLayout("horizontal")
+                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
+                .language("en")
+                .build();
+
+        LimitViolationInfos violation = LimitViolationInfos.builder()
+                .equipmentId("twt1")
+                .limitName(null)
+                .build();
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, Set.of(violation));
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+        assertTrue(svg.contains(OVERLOAD_STYLE_CLASS));
+    }
+
+    @Test
+    void testSingleLineDiagramWithViolationSanitizedClass() {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetworkWithDepth());
+
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
+                .useName(false)
+                .labelCentered(false)
+                .diagonalLabel(false)
+                .topologicalColoring(false)
+                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
+                .substationLayout("horizontal")
+                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
+                .language("en")
+                .build();
+
+        LimitViolationInfos violation = LimitViolationInfos.builder()
+                .equipmentId("twt1")
+                .limitName("IT20")
+                .build();
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, Set.of(violation));
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+        String expected = OVERLOAD_STYLE_CLASS + "-it20";
+        assertTrue(svg.contains(expected));
+    }
+
+    @Test
     void testCreatePositionsFromCsv() throws Exception {
 
         byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
@@ -1181,7 +1304,6 @@ class SingleLineDiagramTest {
                 .setId("busFr1B")
                 .setName("busFr1B")
                 .add();
-
         Substation substationFr2 = network.newSubstation()
                 .setId("subFr2")
                 .setCountry(Country.FR)
@@ -1227,6 +1349,53 @@ class SingleLineDiagramTest {
         voltageLevelEs1B.getBusBreakerView().newBus()
                 .setId("busEs1B")
                 .setName("busEs1B")
+                .add();
+
+        Substation substationFr3 = network.newSubstation()
+                .setId("subFr3")
+                .setCountry(Country.FR)
+                .setTso("RTE")
+                .add();
+        VoltageLevel voltageLevelFr3A = substationFr3.newVoltageLevel()
+                .setId("vlFr3A")
+                .setName("vlFr3A")
+                .setNominalV(440.0)
+                .setHighVoltageLimit(400.0)
+                .setLowVoltageLimit(200.0)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        voltageLevelFr3A.getBusBreakerView().newBus()
+                .setId("busFr3A")
+                .setName("busFr3A")
+                .add();
+
+        VoltageLevel voltageLevelFr3B = substationFr3.newVoltageLevel()
+                .setId("vlFr3B")
+                .setName("vlFr3B")
+                .setNominalV(440.0)
+                .setHighVoltageLimit(400.0)
+                .setLowVoltageLimit(200.0)
+                .setTopologyKind(TopologyKind.BUS_BREAKER)
+                .add();
+        voltageLevelFr3B.getBusBreakerView().newBus()
+                .setId("busFr3B")
+                .setName("busFr3B")
+                .add();
+
+        substationFr3.newTwoWindingsTransformer()
+                .setId("twt1")
+                .setName("twt1")
+                .setVoltageLevel1("vlFr3A")
+                .setBus1("busFr3A")
+                .setVoltageLevel2("vlFr3B")
+                .setBus2("busFr3B")
+                .setConnectableBus1("busFr3A")
+                .setConnectableBus2("busFr3B")
+                .setRatedU2(158.)
+                .setR(47)
+                .setG(27)
+                .setB(17)
+                .setX(23)
                 .add();
 
         network.getVariantManager().cloneVariant(VariantManagerConstants.INITIAL_VARIANT_ID, VARIANT_1_ID);

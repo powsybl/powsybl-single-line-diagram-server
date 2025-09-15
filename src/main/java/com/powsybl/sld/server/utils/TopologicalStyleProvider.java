@@ -35,7 +35,7 @@ public class TopologicalStyleProvider extends AbstractVoltageStyleProvider {
     }
 
     public TopologicalStyleProvider(Network network, Map<String, String> violationStyles) {
-        super(network); // Don't pass null baseVoltageStyle, use the single-param constructor
+        super(network);
         this.violationStyles = violationStyles != null ? violationStyles : Collections.emptyMap();
     }
 

@@ -60,7 +60,7 @@ public final class DiagramUtils {
                 String safe = limitName.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
                 styleClass = baseStyleClass + "-" + safe;
             }
-            violationStyles.put(li.getBranchId(), styleClass);
+            violationStyles.put(li.getEquipmentId(), styleClass);
         }
         return violationStyles;
     }
