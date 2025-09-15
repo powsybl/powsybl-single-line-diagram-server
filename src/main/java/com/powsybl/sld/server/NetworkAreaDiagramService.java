@@ -366,12 +366,24 @@ class NetworkAreaDiagramService {
     }
 
     private LayoutFactory prepareFixedLayoutFactory(NadGenerationContext nadGenerationContext) {
-        Map<String, Point> positionsForFixedLayout = nadGenerationContext.getPositions().stream()
-            .collect(Collectors.toMap(
-                NadVoltageLevelPositionInfos::getVoltageLevelId,
-                info -> new Point(info.getXPosition(), info.getYPosition())
-            ));
-        return new FixedLayoutFactory(positionsForFixedLayout, BasicForceLayout::new);
+        Map<String, Point> positionsForFixedLayout = new HashMap<>();
+        Map<String, TextPosition> textNodesPositionsForFixedLayout = new HashMap<>();
+
+        nadGenerationContext.getPositions().forEach(info -> {
+            positionsForFixedLayout.put(
+                    info.getVoltageLevelId(),
+                    new Point(info.getXPosition(), info.getYPosition())
+            );
+            textNodesPositionsForFixedLayout.put(
+                    info.getVoltageLevelId(),
+                    new TextPosition(
+                            new Point(info.getXLabelPosition(), info.getYLabelPosition()),
+                            new Point(0, 0) // We do not display the edge connections
+                    )
+            );
+        });
+
+        return new FixedLayoutFactory(positionsForFixedLayout, textNodesPositionsForFixedLayout, BasicForceLayout::new);
     }
 
     private String processSvgAndMetadata(SvgAndMetadata svgAndMetadata) {

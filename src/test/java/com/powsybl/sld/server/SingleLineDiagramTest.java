@@ -523,6 +523,8 @@ class SingleLineDiagramTest {
                 .voltageLevelId("vlFr1A")
                 .xPosition(75416.26)
                 .yPosition(12326.69)
+                .xLabelPosition(846.1)
+                .yLabelPosition(791.1)
                 .build();
         NadConfigInfos nadConfig = NadConfigInfos.builder()
                 .id(validConfigUuid)
@@ -561,12 +563,16 @@ class SingleLineDiagramTest {
 
         assertTrue(firstResultContent.contains("75416.26")); // Positions from the nad config
         assertTrue(firstResultContent.contains("12326.69"));
+        assertTrue(firstResultContent.contains("846.1"));
+        assertTrue(firstResultContent.contains("791.1"));
 
         // Second test, with positions from the user
         NadVoltageLevelPositionInfos positionFromUser = NadVoltageLevelPositionInfos.builder()
                 .voltageLevelId("vlFr1A")
                 .xPosition(88588.25)
                 .yPosition(99199.85)
+                .xLabelPosition(641.2)
+                .yLabelPosition(932.2)
                 .build();
 
         NadRequestInfos requestWithPositionsFromUser = NadRequestInfos.builder()
@@ -594,6 +600,8 @@ class SingleLineDiagramTest {
 
         assertTrue(secondResultContent.contains("88588.25")); // Positions from the user
         assertTrue(secondResultContent.contains("99199.85"));
+        assertTrue(secondResultContent.contains("641.2"));
+        assertTrue(secondResultContent.contains("932.2"));
 
         // final test, with positions from both the nad config and the user
         NadRequestInfos requestWithPositionsFromBoth = NadRequestInfos.builder()
