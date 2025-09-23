@@ -260,7 +260,7 @@ class NetworkAreaDiagramService {
         );
 
         // Build Powsybl parameters
-        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getLimitViolationInfos());
+        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos());
 
         int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
         if (nbVoltageLevels > maxVoltageLevels) {
@@ -270,7 +270,7 @@ class NetworkAreaDiagramService {
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
 
-    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, Set<LimitViolationInfos> limitViolationInfos) {
+    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
 
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
@@ -285,8 +285,8 @@ class NetworkAreaDiagramService {
         NadParameters nadParameters = new NadParameters();
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
-        Map<String, String> violationStyles = DiagramUtils.createViolationStylesMap(limitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
-        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), violationStyles));
+        Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
+        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), limitViolationStyles));
 
         // Set style provider factory either with geographical data or with the provided positions (if any)
         if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES && nadGenerationContext.getPositions().isEmpty()) {

@@ -16,8 +16,8 @@ import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.SldComponentLibrary;
+import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.EquipmentInfos;
-import com.powsybl.sld.server.dto.LimitViolationInfos;
 import com.powsybl.sld.server.dto.SubstationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
@@ -75,7 +75,7 @@ class SingleLineDiagramService {
         };
     }
 
-    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, Set<LimitViolationInfos> limitViolationInfos) {
+    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
@@ -117,16 +117,16 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
 
-            Map<String, String> violationStyles = DiagramUtils.createViolationStylesMap(limitViolationInfos, OVERLOAD_STYLE_CLASS);
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
 
             sldParameters.setStyleProviderFactory((net, parameters) -> {
                 return diagParams.isTopologicalColoring()
                     ? new StyleProvidersList(new TopologicalStyleProvider(network, parameters),
                                              new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, violationStyles))
+                                             new LimitHighlightStyleProvider(network, limitViolationStyles))
                     : new StyleProvidersList(new NominalVoltageStyleProvider(),
                                              new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, violationStyles));
+                                             new LimitHighlightStyleProvider(network, limitViolationStyles));
             });
             sldParameters.setComponentLibrary(compLibrary);
 

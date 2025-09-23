@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class LimitViolationInfos {
+public class CurrentLimitViolationInfos {
     private String equipmentId;
     private String limitName;
 }

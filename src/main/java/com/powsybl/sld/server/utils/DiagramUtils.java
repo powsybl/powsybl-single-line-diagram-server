@@ -10,12 +10,11 @@ import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
-import com.powsybl.sld.server.dto.LimitViolationInfos;
+import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
-import java.util.Locale;
 
 /**
  * @author Etienne Homer<etienne.homer at rte-france.com>
@@ -44,13 +43,13 @@ public final class DiagramUtils {
      * @param baseStyleClass Base CSS class for violations (e.g., "sld-overload" or "nad-overloaded")
      * @return Map from equipment ID to CSS style class, or empty map if no violations
      */
-    public static Map<String, String> createViolationStylesMap(Set<LimitViolationInfos> limitViolationInfos, String baseStyleClass) {
+    public static Map<String, String> createLimitViolationStyles(List<CurrentLimitViolationInfos> limitViolationInfos, String baseStyleClass) {
         if (limitViolationInfos == null || limitViolationInfos.isEmpty()) {
-            return Collections.emptyMap();
+            return Map.of();
         }
 
-        Map<String, String> violationStyles = new HashMap<>();
-        for (LimitViolationInfos li : limitViolationInfos) {
+        Map<String, String> limitViolationStyles = new HashMap<>();
+        for (CurrentLimitViolationInfos li : limitViolationInfos) {
             String limitName = li.getLimitName();
             String styleClass;
             if (limitName == null || limitName.isBlank()) {
@@ -60,8 +59,8 @@ public final class DiagramUtils {
                 String safe = limitName.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
                 styleClass = baseStyleClass + "-" + safe;
             }
-            violationStyles.put(li.getEquipmentId(), styleClass);
+            limitViolationStyles.put(li.getEquipmentId(), styleClass);
         }
-        return violationStyles;
+        return limitViolationStyles;
     }
 }

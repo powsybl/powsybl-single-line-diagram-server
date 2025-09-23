@@ -17,32 +17,36 @@ import java.util.*;
 
 import static com.powsybl.sld.svg.styles.StyleClassConstants.*;
 
+/*
+ * this class is copied from the library powsybl-diagram
+ * it should be removed when this PR https://github.com/powsybl/powsybl-diagram/pull/729
+ * will be merged and released
+ */
 /**
  * @author Jamal KHEYYAD {@literal <jamal.kheyyad at rte-international.com>}
  */
 public class LimitHighlightStyleProvider extends EmptyStyleProvider {
     private final Network network;
-    private final Map<String, String> violationStyles;
+    private Map<String, String> limitViolationStyles = Map.of();
 
     public LimitHighlightStyleProvider(Network network) {
         this(network, Collections.emptyMap());
     }
 
-    public LimitHighlightStyleProvider(Network network, Map<String, String> violationStyles) {
+    public LimitHighlightStyleProvider(Network network, Map<String, String> limitViolationStyles) {
         this.network = network;
-        this.violationStyles = violationStyles != null ? violationStyles : Collections.emptyMap();
+        this.limitViolationStyles = limitViolationStyles;
     }
 
     @Override
     public List<String> getEdgeStyles(Graph graph, Edge edge) {
         // Check custom violations first
-        if (!violationStyles.isEmpty()) {
+        if (!limitViolationStyles.isEmpty()) {
             Optional<String> customStyle = getCustomViolationStyle(edge);
             if (customStyle.isPresent()) {
                 return List.of(customStyle.get());
             }
         }
-
         // Fallback to default overload detection
         Optional<String> overloadStyle = getOverloadStyle(edge);
         return overloadStyle.map(Collections::singletonList).orElse(Collections.emptyList());
@@ -51,7 +55,7 @@ public class LimitHighlightStyleProvider extends EmptyStyleProvider {
     private Optional<String> getCustomViolationStyle(Edge edge) {
         for (Node node : edge.getNodes()) {
             if (node instanceof FeederNode feederNode) {
-                String style = violationStyles.get(feederNode.getEquipmentId());
+                String style = limitViolationStyles.get(feederNode.getEquipmentId());
                 if (style != null && !style.isBlank()) {
                     return Optional.of(style);
                 }

@@ -28,8 +28,8 @@ import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.ConvergenceComponentLibrary;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
+import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
-import com.powsybl.sld.server.dto.LimitViolationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
@@ -875,8 +875,8 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .limitViolationInfos(Set.of(
-                    LimitViolationInfos.builder()
+                .currentLimitViolationsInfos(List.of(
+                    CurrentLimitViolationInfos.builder()
                         .equipmentId("twt1")
                         .limitName(null)
                         .build()
@@ -887,6 +887,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        result = mvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -907,8 +910,8 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .limitViolationInfos(Set.of(
-                    LimitViolationInfos.builder()
+                .currentLimitViolationsInfos(List.of(
+                    CurrentLimitViolationInfos.builder()
                         .equipmentId("twt1")
                         .limitName("IT20")
                         .build()
@@ -919,6 +922,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        result = mvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -942,12 +948,12 @@ class SingleLineDiagramTest {
                 .language("en")
                 .build();
 
-        LimitViolationInfos violation = LimitViolationInfos.builder()
+        CurrentLimitViolationInfos violation = CurrentLimitViolationInfos.builder()
                 .equipmentId("twt1")
                 .limitName(null)
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, Set.of(violation));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, List.of(violation));
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         assertTrue(svg.contains(OVERLOAD_STYLE_CLASS));
@@ -969,12 +975,12 @@ class SingleLineDiagramTest {
                 .language("en")
                 .build();
 
-        LimitViolationInfos violation = LimitViolationInfos.builder()
+        CurrentLimitViolationInfos violation = CurrentLimitViolationInfos.builder()
                 .equipmentId("twt1")
                 .limitName("IT20")
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, Set.of(violation));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, List.of(violation));
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         String expected = OVERLOAD_STYLE_CLASS + "-it20";
