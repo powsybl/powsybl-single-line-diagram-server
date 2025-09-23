@@ -57,6 +57,7 @@ import org.supercsv.io.CsvMapReader;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -212,8 +213,8 @@ class NetworkAreaDiagramService {
         nadConfigRepository.deleteById(nadConfigUuid);
     }
 
-    public String generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, NadRequestInfos nadRequestInfos) {
-        return diagramExecutionService.supplyAsync(() -> self.generateNetworkAreaDiagramSvg(networkUuid, variantId, nadRequestInfos)).join();
+    public CompletableFuture<String> generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, NadRequestInfos nadRequestInfos) {
+        return diagramExecutionService.supplyAsync(() -> self.generateNetworkAreaDiagramSvg(networkUuid, variantId, nadRequestInfos));
     }
 
     @Transactional(readOnly = true)

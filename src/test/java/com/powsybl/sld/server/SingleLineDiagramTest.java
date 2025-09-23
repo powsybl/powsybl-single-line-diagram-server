@@ -83,6 +83,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -379,6 +380,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        result = mvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -398,11 +402,14 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
                 .build();
 
-        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfosNotFound)))
-                .andExpect(status().isNotFound());
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isNotFound()).andReturn();
     }
 
     @Test
@@ -432,6 +439,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestWithValidFilter)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        validResult = mvc.perform(asyncDispatch(validResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -450,11 +460,14 @@ class SingleLineDiagramTest {
                 .positions(Collections.emptyList())
                 .build();
 
-        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidFilterNadRequestJson)))
-                .andExpect(status().isNotFound());
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isNotFound()).andReturn();
     }
 
     @Test
@@ -488,6 +501,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        validResult = mvc.perform(asyncDispatch(validResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -540,6 +556,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithPositionFromNadConfig)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        firstResult = mvc.perform(asyncDispatch(firstResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -574,6 +593,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithPositionsFromUser)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        secondResult = mvc.perform(asyncDispatch(secondResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -600,6 +622,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithPositionsFromBoth)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        thirdResult = mvc.perform(asyncDispatch(thirdResult))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -639,11 +664,14 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
-                .andExpect(status().isOk());
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isOk()).andReturn();
 
         verify(geoDataService, times(0)).getSubstationsGraphics(any(), any(), any());
     }
@@ -675,11 +703,14 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
-                .andExpect(status().isNotFound());
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isNotFound()).andReturn();
     }
 
     @ParameterizedTest
@@ -766,6 +797,9 @@ class SingleLineDiagramTest {
         MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        result = mvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andReturn();
         String stringResult = result.getResponse().getContentAsString();
@@ -788,9 +822,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.CONFIGURED)
                 .build();
 
-        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
@@ -814,6 +851,9 @@ class SingleLineDiagramTest {
         MvcResult resultExtendedVl = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfosExtendedVl)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        resultExtendedVl = mvc.perform(asyncDispatch(resultExtendedVl))
                 .andExpect(status().isOk())
                 .andReturn();
         String stringResultExtendedVl = resultExtendedVl.getResponse().getContentAsString();
@@ -1042,6 +1082,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestNoOmition)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        resultNoOmition = mvc.perform(asyncDispatch(resultNoOmition))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -1066,6 +1109,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestWithOmition)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        resultWithOmition = mvc.perform(asyncDispatch(resultWithOmition))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -1104,6 +1150,9 @@ class SingleLineDiagramTest {
         MvcResult resultWithOmitionAndExtension = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestWithOmitionAndExtension)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        resultWithOmitionAndExtension = mvc.perform(asyncDispatch(resultWithOmitionAndExtension))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -1133,11 +1182,15 @@ class SingleLineDiagramTest {
             .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
             .build();
 
-        String errorMessage = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
             .andExpect(status().isForbidden())
-            .andReturn().getResponse().getErrorMessage();
+            .andReturn();
+        String errorMessage = mvcResult.getResponse().getErrorMessage();
         assertEquals(String.format("You need to reduce the number of voltage levels to be displayed in the network area diagram (current %s, maximum %s)", vlIds.size(), maxVls), errorMessage);
     }
 
@@ -1465,6 +1518,9 @@ class SingleLineDiagramTest {
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        result = mvc.perform(asyncDispatch(result))
                 .andExpect(status().isOk())
                 .andReturn();
         String stringResult = result.getResponse().getContentAsString();
@@ -1481,11 +1537,14 @@ class SingleLineDiagramTest {
                 .positions(Collections.emptyList())
                 .build();
 
-        mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfosVlNotFound)))
-                .andExpect(status().isNotFound());
+                .andExpect(request().asyncStarted())
+                .andReturn();
+        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(status().isNotFound()).andReturn();
     }
 
     @Test

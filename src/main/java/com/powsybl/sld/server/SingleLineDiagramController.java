@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static com.powsybl.sld.server.NetworkAreaDiagramService.*;
 import static com.powsybl.ws.commons.LogUtils.sanitizeParam;
@@ -275,7 +276,7 @@ public class SingleLineDiagramController {
     @PostMapping(value = "/network-area-diagram/{networkUuid}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get network area diagram image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The network area diagram svg")})
-    public String generateNetworkAreaDiagramSvg(
+    public CompletableFuture<String> generateNetworkAreaDiagramSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
             @RequestBody NadRequestInfos nadRequestInfos) {
