@@ -9,6 +9,7 @@ package com.powsybl.sld.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
+import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
@@ -67,10 +68,10 @@ public class SingleLineDiagramController {
 
     // voltage levels
     //
-    @GetMapping(value = "/svg/{networkUuid}/{voltageLevelId}", produces = IMAGE_SVG_PLUS_XML)
+    @PostMapping(value = "/svg/{networkUuid}/{voltageLevelId}", produces = IMAGE_SVG_PLUS_XML)
     @Operation(summary = "Get voltage level image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage level SVG")})
-    public String getVoltageLevelSvg(
+    public @ResponseBody String generateVoltageLevelSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
@@ -80,7 +81,8 @@ public class SingleLineDiagramController {
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
-            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) {
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
+            @RequestBody(required = false) List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
         LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId != null ? sanitizeParam(voltageLevelId) : null);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -92,7 +94,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters).getSvg();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, currentLimitViolationInfos).getSvg();
     }
 
     @GetMapping(value = "/metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -121,13 +123,13 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters).getMetadata();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, null).getMetadata();
     }
 
-    @GetMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get voltage level svg and metadata")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The voltage level svg and metadata")})
-    public String getVoltageLevelFullSvg(
+    public @ResponseBody String generateVoltageLevelFullSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "VoltageLevel ID") @PathVariable("voltageLevelId") String voltageLevelId,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
@@ -137,7 +139,8 @@ public class SingleLineDiagramController {
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
-            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) throws JsonProcessingException {
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
+            @RequestBody(required = false) List<CurrentLimitViolationInfos> currentLimitViolationInfos) throws JsonProcessingException {
         LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId != null ? sanitizeParam(voltageLevelId) : null);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -149,7 +152,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, currentLimitViolationInfos);
         String svg = svgAndMetadata.getSvg();
         String metadata = svgAndMetadata.getMetadata();
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
@@ -162,10 +165,10 @@ public class SingleLineDiagramController {
 
     // substations
     //
-    @GetMapping(value = "/substation-svg/{networkUuid}/{substationId}", produces = IMAGE_SVG_PLUS_XML)
+    @PostMapping(value = "/substation-svg/{networkUuid}/{substationId}", produces = IMAGE_SVG_PLUS_XML)
     @Operation(summary = "Get substation image")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The substation svg")})
-    public String getSubstationSvg(
+    public @ResponseBody String generateSubstationSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Substation ID") @PathVariable("substationId") String substationId,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
@@ -176,7 +179,8 @@ public class SingleLineDiagramController {
             @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = HORIZONTAL) String substationLayout,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
-            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) {
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
+            @RequestBody(required = false) List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
         LOGGER.debug("getSubstationSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId != null ? sanitizeParam(substationId) : null);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -188,7 +192,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters).getSvg();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, currentLimitViolationInfos).getSvg();
     }
 
     @GetMapping(value = "/substation-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -217,13 +221,13 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters).getMetadata();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, null).getMetadata();
     }
 
-    @GetMapping(value = "substation-svg-and-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "substation-svg-and-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get substation svg and metadata")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "The substation svg and metadata")})
-    public String getSubstationFullSvg(
+    public @ResponseBody String generateSubstationFullSvg(
             @Parameter(description = "Network UUID") @PathVariable("networkUuid") UUID networkUuid,
             @Parameter(description = "Substation ID") @PathVariable("substationId") String substationId,
             @Parameter(description = "Variant Id") @RequestParam(name = "variantId", required = false) String variantId,
@@ -234,7 +238,8 @@ public class SingleLineDiagramController {
             @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = HORIZONTAL) String substationLayout,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
-            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) throws JsonProcessingException {
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
+            @RequestBody(required = false) List<CurrentLimitViolationInfos> currentLimitViolationInfos) throws JsonProcessingException {
         LOGGER.debug("getSubstationFullSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId != null ? sanitizeParam(substationId) : null);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -246,7 +251,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, currentLimitViolationInfos);
         String svg = svgAndMetadata.getSvg();
         String metadata = svgAndMetadata.getMetadata();
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();

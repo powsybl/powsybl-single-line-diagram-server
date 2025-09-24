@@ -16,6 +16,7 @@ import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.SldComponentLibrary;
+import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.EquipmentInfos;
 import com.powsybl.sld.server.dto.SubstationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
@@ -25,9 +26,9 @@ import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
-import com.powsybl.sld.svg.styles.iidm.LimitHighlightStyleProvider;
 import com.powsybl.sld.svg.styles.iidm.TopologicalStyleProvider;
 import com.powsybl.sld.server.utils.DiagramUtils;
+import com.powsybl.sld.server.utils.LimitHighlightStyleProvider;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
 
 import static com.powsybl.iidm.network.IdentifiableType.SUBSTATION;
 import static com.powsybl.iidm.network.IdentifiableType.VOLTAGE_LEVEL;
+import static com.powsybl.sld.svg.styles.StyleClassConstants.OVERLOAD_STYLE_CLASS;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -73,7 +75,7 @@ class SingleLineDiagramService {
         };
     }
 
-    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams) {
+    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
@@ -114,9 +116,18 @@ class SingleLineDiagramService {
             sldParameters.setSubstationLayoutFactory(substationLayoutFactory);
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
-            sldParameters.setStyleProviderFactory((net, parameters) -> diagParams.isTopologicalColoring() ?
-                    new StyleProvidersList(new TopologicalStyleProvider(network, parameters), new HighlightLineStateStyleProvider(network), new LimitHighlightStyleProvider(network)) :
-                    new StyleProvidersList(new NominalVoltageStyleProvider(), new HighlightLineStateStyleProvider(network), new LimitHighlightStyleProvider(network)));
+
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
+
+            sldParameters.setStyleProviderFactory((net, parameters) -> {
+                return diagParams.isTopologicalColoring()
+                    ? new StyleProvidersList(new TopologicalStyleProvider(network, parameters),
+                                             new HighlightLineStateStyleProvider(network),
+                                             new LimitHighlightStyleProvider(network, limitViolationStyles))
+                    : new StyleProvidersList(new NominalVoltageStyleProvider(),
+                                             new HighlightLineStateStyleProvider(network),
+                                             new LimitHighlightStyleProvider(network, limitViolationStyles));
+            });
             sldParameters.setComponentLibrary(compLibrary);
 
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, sldParameters);

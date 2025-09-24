@@ -20,8 +20,8 @@ import com.powsybl.nad.NetworkAreaDiagram;
 import com.powsybl.nad.build.iidm.VoltageLevelFilter;
 import com.powsybl.nad.layout.*;
 import com.powsybl.nad.model.Point;
+import com.powsybl.nad.svg.StyleProvider;
 import com.powsybl.nad.svg.SvgParameters;
-import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.*;
@@ -38,6 +38,7 @@ import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.CsvFileValidator;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import com.powsybl.sld.server.utils.ResourceUtils;
+import com.powsybl.sld.server.utils.TopologicalStyleProvider;
 import lombok.NonNull;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
@@ -259,7 +260,7 @@ class NetworkAreaDiagramService {
         );
 
         // Build Powsybl parameters
-        buildGraphicalParameters(nadGenerationContext);
+        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos());
 
         int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
         if (nbVoltageLevels > maxVoltageLevels) {
@@ -269,7 +270,7 @@ class NetworkAreaDiagramService {
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
 
-    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext) {
+    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
 
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
@@ -284,7 +285,8 @@ class NetworkAreaDiagramService {
         NadParameters nadParameters = new NadParameters();
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
-        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork()));
+        Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
+        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), limitViolationStyles));
 
         // Set style provider factory either with geographical data or with the provided positions (if any)
         if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES && nadGenerationContext.getPositions().isEmpty()) {
