@@ -1,0 +1,12 @@
+name: Docker Deploy
+
+on: workflow_dispatch
+
+jobs:
+  run-deploy:
+    uses: powsybl/github-ci/.github/workflows/manual-dockerdeploy-backend-app-generic.yml@1a1ce5c10be37ecd5e9a0566b653670bcd47a6bb
+    with:
+      dockerImage: docker.io/powsybl/single-line-diagram-server
+      dockerUsername: powsyblci
+    secrets:
+      DOCKER_RELEASE: ${{ secrets.DOCKER_RELEASE }}
