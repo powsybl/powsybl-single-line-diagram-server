@@ -207,5 +207,10 @@
             <groupId>net.sf.supercsv</groupId>
             <artifactId>super-csv</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-iidm-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

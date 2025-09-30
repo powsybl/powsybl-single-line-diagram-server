@@ -21,15 +21,12 @@ import com.powsybl.sld.server.dto.EquipmentInfos;
 import com.powsybl.sld.server.dto.SubstationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
-import com.powsybl.sld.server.utils.SldDisplayMode;
+import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
 import com.powsybl.sld.svg.styles.iidm.TopologicalStyleProvider;
-import com.powsybl.sld.server.utils.DiagramUtils;
-import com.powsybl.sld.server.utils.LimitHighlightStyleProvider;
-import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
@@ -109,7 +106,7 @@ class SingleLineDiagramService {
                 throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
             }
 
-            var voltageLevelLayoutFactory = VoltageLevelLayoutFactoryCreator.newSmartVoltageLevelLayoutFactoryCreator();
+            var voltageLevelLayoutFactory = CustomVoltageLevelLayoutFactoryCreator.newCustomVoltageLevelLayoutFactoryCreator();
             var substationLayoutFactory = getSubstationLayoutFactory(diagParams.getSubstationLayout());
 
             sldParameters.setSvgParameters(svgParameters);
