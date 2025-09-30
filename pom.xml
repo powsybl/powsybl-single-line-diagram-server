@@ -210,7 +210,6 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-iidm-test</artifactId>
-            <version>6.8.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
