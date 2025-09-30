@@ -18,6 +18,8 @@ import com.powsybl.iidm.network.extensions.BusbarSectionPositionAdder;
 import com.powsybl.iidm.network.extensions.ConnectablePosition;
 import com.powsybl.iidm.network.extensions.ConnectablePositionAdder;
 import com.powsybl.iidm.network.extensions.SubstationPosition;
+import com.powsybl.iidm.network.test.FourSubstationsNodeBreakerFactory;
+import com.powsybl.iidm.network.test.FourSubstationsNodeBreakerWithExtensionsFactory;
 import com.powsybl.nad.svg.StyleProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
@@ -50,6 +52,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -957,6 +960,48 @@ class SingleLineDiagramTest {
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         assertTrue(svg.contains(OVERLOAD_STYLE_CLASS));
+    }
+
+    @Test
+    void testSingleLineDiagramNodeBreakerWithExtensions() {
+        UUID testNetworkId = UUID.fromString(UUID.randomUUID().toString());
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(FourSubstationsNodeBreakerWithExtensionsFactory.create());
+
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
+            .useName(true)
+            .labelCentered(false)
+            .diagonalLabel(true)
+            .topologicalColoring(true)
+            .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
+            .substationLayout("horizontal")
+            .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
+            .language("en")
+            .build();
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, List.of());
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+    }
+
+    @Test
+    void testSingleLineDiagramNodeBreakerWithoutExtensions() {
+        UUID testNetworkId = UUID.fromString(UUID.randomUUID().toString());
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(FourSubstationsNodeBreakerFactory.create());
+
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
+            .useName(true)
+            .labelCentered(false)
+            .diagonalLabel(true)
+            .topologicalColoring(true)
+            .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
+            .substationLayout("horizontal")
+            .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
+            .language("en")
+            .build();
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, List.of());
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
     }
 
     @Test

@@ -14,6 +14,7 @@ import com.powsybl.iidm.network.extensions.BusbarSectionPosition;
 import com.powsybl.iidm.network.extensions.ConnectablePosition;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.layout.position.clustering.PositionByClustering;
+import com.powsybl.sld.layout.position.predefined.PositionPredefined;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 
 import java.util.Objects;
@@ -39,15 +40,12 @@ public class CustomVoltageLevelLayoutFactory implements VoltageLevelLayoutFactor
         PositionVoltageLevelLayoutFactoryParameters positionVoltageLevelLayoutFactoryParameters = defaultPositionVoltageLevelLayoutFactoryParameters();
 
         return vl.getTopologyKind() == TopologyKind.BUS_BREAKER || hasAtLeastOneExtension(vl)
-            ? new PositionVoltageLevelLayoutFactory(positionVoltageLevelLayoutFactoryParameters)
+            ? new PositionVoltageLevelLayoutFactory(new PositionPredefined(), positionVoltageLevelLayoutFactoryParameters)
             : new PositionVoltageLevelLayoutFactory(new PositionByClustering(), positionVoltageLevelLayoutFactoryParameters);
     }
 
     private PositionVoltageLevelLayoutFactoryParameters defaultPositionVoltageLevelLayoutFactoryParameters() {
-        PositionVoltageLevelLayoutFactoryParameters positionVoltageLevelLayoutFactoryParameters = new PositionVoltageLevelLayoutFactoryParameters();
-        positionVoltageLevelLayoutFactoryParameters.setSubstituteInternalMiddle2wtByEquipmentNodes(false);
-
-        return positionVoltageLevelLayoutFactoryParameters;
+        return new PositionVoltageLevelLayoutFactoryParameters().setSubstituteInternalMiddle2wtByEquipmentNodes(false);
     }
 
     private static boolean hasAtLeastOneExtension(VoltageLevel vl) {
