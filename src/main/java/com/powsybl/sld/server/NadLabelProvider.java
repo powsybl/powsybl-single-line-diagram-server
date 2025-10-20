@@ -26,8 +26,7 @@ public class NadLabelProvider extends DefaultLabelProvider {
     public String getBusDescription(BusNode busNode) {
         if (svgParameters.isBusLegend()) {
             Bus b = network.getBusView().getBus(busNode.getEquipmentId());
-            String voltage = valueFormatter.formatVoltage(b.getV(), "kV");
-            return voltage;
+            return valueFormatter.formatVoltage(b.getV(), "kV");
         }
         return null;
     }
