@@ -7,6 +7,7 @@
 
 package com.powsybl.sld.server;
 
+import com.powsybl.diagram.util.ValueFormatter;
 import com.powsybl.iidm.network.Bus;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.nad.model.BusNode;
@@ -24,6 +25,9 @@ public class NadLabelProvider extends DefaultLabelProvider {
 
     @Override
     public String getBusDescription(BusNode busNode) {
+        SvgParameters svgParameters = this.getSvgParameters();
+        Network network = this.getNetwork();
+        ValueFormatter valueFormatter = this.getValueFormatter();
         if (svgParameters.isBusLegend()) {
             Bus b = network.getBusView().getBus(busNode.getEquipmentId());
             return valueFormatter.formatVoltage(b.getV(), "kV");
