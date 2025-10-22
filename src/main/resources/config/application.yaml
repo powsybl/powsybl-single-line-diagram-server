@@ -1,6 +1,11 @@
 spring:
   application:
     name: single-line-diagram-server
+  datasource:
+    hikari:
+      # By default the limit is 10, following our scalability study this service can be very solicited
+      # so we're increasing its limit
+      maximumPoolSize: 20
 
   mvc:
     async:
