@@ -92,7 +92,6 @@ class SingleLineDiagramService {
             svgParameters.setLanguageTag(diagParams.getLanguage());
             svgParameters.setUnifyVoltageLevelColors(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
-
             SldParameters sldParameters = new SldParameters();
 
             if (diagParams.getSldDisplayMode() == SldDisplayMode.FEEDER_POSITION) {
