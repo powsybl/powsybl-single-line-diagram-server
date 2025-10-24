@@ -91,6 +91,7 @@ class SingleLineDiagramService {
             svgParameters.setUndefinedValueSymbol("\u2014");
             svgParameters.setLanguageTag(diagParams.getLanguage());
             svgParameters.setUnifyVoltageLevelColors(true);
+            svgParameters.setDisplayCurrentFeederInfo(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
 
             SldParameters sldParameters = new SldParameters();
