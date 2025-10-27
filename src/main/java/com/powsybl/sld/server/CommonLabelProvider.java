@@ -7,7 +7,6 @@ import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.model.coordinate.Direction;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.*;
-import com.powsybl.sld.model.nodes.feeders.FeederWithSides;
 import com.powsybl.sld.svg.BusLegendInfo;
 import com.powsybl.sld.svg.DefaultLabelProvider;
 import com.powsybl.sld.svg.SvgParameters;
@@ -74,7 +73,7 @@ public class CommonLabelProvider extends DefaultLabelProvider {
 
     private void addDecoratorForBranch(List<NodeDecorator> nodeDecorators, FeederNode feederNode, Direction direction) {
         Branch<?> branch = network.getBranch(feederNode.getEquipmentId());
-        if (displayStatusDecorator(branch, feederNode.getFeeder())) {
+        if (!branch.getTerminal1().isConnected() && !branch.getTerminal2().isConnected()) {
             getOperatingStatusDecorator(nodeDecorators, feederNode, direction, branch);
         }
     }
@@ -82,7 +81,7 @@ public class CommonLabelProvider extends DefaultLabelProvider {
     private void addDecoratorForThreeWindingsTransformer(List<NodeDecorator> nodeDecorators, Node node, FeederNode feederNode, Direction direction) {
         if (node.getAdjacentNodes().stream().noneMatch(Middle3WTNode.class::isInstance)) {
             ThreeWindingsTransformer twt = network.getThreeWindingsTransformer(feederNode.getEquipmentId());
-            if (displayStatusDecorator(twt, feederNode.getFeeder())) {
+            if (!twt.getLeg1().getTerminal().isConnected() && !twt.getLeg2().getTerminal().isConnected() && !twt.getLeg3().getTerminal().isConnected()) {
                 getOperatingStatusDecorator(nodeDecorators, feederNode, direction, twt);
             }
         }
@@ -90,21 +89,21 @@ public class CommonLabelProvider extends DefaultLabelProvider {
 
     private void addDecoratorForHvdc(List<NodeDecorator> nodeDecorators, FeederNode feederNode, Direction direction) {
         HvdcLine hvdcLine = network.getHvdcLine(feederNode.getEquipmentId());
-        if (displayStatusDecorator(hvdcLine, feederNode.getFeeder())) {
+        if (!hvdcLine.getConverterStation1().getTerminal().isConnected() && !hvdcLine.getConverterStation2().getTerminal().isConnected()) {
             getOperatingStatusDecorator(nodeDecorators, feederNode, direction, hvdcLine);
         }
     }
 
     private void addDecoratorFor3WT(List<NodeDecorator> nodeDecorators, Middle3WTNode middle3WTNode, Direction direction) {
         ThreeWindingsTransformer twt = network.getThreeWindingsTransformer(middle3WTNode.getEquipmentId());
-        if (displayStatusDecorator(twt)) {
+        if (!twt.getLeg1().getTerminal().isConnected() && !twt.getLeg2().getTerminal().isConnected() && !twt.getLeg3().getTerminal().isConnected()) {
             getOperatingStatusDecorator(nodeDecorators, middle3WTNode, direction, twt);
         }
     }
 
     private void addDecoratorForGenericEquipment(List<NodeDecorator> nodeDecorators, EquipmentNode equipmentNode, Direction direction) {
         Identifiable<?> identifiable = network.getIdentifiable(equipmentNode.getEquipmentId());
-        if (displayStatusDecorator(identifiable)) {
+        if (identifiable instanceof Connectable<?> connectable && !connectable.getTerminals().stream().allMatch(Terminal::isConnected)) {
             getOperatingStatusDecorator(nodeDecorators, equipmentNode, direction, identifiable);
         }
     }
@@ -124,43 +123,11 @@ public class CommonLabelProvider extends DefaultLabelProvider {
 
     private NodeDecorator addOperatingStatusDecorator(Node node, Direction direction, String decoratorType) {
         return switch (node) {
-            case Middle3WTNode middle3WTNode ->
-                    new NodeDecorator(decoratorType, getMiddle3WTDecoratorPosition(middle3WTNode, direction));
+            case Middle3WTNode middle3WTNode -> new NodeDecorator(decoratorType, getMiddle3WTDecoratorPosition(middle3WTNode, direction));
             case BusNode ignored2 -> new NodeDecorator(decoratorType, getBusDecoratorPosition());
-            case FeederNode ignored1 ->
-                    new NodeDecorator(decoratorType, getFeederDecoratorPosition(direction, decoratorType));
-            case Internal2WTNode ignored ->
-                    new NodeDecorator(decoratorType, getInternal2WTDecoratorPosition(node.getOrientation()));
+            case FeederNode ignored1 -> new NodeDecorator(decoratorType, getFeederDecoratorPosition(direction, decoratorType));
+            case Internal2WTNode ignored -> new NodeDecorator(decoratorType, getInternal2WTDecoratorPosition(node.getOrientation()));
             case null, default -> new NodeDecorator(decoratorType, getGenericDecoratorPosition());
         };
-    }
-
-    private boolean displayStatusDecorator(Identifiable<?> identifiable, Feeder feeder) {
-        if (!(feeder instanceof FeederWithSides feederWithSides)) {
-            return false;
-        }
-        NodeSide side = feederWithSides.getSide();
-        if (identifiable instanceof Branch<?> branch) {
-            Terminal terminal = side == NodeSide.ONE ? branch.getTerminal1() : branch.getTerminal2();
-            return !terminal.isConnected();
-        } else if (identifiable instanceof ThreeWindingsTransformer twt) {
-            Terminal terminal = switch (side) {
-                case ONE -> twt.getLeg1().getTerminal();
-                case TWO -> twt.getLeg2().getTerminal();
-                case THREE -> twt.getLeg3().getTerminal();
-            };
-            return !terminal.isConnected();
-        } else if (identifiable instanceof HvdcLine hvdcLine) {
-            Terminal terminal = side == NodeSide.ONE ? hvdcLine.getConverterStation1().getTerminal() : hvdcLine.getConverterStation2().getTerminal();
-            return !terminal.isConnected();
-        }
-        return false;
-    }
-
-    private boolean displayStatusDecorator(Identifiable<?> identifiable) {
-        if (identifiable instanceof Connectable<?> connectable) {
-            return connectable.getTerminals().stream().noneMatch(Terminal::isConnected);
-        }
-        return false;
     }
 }

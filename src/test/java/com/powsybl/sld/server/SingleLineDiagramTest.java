@@ -14,10 +14,7 @@ import com.google.common.jimfs.Jimfs;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.extensions.Extendable;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.BusbarSectionPositionAdder;
-import com.powsybl.iidm.network.extensions.ConnectablePosition;
-import com.powsybl.iidm.network.extensions.ConnectablePositionAdder;
-import com.powsybl.iidm.network.extensions.SubstationPosition;
+import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.iidm.network.test.FourSubstationsNodeBreakerFactory;
 import com.powsybl.iidm.network.test.FourSubstationsNodeBreakerWithExtensionsFactory;
 import com.powsybl.nad.svg.StyleProvider;
@@ -85,9 +82,8 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -965,6 +961,19 @@ class SingleLineDiagramTest {
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, List.of());
         String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+
+        Network network = networkStoreService.getNetwork(testNetworkId, null);
+        network.getLine("LINE_S2S3").newExtension(OperatingStatusAdder.class).withStatus(OperatingStatus.Status.PLANNED_OUTAGE).add();
+        network.getLine("LINE_S2S3").getTerminal1().disconnect();
+        network.getLine("LINE_S2S3").getTerminal2().disconnect();
+        network.getTwoWindingsTransformer("TWT").newExtension(OperatingStatusAdder.class).withStatus(OperatingStatus.Status.PLANNED_OUTAGE).add();
+        network.getTwoWindingsTransformer("TWT").getTerminal1().disconnect();
+        network.getHvdcConverterStation("VSC1").getHvdcLine().newExtension(OperatingStatusAdder.class).withStatus(OperatingStatus.Status.FORCED_OUTAGE).add();
+        network.getHvdcConverterStation("VSC1").getHvdcLine().getConverterStation1().disconnect();
+        network.getHvdcConverterStation("VSC1").getHvdcLine().getConverterStation2().disconnect();
+        svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S2VL1", parameters, List.of());
+        svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
 
