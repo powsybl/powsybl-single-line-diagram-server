@@ -63,6 +63,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.server.ResponseStatusException;
@@ -378,13 +379,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
                 .build();
 
-        MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        result = mvc.perform(asyncDispatch(result))
+                .andExpect(request().asyncStarted());
+        MvcResult result = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -404,13 +404,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
                 .build();
 
-        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfosNotFound)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(request().asyncStarted());
+        mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isNotFound()).andReturn();
     }
 
@@ -437,13 +436,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult validResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestWithValidFilter)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        validResult = mvc.perform(asyncDispatch(validResult))
+                .andExpect(request().asyncStarted());
+        MvcResult validResult = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -462,13 +460,12 @@ class SingleLineDiagramTest {
                 .positions(Collections.emptyList())
                 .build();
 
-        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidFilterNadRequestJson)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(request().asyncStarted());
+        mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isNotFound()).andReturn();
     }
 
@@ -499,13 +496,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult validResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        validResult = mvc.perform(asyncDispatch(validResult))
+                .andExpect(request().asyncStarted());
+        MvcResult validResult = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -554,13 +550,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult firstResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithPositionFromNadConfig)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        firstResult = mvc.perform(asyncDispatch(firstResult))
+                .andExpect(request().asyncStarted());
+        MvcResult firstResult = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -591,13 +586,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult secondResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+        mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithPositionsFromUser)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        secondResult = mvc.perform(asyncDispatch(secondResult))
+                .andExpect(request().asyncStarted());
+        MvcResult secondResult = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -620,13 +614,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult thirdResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+        mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithPositionsFromBoth)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        thirdResult = mvc.perform(asyncDispatch(thirdResult))
+                .andExpect(request().asyncStarted());
+        MvcResult thirdResult = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -666,13 +659,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(request().asyncStarted());
+        mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk()).andReturn();
 
         verify(geoDataService, times(0)).getSubstationsGraphics(any(), any(), any());
@@ -705,13 +697,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(request().asyncStarted());
+        mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isNotFound()).andReturn();
     }
 
@@ -796,12 +787,11 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        result = mvc.perform(asyncDispatch(result))
+                .andExpect(request().asyncStarted());
+        MvcResult result = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andReturn();
         String stringResult = result.getResponse().getContentAsString();
@@ -824,12 +814,11 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.CONFIGURED)
                 .build();
 
-        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(request().asyncStarted());
+        mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
@@ -850,12 +839,11 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult resultExtendedVl = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfosExtendedVl)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        resultExtendedVl = mvc.perform(asyncDispatch(resultExtendedVl))
+                .andExpect(request().asyncStarted());
+        MvcResult resultExtendedVl = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andReturn();
         String stringResultExtendedVl = resultExtendedVl.getResponse().getContentAsString();
@@ -885,13 +873,12 @@ class SingleLineDiagramTest {
                 ))
                 .build();
 
-        MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        result = mvc.perform(asyncDispatch(result))
+                .andExpect(request().asyncStarted());
+        MvcResult result = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -920,13 +907,12 @@ class SingleLineDiagramTest {
                 ))
                 .build();
 
-        MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        result = mvc.perform(asyncDispatch(result))
+                .andExpect(request().asyncStarted());
+        MvcResult result = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -1128,13 +1114,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult resultNoOmition = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestNoOmition)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        resultNoOmition = mvc.perform(asyncDispatch(resultNoOmition))
+                .andExpect(request().asyncStarted());
+        MvcResult resultNoOmition = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -1155,13 +1140,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult resultWithOmition = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestWithOmition)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        resultWithOmition = mvc.perform(asyncDispatch(resultWithOmition))
+                .andExpect(request().asyncStarted());
+        MvcResult resultWithOmition = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -1197,12 +1181,11 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult resultWithOmitionAndExtension = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestWithOmitionAndExtension)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        resultWithOmitionAndExtension = mvc.perform(asyncDispatch(resultWithOmitionAndExtension))
+                .andExpect(request().asyncStarted());
+        MvcResult resultWithOmitionAndExtension = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
@@ -1232,12 +1215,11 @@ class SingleLineDiagramTest {
             .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
             .build();
 
-        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(nadRequestInfos)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(request().asyncStarted());
+        MvcResult mvcResult = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
             .andExpect(status().isForbidden())
             .andReturn();
         String errorMessage = mvcResult.getResponse().getErrorMessage();
@@ -1564,13 +1546,12 @@ class SingleLineDiagramTest {
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
-        MvcResult result = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        result = mvc.perform(asyncDispatch(result))
+                .andExpect(request().asyncStarted());
+        MvcResult result = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andReturn();
         String stringResult = result.getResponse().getContentAsString();
@@ -1587,13 +1568,12 @@ class SingleLineDiagramTest {
                 .positions(Collections.emptyList())
                 .build();
 
-        MvcResult mvcResult = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+        mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
                         .param("variantId", VARIANT_2_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(nadRequestInfosVlNotFound)))
-                .andExpect(request().asyncStarted())
-                .andReturn();
-        mvcResult = mvc.perform(asyncDispatch(mvcResult))
+                .andExpect(request().asyncStarted());
+        mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isNotFound()).andReturn();
     }
 
