@@ -74,14 +74,7 @@ class SingleLineDiagramService {
         };
     }
 
-    private BaseVoltagesConfig buildBaseVoltagesConfig(List<BaseVoltageConfig> baseVoltages) {
-        BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
-        baseVoltagesConfig.setBaseVoltages(baseVoltages);
-        baseVoltagesConfig.setDefaultProfile("Default");
-        return baseVoltagesConfig;
-    }
-
-    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, List<CurrentLimitViolationInfos> currentLimitViolationInfos, List<BaseVoltageConfig> customBaseVoltages) {
+    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, List<CurrentLimitViolationInfos> currentLimitViolationInfos, BaseVoltagesConfig baseVoltagesConfig) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
@@ -124,8 +117,7 @@ class SingleLineDiagramService {
             sldParameters.setLayoutParameters(layoutParameters);
 
             Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
-            if (customBaseVoltages != null) {
-                BaseVoltagesConfig baseVoltagesConfig = buildBaseVoltagesConfig(customBaseVoltages);
+            if (baseVoltagesConfig != null) {
                 sldParameters.setStyleProviderFactory((net, parameters) -> {
                     return diagParams.isTopologicalColoring()
                         ? new StyleProvidersList(new TopologicalStyleProvider(baseVoltagesConfig, network, parameters),
