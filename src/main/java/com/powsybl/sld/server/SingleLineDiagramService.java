@@ -94,6 +94,7 @@ class SingleLineDiagramService {
             svgParameters.setDisplayCurrentFeederInfo(true);
             svgParameters.setDisplayPermanentLimitPercentageFeederInfo(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
+            layoutParameters.setSpaceForFeederInfos(65);
 
             SldParameters sldParameters = new SldParameters();
 
