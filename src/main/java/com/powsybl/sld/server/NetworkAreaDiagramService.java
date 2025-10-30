@@ -10,6 +10,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.config.BaseVoltageConfig;
+import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.VoltageLevel;
@@ -270,6 +272,19 @@ class NetworkAreaDiagramService {
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
 
+    private BaseVoltagesConfig buildBaseVoltagesConfig() {
+        BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
+        BaseVoltageConfig baseVoltage1 = new BaseVoltageConfig();
+        baseVoltage1.setName("vl0to40");
+        baseVoltage1.setMinValue(0);
+        baseVoltage1.setMaxValue(40);
+        baseVoltage1.setProfile("Deafault");
+        List<BaseVoltageConfig> listBaseVoltageConfigs = List.of(baseVoltage1);
+        baseVoltagesConfig.setBaseVoltages(listBaseVoltageConfigs);
+        baseVoltagesConfig.setDefaultProfile("Default");
+        return baseVoltagesConfig;
+    }
+
     private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
 
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
@@ -286,7 +301,8 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
         Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
-        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), limitViolationStyles));
+        BaseVoltagesConfig baseVoltageStyle = buildBaseVoltagesConfig();
+        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), baseVoltageStyle, limitViolationStyles));
 
         // Set style provider factory either with geographical data or with the provided positions (if any)
         if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES && nadGenerationContext.getPositions().isEmpty()) {
