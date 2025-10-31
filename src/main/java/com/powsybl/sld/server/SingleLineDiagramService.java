@@ -120,10 +120,12 @@ class SingleLineDiagramService {
                 return diagParams.isTopologicalColoring()
                     ? new StyleProvidersList(new TopologicalStyleProvider(network, parameters),
                                              new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, limitViolationStyles))
+                                             new LimitHighlightStyleProvider(network, limitViolationStyles),
+                                             new BusLegendStyleProvider())
                     : new StyleProvidersList(new NominalVoltageStyleProvider(),
                                              new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, limitViolationStyles));
+                                             new LimitHighlightStyleProvider(network, limitViolationStyles),
+                                             new BusLegendStyleProvider());
             });
             sldParameters.setComponentLibrary(compLibrary);
 
