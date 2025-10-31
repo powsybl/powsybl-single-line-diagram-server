@@ -7,7 +7,6 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.commons.config.BaseVoltageConfig;
 import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;

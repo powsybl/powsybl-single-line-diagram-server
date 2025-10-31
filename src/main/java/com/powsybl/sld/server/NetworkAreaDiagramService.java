@@ -10,7 +10,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.commons.config.BaseVoltageConfig;
 import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
