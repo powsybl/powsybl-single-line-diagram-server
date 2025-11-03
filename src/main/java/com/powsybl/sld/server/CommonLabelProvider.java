@@ -20,14 +20,14 @@ public class CommonLabelProvider extends DefaultLabelProvider {
 
     private static final String PREFIX_VOLTAGE = "U = ";
     private static final String PREFIX_ANGLE = "θ = ";
-    private static final String PREFIX_GENERATOR_SUM = "P = ";
-    private static final String PREFIX_LOAD_SUM = "C = ";
+    private static final String PREFIX_PRODUCTION = "P = ";
+    private static final String PREFIX_CONSUMPTION = "C = ";
 
     private static final String KEY_BUS_ID = "busId";
-    private static final String KEY_VOLTAGE = "v";
-    private static final String KEY_ANGLE = "angle";
-    private static final String KEY_GENERATOR_SUM = "generatorSum";
-    private static final String KEY_LOAD_SUM = "loadSum";
+    public static final String KEY_VOLTAGE = "v";
+    public static final String KEY_ANGLE = "angle";
+    public static final String KEY_CONSUMPTION = "consumption-sum";
+    public static final String KEY_PRODUCTION = "production-sum";
 
     public CommonLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
         super(network, componentLibrary, layoutParameters, svgParameters);
@@ -42,8 +42,8 @@ public class CommonLabelProvider extends DefaultLabelProvider {
                     new BusLegendInfo.Caption(b.getId(), KEY_BUS_ID),
                     new BusLegendInfo.Caption(PREFIX_VOLTAGE + valueFormatter.formatVoltage(b.getV(), UNIT_KV), KEY_VOLTAGE),
                     new BusLegendInfo.Caption(PREFIX_ANGLE + valueFormatter.formatAngleInDegrees(b.getAngle()), KEY_ANGLE),
-                    new BusLegendInfo.Caption(PREFIX_GENERATOR_SUM + formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_GENERATOR_SUM),
-                    new BusLegendInfo.Caption(PREFIX_LOAD_SUM + formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_LOAD_SUM)
+                    new BusLegendInfo.Caption(PREFIX_PRODUCTION + formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_CONSUMPTION),
+                    new BusLegendInfo.Caption(PREFIX_CONSUMPTION + formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_PRODUCTION)
                 ))
             ).toList();
     }
