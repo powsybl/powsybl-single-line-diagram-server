@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2019, RTE (http://www.rte-france.com)
+ * Copyright (c) 2025, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -9,7 +9,6 @@ package com.powsybl.sld.server;
 import com.powsybl.diagram.components.ComponentSize;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.OperatingStatus;
-import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.model.coordinate.Direction;
@@ -18,7 +17,6 @@ import com.powsybl.sld.svg.LabelProvider;
 import com.powsybl.sld.svg.SvgParameters;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
 
@@ -27,14 +25,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
- * @author Franck Lecuyer <franck.lecuyer at rte-france.com>
+ * @author REHILI Ghazwa <ghazwa.rehili@rte-france.com>
  */
 @SpringBootTest
 class CommonLabelProviderTest {
-
-    @MockitoBean
-    private NetworkStoreService networkStoreService;
 
     @Test
     void testGetNodeDecoratorsWithEmbeddedMiddle3WTNode() {
@@ -51,9 +45,9 @@ class CommonLabelProviderTest {
         when(leg1.getTerminal()).thenReturn(mock(Terminal.class));
         when(leg2.getTerminal()).thenReturn(mock(Terminal.class));
         when(leg3.getTerminal()).thenReturn(mock(Terminal.class));
-        when(leg1.getTerminal().isConnected()).thenReturn(false);
-        when(leg2.getTerminal().isConnected()).thenReturn(false);
-        when(leg3.getTerminal().isConnected()).thenReturn(false);
+        when(leg1.getTerminal().isConnected()).thenReturn(true);
+        when(leg2.getTerminal().isConnected()).thenReturn(true);
+        when(leg3.getTerminal().isConnected()).thenReturn(true);
 
         Middle3WTNode middle3WTNode = mock(Middle3WTNode.class);
         when(middle3WTNode.isEmbeddedInVlGraph()).thenReturn(true);
@@ -69,6 +63,13 @@ class CommonLabelProviderTest {
         when(mockLibrary.getSize(any())).thenReturn(new ComponentSize(40, 20));
         CommonLabelProvider provider = new CommonLabelProvider(mockNetwork, mockLibrary, layoutParameters, svgParameters);
         List<LabelProvider.NodeDecorator> decorators = provider.getNodeDecorators(middle3WTNode, Direction.TOP);
+        assertTrue(decorators.isEmpty());
+
+        when(leg1.getTerminal().isConnected()).thenReturn(false);
+        when(leg2.getTerminal().isConnected()).thenReturn(false);
+        when(leg3.getTerminal().isConnected()).thenReturn(false);
+        provider = new CommonLabelProvider(mockNetwork, mockLibrary, layoutParameters, svgParameters);
+        decorators = provider.getNodeDecorators(middle3WTNode, Direction.TOP);
         assertTrue(decorators.stream().anyMatch(d -> d.getType().equals("FLASH")));
     }
 
@@ -88,8 +89,8 @@ class CommonLabelProviderTest {
         Terminal terminal2 = mock(Terminal.class);
         when(mockLine.getTerminal1()).thenReturn(terminal1);
         when(mockLine.getTerminal2()).thenReturn(terminal2);
-        when(terminal1.isConnected()).thenReturn(false);
-        when(terminal2.isConnected()).thenReturn(false);
+        when(terminal1.isConnected()).thenReturn(true);
+        when(terminal2.isConnected()).thenReturn(true);
 
         OperatingStatus<Line> mockStatus = mock(OperatingStatus.class);
         when(mockStatus.getStatus()).thenReturn(OperatingStatus.Status.FORCED_OUTAGE);
@@ -102,6 +103,12 @@ class CommonLabelProviderTest {
 
         CommonLabelProvider provider = new CommonLabelProvider(mockNetwork, mockLibrary, layoutParameters, svgParameters);
         List<LabelProvider.NodeDecorator> decorators = provider.getNodeDecorators(feederNode, Direction.TOP);
+        assertTrue(decorators.isEmpty());
+
+        when(terminal1.isConnected()).thenReturn(false);
+        when(terminal2.isConnected()).thenReturn(false);
+        provider = new CommonLabelProvider(mockNetwork, mockLibrary, layoutParameters, svgParameters);
+        decorators = provider.getNodeDecorators(feederNode, Direction.TOP);
         assertTrue(decorators.stream().anyMatch(d -> d.getType().equals("FLASH")));
     }
 
@@ -152,8 +159,8 @@ class CommonLabelProviderTest {
         Terminal terminal2 = mock(Terminal.class);
         when(converter1.getTerminal()).thenReturn(terminal1);
         when(converter2.getTerminal()).thenReturn(terminal2);
-        when(terminal1.isConnected()).thenReturn(false);
-        when(terminal2.isConnected()).thenReturn(false);
+        when(terminal1.isConnected()).thenReturn(true);
+        when(terminal2.isConnected()).thenReturn(true);
         when(mockHvdcLine.getConverterStation1()).thenReturn(converter1);
         when(mockHvdcLine.getConverterStation2()).thenReturn(converter2);
         OperatingStatus<HvdcLine> mockStatus = mock(OperatingStatus.class);
@@ -166,6 +173,12 @@ class CommonLabelProviderTest {
         when(mockLibrary.getSize(any())).thenReturn(new ComponentSize(40, 20));
         CommonLabelProvider provider = new CommonLabelProvider(mockNetwork, mockLibrary, layoutParameters, svgParameters);
         List<LabelProvider.NodeDecorator> decorators = provider.getNodeDecorators(feederNode, Direction.TOP);
+        assertTrue(decorators.isEmpty());
+
+        when(terminal1.isConnected()).thenReturn(false);
+        when(terminal2.isConnected()).thenReturn(false);
+        provider = new CommonLabelProvider(mockNetwork, mockLibrary, layoutParameters, svgParameters);
+        decorators = provider.getNodeDecorators(feederNode, Direction.TOP);
         assertTrue(decorators.stream().anyMatch(d -> d.getType().equals("FLASH")));
     }
 }
