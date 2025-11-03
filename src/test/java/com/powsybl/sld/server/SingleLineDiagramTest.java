@@ -53,10 +53,10 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -102,20 +102,20 @@ class SingleLineDiagramTest {
     @Autowired
     private NetworkAreaDiagramService networkAreaDiagramService;
 
-    @MockBean
+    @MockitoBean
     private NadConfigRepository nadConfigRepository;
 
-    @MockBean
+    @MockitoBean
     private NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository;
 
-    @MockBean
+    @MockitoBean
     private PositionDiagramLabelProvider positionDiagramLabelProvider;
 
-    @MockBean
+    @MockitoBean
     private NetworkStoreService networkStoreService;
-    @MockBean
+    @MockitoBean
     private GeoDataService geoDataService;
-    @MockBean
+    @MockitoBean
     private FilterService filterService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
