@@ -38,6 +38,7 @@ import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
+import com.powsybl.sld.server.dto.sld.SldRequestInfos;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
@@ -941,7 +942,12 @@ class SingleLineDiagramTest {
                 .limitName(null)
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, new SvgGenerationMetadata(List.of(violation)));
+        SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
+                .baseVoltagesConfig(null)
+                .currentLimitViolationInfos(List.of(violation))
+                .build();
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, sldRequestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         assertTrue(svg.contains(OVERLOAD_STYLE_CLASS));
@@ -963,7 +969,7 @@ class SingleLineDiagramTest {
             .language("en")
             .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, new SvgGenerationMetadata(List.of()));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, null);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
@@ -984,7 +990,7 @@ class SingleLineDiagramTest {
             .language("en")
             .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, new SvgGenerationMetadata(List.of()));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, null);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
@@ -1010,7 +1016,12 @@ class SingleLineDiagramTest {
                 .limitName("IT20")
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, new SvgGenerationMetadata(List.of(violation)));
+        SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
+                .currentLimitViolationInfos(List.of(violation))
+                .baseVoltagesConfig(null)
+                .build();
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, sldRequestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         String expected = OVERLOAD_STYLE_CLASS + "-it20";
@@ -1269,7 +1280,7 @@ class SingleLineDiagramTest {
                 .language("en")
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "vlFr1A", parameters, null, null);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "vlFr1A", parameters, null);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
@@ -1296,7 +1307,7 @@ class SingleLineDiagramTest {
                 .language("en")
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr1", parameters, null, null);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr1", parameters, null);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });

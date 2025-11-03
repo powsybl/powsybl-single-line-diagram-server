@@ -10,11 +10,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.commons.config.BaseVoltagesConfig;
-import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.SvgGenerationMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
+import com.powsybl.sld.server.dto.sld.SldRequestInfos;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -126,7 +126,11 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, null, baseVoltagesConfig).getMetadata();
+        SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
+                .baseVoltagesConfig(baseVoltagesConfig)
+                .currentLimitViolationInfos(null)
+                .build();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, sldRequestInfos).getMetadata();
     }
 
     @PostMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -225,7 +229,11 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, null, baseVoltagesConfig).getMetadata();
+        SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
+                .baseVoltagesConfig(baseVoltagesConfig)
+                .currentLimitViolationInfos(null)
+                .build();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, sldRequestInfos).getMetadata();
     }
 
     @PostMapping(value = "substation-svg-and-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)

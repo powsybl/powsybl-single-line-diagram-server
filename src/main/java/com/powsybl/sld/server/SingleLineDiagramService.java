@@ -7,7 +7,6 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
-import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
@@ -69,14 +68,7 @@ class SingleLineDiagramService {
         };
     }
 
-    private BaseVoltagesConfig buildBaseVoltagesConfig(List<BaseVoltageConfig> baseVoltages) {
-        BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
-        baseVoltagesConfig.setBaseVoltages(baseVoltages);
-        baseVoltagesConfig.setDefaultProfile("Default");
-        return baseVoltagesConfig;
-    }
-
-    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, SvgGenerationMetadata svgGenerationMetadata) {
+    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, SldRequestInfos sldRequestInfos) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
@@ -118,28 +110,15 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
 
-            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(svgGenerationMetadata != null ? svgGenerationMetadata.getCurrentLimitViolationInfos() : null, OVERLOAD_STYLE_CLASS);
-
-            sldParameters.setStyleProviderFactory((net, parameters) ->
-                diagParams.isTopologicalColoring()
-                    ? new StyleProvidersList(new TopologicalStyleProvider(network, parameters),
-                                             new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, limitViolationStyles),
-                                             new BusLegendStyleProvider())
-                    : new StyleProvidersList(new NominalVoltageStyleProvider(),
-                                             new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, limitViolationStyles),
-                                             new BusLegendStyleProvider())
-            );
-            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
-            if (baseVoltagesConfig != null) {
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolationInfos(), OVERLOAD_STYLE_CLASS);
+            if (sldRequestInfos.getBaseVoltagesConfig() != null) {
                 sldParameters.setStyleProviderFactory((net, parameters) -> {
                     return diagParams.isTopologicalColoring()
-                        ? new StyleProvidersList(new TopologicalStyleProvider(baseVoltagesConfig, network, parameters),
+                        ? new StyleProvidersList(new TopologicalStyleProvider(sldRequestInfos.getBaseVoltagesConfig(), network, parameters),
                                                 new HighlightLineStateStyleProvider(network),
                                                 new LimitHighlightStyleProvider(network, limitViolationStyles),
                                                 new BusLegendStyleProvider())
-                        : new StyleProvidersList(new NominalVoltageStyleProvider(baseVoltagesConfig),
+                        : new StyleProvidersList(new NominalVoltageStyleProvider(sldRequestInfos.getBaseVoltagesConfig()),
                                                 new HighlightLineStateStyleProvider(network),
                                                 new LimitHighlightStyleProvider(network, limitViolationStyles),
                                                 new BusLegendStyleProvider());
