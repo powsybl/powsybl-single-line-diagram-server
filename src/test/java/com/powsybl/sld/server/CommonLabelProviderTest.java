@@ -16,10 +16,7 @@ import com.powsybl.sld.model.coordinate.Direction;
 import com.powsybl.sld.model.nodes.*;
 import com.powsybl.sld.svg.LabelProvider;
 import com.powsybl.sld.svg.SvgParameters;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -38,14 +35,6 @@ class CommonLabelProviderTest {
 
     @MockitoBean
     private NetworkStoreService networkStoreService;
-
-    @Autowired
-    private SingleLineDiagramService singleLineDiagramService;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-    }
 
     @Test
     void testGetNodeDecoratorsWithEmbeddedMiddle3WTNode() {
@@ -87,7 +76,7 @@ class CommonLabelProviderTest {
     void testGetNodeDecoratorsWithFeederNode() {
         Network mockNetwork = mock(Network.class);
         Line mockLine = mock(Line.class);
-        when(mockNetwork.getBranch(eq("LINE_S2S3"))).thenReturn(mockLine);
+        when(mockNetwork.getBranch("LINE_S2S3")).thenReturn(mockLine);
 
         FeederNode feederNode = mock(FeederNode.class);
         Feeder feeder = mock(Feeder.class);
@@ -121,8 +110,8 @@ class CommonLabelProviderTest {
         Network mockNetwork = mock(Network.class);
         BusbarSection mockBusbarSection = mock(BusbarSection.class);
 
-        when(mockNetwork.getBusbarSection(eq("S1VL1_BBS"))).thenReturn(mockBusbarSection);
-        when(mockNetwork.getIdentifiable(eq("S1VL1_BBS"))).thenReturn((Identifiable) mockBusbarSection);
+        when(mockNetwork.getBusbarSection("S1VL1_BBS")).thenReturn(mockBusbarSection);
+        when(mockNetwork.getIdentifiable("S1VL1_BBS")).thenReturn((Identifiable) mockBusbarSection);
         BusNode busNode = mock(BusNode.class);
         when(busNode.getEquipmentId()).thenReturn("S1VL1_BBS");
 
@@ -154,8 +143,8 @@ class CommonLabelProviderTest {
         when(feederNode.getFeeder()).thenReturn(feeder);
         when(feeder.getFeederType()).thenReturn(FeederType.HVDC);
         when(feederNode.getEquipmentId()).thenReturn("VSC1");
-        when(mockNetwork.getHvdcLine(eq("VSC1"))).thenReturn(mockHvdcLine);
-        when(mockNetwork.getHvdcConverterStation(eq("VSC1"))).thenReturn(mockConverterStation);
+        when(mockNetwork.getHvdcLine("VSC1")).thenReturn(mockHvdcLine);
+        when(mockNetwork.getHvdcConverterStation("VSC1")).thenReturn(mockConverterStation);
         when(mockConverterStation.getHvdcLine()).thenReturn(mockHvdcLine);
         HvdcConverterStation converter1 = mock(HvdcConverterStation.class);
         HvdcConverterStation converter2 = mock(HvdcConverterStation.class);
@@ -170,7 +159,7 @@ class CommonLabelProviderTest {
         OperatingStatus<HvdcLine> mockStatus = mock(OperatingStatus.class);
         when(mockStatus.getStatus()).thenReturn(OperatingStatus.Status.FORCED_OUTAGE);
         when(mockHvdcLine.getExtension(OperatingStatus.class)).thenReturn(mockStatus);
-        when(mockNetwork.getIdentifiable(eq("VSC1"))).thenReturn(mockConverterStation);
+        when(mockNetwork.getIdentifiable("VSC1")).thenReturn(mockConverterStation);
         LayoutParameters layoutParameters = mock(LayoutParameters.class);
         SvgParameters svgParameters = mock(SvgParameters.class);
         SldComponentLibrary mockLibrary = mock(SldComponentLibrary.class);
