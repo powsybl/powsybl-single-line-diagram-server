@@ -127,7 +127,6 @@ public class SingleLineDiagramController {
                 .build();
         SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
                 .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
-                .currentLimitViolations(null)
                 .build();
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, sldRequestInfos).getMetadata();
     }
@@ -230,7 +229,6 @@ public class SingleLineDiagramController {
                 .build();
         SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
                 .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
-                .currentLimitViolations(null)
                 .build();
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, sldRequestInfos).getMetadata();
     }
