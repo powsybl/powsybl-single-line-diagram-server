@@ -943,7 +943,6 @@ class SingleLineDiagramTest {
                 .build();
 
         SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
-                .baseVoltagesConfigInfos(null)
                 .currentLimitViolations(List.of(violation))
                 .build();
 
@@ -1018,7 +1017,6 @@ class SingleLineDiagramTest {
 
         SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
                 .currentLimitViolations(List.of(violation))
-                .baseVoltagesConfigInfos(null)
                 .build();
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, sldRequestInfos);

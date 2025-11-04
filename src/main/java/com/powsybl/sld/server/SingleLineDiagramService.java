@@ -112,6 +112,7 @@ class SingleLineDiagramService {
             sldParameters.setLayoutParameters(layoutParameters);
 
             Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolations(), OVERLOAD_STYLE_CLASS);
+
             if (sldRequestInfos.getBaseVoltagesConfigInfos() != null) {
                 BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
                 baseVoltagesConfig.setBaseVoltages(sldRequestInfos.getBaseVoltagesConfigInfos().getBaseVoltages());
