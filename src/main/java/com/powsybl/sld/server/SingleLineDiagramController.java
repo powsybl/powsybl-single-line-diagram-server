@@ -9,7 +9,7 @@ package com.powsybl.sld.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
-import com.powsybl.commons.config.BaseVoltagesConfig;
+import com.powsybl.sld.server.dto.sld.BaseVoltagesConfigInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.SvgGenerationMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
@@ -113,7 +113,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
-            @RequestBody(required = false) BaseVoltagesConfig baseVoltagesConfig) {
+            @RequestBody(required = false) BaseVoltagesConfigInfos baseVoltagesConfigInfos) {
         LOGGER.debug("getVoltageLevelMetadata request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId != null ? sanitizeParam(voltageLevelId) : null);
 
         var parameters = SingleLineDiagramParameters.builder()
@@ -127,8 +127,8 @@ public class SingleLineDiagramController {
                 .language(language)
                 .build();
         SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
-                .baseVoltagesConfig(baseVoltagesConfig)
-                .currentLimitViolationInfos(null)
+                .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
+                .currentLimitViolations(null)
                 .build();
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, sldRequestInfos).getMetadata();
     }
@@ -217,7 +217,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
-            @RequestBody(required = false) BaseVoltagesConfig baseVoltagesConfig) {
+            @RequestBody(required = false) BaseVoltagesConfigInfos baseVoltagesConfigInfos) {
         LOGGER.debug("getSubstationMetadata request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId != null ? sanitizeParam(substationId) : null);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -230,8 +230,8 @@ public class SingleLineDiagramController {
                 .language(language)
                 .build();
         SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
-                .baseVoltagesConfig(baseVoltagesConfig)
-                .currentLimitViolationInfos(null)
+                .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
+                .currentLimitViolations(null)
                 .build();
         return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, sldRequestInfos).getMetadata();
     }

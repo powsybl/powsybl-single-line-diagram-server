@@ -7,6 +7,7 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
@@ -110,15 +111,18 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
 
-            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolationInfos(), OVERLOAD_STYLE_CLASS);
-            if (sldRequestInfos.getBaseVoltagesConfig() != null) {
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolations(), OVERLOAD_STYLE_CLASS);
+            if (sldRequestInfos.getBaseVoltagesConfigInfos() != null) {
+                BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
+                baseVoltagesConfig.setBaseVoltages(sldRequestInfos.getBaseVoltagesConfigInfos().getBaseVoltages());
+                baseVoltagesConfig.setDefaultProfile(sldRequestInfos.getBaseVoltagesConfigInfos().getDefaultProfile());
                 sldParameters.setStyleProviderFactory((net, parameters) -> {
                     return diagParams.isTopologicalColoring()
-                        ? new StyleProvidersList(new TopologicalStyleProvider(sldRequestInfos.getBaseVoltagesConfig(), network, parameters),
+                        ? new StyleProvidersList(new TopologicalStyleProvider(baseVoltagesConfig, network, parameters),
                                                 new HighlightLineStateStyleProvider(network),
                                                 new LimitHighlightStyleProvider(network, limitViolationStyles),
                                                 new BusLegendStyleProvider())
-                        : new StyleProvidersList(new NominalVoltageStyleProvider(sldRequestInfos.getBaseVoltagesConfig()),
+                        : new StyleProvidersList(new NominalVoltageStyleProvider(baseVoltagesConfig),
                                                 new HighlightLineStateStyleProvider(network),
                                                 new LimitHighlightStyleProvider(network, limitViolationStyles),
                                                 new BusLegendStyleProvider());

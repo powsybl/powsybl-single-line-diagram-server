@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.config.BaseVoltagesConfig;
+import com.powsybl.sld.server.dto.sld.BaseVoltagesConfigInfos;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.VoltageLevel;
@@ -261,7 +262,7 @@ class NetworkAreaDiagramService {
         );
 
         // Build Powsybl parameters
-        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos(), nadRequestInfos.getBaseVoltageStyle());
+        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos(), nadRequestInfos.getBaseVoltagesConfigInfos());
 
         int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
         if (nbVoltageLevels > maxVoltageLevels) {
@@ -271,7 +272,7 @@ class NetworkAreaDiagramService {
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
 
-    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, BaseVoltagesConfig baseVoltageStyle) {
+    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, BaseVoltagesConfigInfos baseVoltagesConfigInfos) {
 
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
@@ -287,8 +288,11 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
         Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
-        if (baseVoltageStyle != null) {
-            nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), baseVoltageStyle, limitViolationStyles));
+        if (baseVoltagesConfigInfos != null) {
+            BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
+            baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos.getBaseVoltages());
+            baseVoltagesConfig.setDefaultProfile(baseVoltagesConfigInfos.getDefaultProfile());
+            nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), baseVoltagesConfig, limitViolationStyles));
         } else {
             nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), limitViolationStyles));
         }
