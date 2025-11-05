@@ -32,6 +32,5 @@ public class NadRequestInfos {
     private NadPositionsGenerationMode nadPositionsGenerationMode;
     private UUID nadPositionsConfigUuid;
     private List<CurrentLimitViolationInfos> currentLimitViolationsInfos;
-    @Builder.Default
-    private BaseVoltagesConfigInfos baseVoltagesConfigInfos = null;
+    private BaseVoltagesConfigInfos baseVoltagesConfigInfos;
 }
