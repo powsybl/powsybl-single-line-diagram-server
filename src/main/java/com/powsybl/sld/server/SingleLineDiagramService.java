@@ -17,10 +17,12 @@ import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.SldComponentLibrary;
+import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.EquipmentInfos;
 import com.powsybl.sld.server.dto.SubstationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
+import com.powsybl.sld.server.dto.sld.BaseVoltagesConfigInfos;
 import com.powsybl.sld.server.dto.sld.SldRequestInfos;
 import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
@@ -115,12 +117,14 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
 
-            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolations(), OVERLOAD_STYLE_CLASS);
+            List<CurrentLimitViolationInfos> currentLimitViolationInfos = sldRequestInfos != null ? sldRequestInfos.getCurrentLimitViolations() : null;
+            BaseVoltagesConfigInfos baseVoltagesConfigInfos = sldRequestInfos != null ? sldRequestInfos.getBaseVoltagesConfigInfos() : null;
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
 
-            if (sldRequestInfos.getBaseVoltagesConfigInfos() != null) {
+            if (baseVoltagesConfigInfos != null) {
                 BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
-                baseVoltagesConfig.setBaseVoltages(sldRequestInfos.getBaseVoltagesConfigInfos().getBaseVoltages());
-                baseVoltagesConfig.setDefaultProfile(sldRequestInfos.getBaseVoltagesConfigInfos().getDefaultProfile());
+                baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos.getBaseVoltages());
+                baseVoltagesConfig.setDefaultProfile(baseVoltagesConfigInfos.getDefaultProfile());
                 sldParameters.setStyleProviderFactory((net, parameters) -> {
                     return diagParams.isTopologicalColoring()
                         ? new StyleProvidersList(new TopologicalStyleProvider(baseVoltagesConfig, network, parameters),
