@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.OptionalDouble;
 import java.util.stream.DoubleStream;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class CommonLabelProvider extends DefaultLabelProvider {
     private static final String UNIT_MW = "MW";
@@ -127,7 +126,6 @@ public class CommonLabelProvider extends DefaultLabelProvider {
         }
     }
 
-
     private <T extends Identifiable<T>> void getOperatingStatusDecorator(List<NodeDecorator> nodeDecorators, Node node, Direction direction, Identifiable<T> identifiable) {
         if (identifiable != null) {
             OperatingStatus<T> operatingStatus = identifiable.getExtension(OperatingStatus.class);
@@ -141,7 +139,6 @@ public class CommonLabelProvider extends DefaultLabelProvider {
         }
     }
 
-
     private NodeDecorator addOperatingStatusDecorator(Node node, Direction direction, String decoratorType) {
         return switch (node) {
             case Middle3WTNode middle3WTNode -> new NodeDecorator(decoratorType, getMiddle3WTDecoratorPosition(middle3WTNode, direction));
@@ -150,7 +147,7 @@ public class CommonLabelProvider extends DefaultLabelProvider {
             case Internal2WTNode ignored -> new NodeDecorator(decoratorType, getInternal2WTDecoratorPosition(node.getOrientation()));
             case null, default -> new NodeDecorator(decoratorType, getGenericDecoratorPosition());
         };
-   
+    }
 
     private String formatPowerSum(DoubleStream stream) {
         OptionalDouble sum = sumDoubleStream(stream);
@@ -165,5 +162,5 @@ public class CommonLabelProvider extends DefaultLabelProvider {
         return stats.getCount() == 0
             ? OptionalDouble.empty()
             : OptionalDouble.of(stats.getSum());
-    } }
+    }
 }
