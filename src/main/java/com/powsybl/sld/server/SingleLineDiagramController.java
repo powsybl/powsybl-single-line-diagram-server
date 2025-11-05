@@ -32,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -95,7 +96,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, sldRequestInfos).getSvg();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, Objects.requireNonNullElse(sldRequestInfos, new SldRequestInfos())).getSvg();
     }
 
     @GetMapping(value = "/metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -157,7 +158,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, sldRequestInfos);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, Objects.requireNonNullElse(sldRequestInfos, new SldRequestInfos()));
         String svg = svgAndMetadata.getSvg();
         String metadata = svgAndMetadata.getMetadata();
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
@@ -197,7 +198,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, sldRequestInfos).getSvg();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, Objects.requireNonNullElse(sldRequestInfos, new SldRequestInfos())).getSvg();
     }
 
     @GetMapping(value = "/substation-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -260,7 +261,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, sldRequestInfos);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, Objects.requireNonNullElse(sldRequestInfos, new SldRequestInfos()));
         String svg = svgAndMetadata.getSvg();
         String metadata = svgAndMetadata.getMetadata();
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
