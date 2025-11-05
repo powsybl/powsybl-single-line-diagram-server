@@ -11,12 +11,27 @@ import com.powsybl.sld.svg.BusLegendInfo;
 import com.powsybl.sld.svg.DefaultLabelProvider;
 import com.powsybl.sld.svg.SvgParameters;
 
+import java.util.DoubleSummaryStatistics;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalDouble;
+import java.util.stream.DoubleStream;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class CommonLabelProvider extends DefaultLabelProvider {
+    private static final String UNIT_MW = "MW";
+    private static final String UNIT_KV = "kV";
+
+    private static final String PREFIX_VOLTAGE = "U = ";
+    private static final String PREFIX_ANGLE = "θ = ";
+    private static final String PREFIX_PRODUCTION = "P = ";
+    private static final String PREFIX_CONSUMPTION = "C = ";
+
+    private static final String KEY_BUS_ID = "busId";
+    public static final String KEY_VOLTAGE = "v";
+    public static final String KEY_ANGLE = "angle";
+    public static final String KEY_CONSUMPTION = "consumption-sum";
+    public static final String KEY_PRODUCTION = "production-sum";
 
     private static final String PLANNED_OUTAGE_BRANCH_NODE_DECORATOR = "LOCK";
     private static final String FORCED_OUTAGE_BRANCH_NODE_DECORATOR = "FLASH";
@@ -29,12 +44,15 @@ public class CommonLabelProvider extends DefaultLabelProvider {
     public List<BusLegendInfo> getBusLegendInfos(VoltageLevelGraph graph) {
         VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
         return vl.getBusView().getBusStream()
-            .map(b -> new BusLegendInfo(b.getId(), List.of(
-                new BusLegendInfo.Caption(b.getId(), "busId"),
-                new BusLegendInfo.Caption(valueFormatter.formatVoltage(b.getV(), "kV"), "v"),
-                new BusLegendInfo.Caption(valueFormatter.formatAngleInDegrees(b.getAngle()), "angle")
-            )))
-            .collect(Collectors.toList());
+            .map(b ->
+                new BusLegendInfo(b.getId(), List.of(
+                    new BusLegendInfo.Caption(b.getId(), KEY_BUS_ID),
+                    new BusLegendInfo.Caption(PREFIX_VOLTAGE + valueFormatter.formatVoltage(b.getV(), UNIT_KV), KEY_VOLTAGE),
+                    new BusLegendInfo.Caption(PREFIX_ANGLE + valueFormatter.formatAngleInDegrees(b.getAngle()), KEY_ANGLE),
+                    new BusLegendInfo.Caption(PREFIX_PRODUCTION + formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_CONSUMPTION),
+                    new BusLegendInfo.Caption(PREFIX_CONSUMPTION + formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_PRODUCTION)
+                ))
+            ).toList();
     }
 
     @Override
@@ -129,5 +147,20 @@ public class CommonLabelProvider extends DefaultLabelProvider {
             case Internal2WTNode ignored -> new NodeDecorator(decoratorType, getInternal2WTDecoratorPosition(node.getOrientation()));
             case null, default -> new NodeDecorator(decoratorType, getGenericDecoratorPosition());
         };
+    }
+
+    private String formatPowerSum(DoubleStream stream) {
+        OptionalDouble sum = sumDoubleStream(stream);
+        String value = sum.isPresent()
+            ? String.valueOf(Math.round(Math.abs(sum.getAsDouble())))
+            : svgParameters.getUndefinedValueSymbol();
+        return value + " " + UNIT_MW;
+    }
+
+    private static OptionalDouble sumDoubleStream(DoubleStream stream) {
+        DoubleSummaryStatistics stats = stream.summaryStatistics();
+        return stats.getCount() == 0
+            ? OptionalDouble.empty()
+            : OptionalDouble.of(stats.getSum());
     }
 }

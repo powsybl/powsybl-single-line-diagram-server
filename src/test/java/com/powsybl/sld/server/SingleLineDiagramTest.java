@@ -1590,6 +1590,10 @@ class SingleLineDiagramTest {
         // vl1 should have 2 busId displayed in bus legend
         assertTrue(stringResult.contains(">vl1_0<"));
         assertTrue(stringResult.contains(">vl1_1<"));
+        // VL contains generator but no loadflow has been run -> 0 MW
+        assertTrue(stringResult.contains(">P = 0 MW<"));
+        // VL contains no load -> — MW
+        assertTrue(stringResult.contains(">C = — MW<"));
 
         result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vl2"))
             .andExpect(status().isOk())
