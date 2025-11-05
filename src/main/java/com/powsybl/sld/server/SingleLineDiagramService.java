@@ -22,6 +22,7 @@ import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
+import com.powsybl.sld.svg.styles.StyleProvider;
 import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
 import com.powsybl.sld.svg.styles.iidm.TopologicalStyleProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,38 +112,33 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
 
-            List<CurrentLimitViolationInfos> currentLimitViolationInfos = sldRequestInfos != null ? sldRequestInfos.getCurrentLimitViolations() : null;
-            BaseVoltagesConfigInfos baseVoltagesConfigInfos = sldRequestInfos != null ? sldRequestInfos.getBaseVoltagesConfigInfos() : null;
-            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolations(), OVERLOAD_STYLE_CLASS);
 
-            if (baseVoltagesConfigInfos != null) {
-                BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
-                baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos.getBaseVoltages());
-                baseVoltagesConfig.setDefaultProfile(baseVoltagesConfigInfos.getDefaultProfile());
-                sldParameters.setStyleProviderFactory((net, parameters) -> {
-                    return diagParams.isTopologicalColoring()
-                        ? new StyleProvidersList(new TopologicalStyleProvider(baseVoltagesConfig, network, parameters),
-                                                new HighlightLineStateStyleProvider(network),
-                                                new LimitHighlightStyleProvider(network, limitViolationStyles),
-                                                new BusLegendStyleProvider())
-                        : new StyleProvidersList(new NominalVoltageStyleProvider(baseVoltagesConfig),
-                                                new HighlightLineStateStyleProvider(network),
-                                                new LimitHighlightStyleProvider(network, limitViolationStyles),
-                                                new BusLegendStyleProvider());
-                });
-            } else {
-                sldParameters.setStyleProviderFactory((net, parameters) -> {
-                    return diagParams.isTopologicalColoring()
-                        ? new StyleProvidersList(new TopologicalStyleProvider(network, parameters),
-                                                new HighlightLineStateStyleProvider(network),
-                                                new LimitHighlightStyleProvider(network, limitViolationStyles),
-                                                new BusLegendStyleProvider())
-                        : new StyleProvidersList(new NominalVoltageStyleProvider(),
-                                                new HighlightLineStateStyleProvider(network),
-                                                new LimitHighlightStyleProvider(network, limitViolationStyles),
-                                                new BusLegendStyleProvider());
-                });
-            }
+            sldParameters.setStyleProviderFactory((net, parameters) -> {
+                ArrayList<StyleProvider> styleProviders = new ArrayList<>();
+                styleProviders.add(new HighlightLineStateStyleProvider(network));
+                styleProviders.add(new LimitHighlightStyleProvider(network, limitViolationStyles));
+                styleProviders.add(new BusLegendStyleProvider());
+
+                if (sldRequestInfos.getBaseVoltagesConfigInfos() != null) {
+                    BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
+                    baseVoltagesConfig.setBaseVoltages(sldRequestInfos.getBaseVoltagesConfigInfos().getBaseVoltages());
+                    baseVoltagesConfig.setDefaultProfile(sldRequestInfos.getBaseVoltagesConfigInfos().getDefaultProfile());
+                    styleProviders.add(
+                        diagParams.isTopologicalColoring()
+                            ? new TopologicalStyleProvider(baseVoltagesConfig, network, parameters)
+                            : new NominalVoltageStyleProvider(baseVoltagesConfig)
+                    );
+                } else {
+                    styleProviders.add(
+                        diagParams.isTopologicalColoring()
+                            ? new TopologicalStyleProvider(network, parameters)
+                            : new NominalVoltageStyleProvider()
+                    );
+                }
+
+                return new StyleProvidersList(styleProviders);
+            });
 
             sldParameters.setComponentLibrary(compLibrary);
 
