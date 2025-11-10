@@ -116,15 +116,17 @@ class SingleLineDiagramService {
 
             Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
 
-            sldParameters.setStyleProviderFactory((net, parameters) -> {
-                return diagParams.isTopologicalColoring()
+            sldParameters.setStyleProviderFactory((net, parameters) ->
+                diagParams.isTopologicalColoring()
                     ? new StyleProvidersList(new TopologicalStyleProvider(network, parameters),
                                              new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, limitViolationStyles))
+                                             new LimitHighlightStyleProvider(network, limitViolationStyles),
+                                             new BusLegendStyleProvider())
                     : new StyleProvidersList(new NominalVoltageStyleProvider(),
                                              new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, limitViolationStyles));
-            });
+                                             new LimitHighlightStyleProvider(network, limitViolationStyles),
+                                             new BusLegendStyleProvider())
+            );
             sldParameters.setComponentLibrary(compLibrary);
 
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, sldParameters);
