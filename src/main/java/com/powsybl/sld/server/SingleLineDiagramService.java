@@ -112,7 +112,7 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
 
-            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolations(), OVERLOAD_STYLE_CLASS);
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolationsInfos(), OVERLOAD_STYLE_CLASS);
 
             sldParameters.setStyleProviderFactory((net, parameters) -> {
                 ArrayList<StyleProvider> styleProviders = new ArrayList<>();

@@ -943,7 +943,7 @@ class SingleLineDiagramTest {
                 .build();
 
         SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
-                .currentLimitViolations(List.of(violation))
+                .currentLimitViolationsInfos(List.of(violation))
                 .build();
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, sldRequestInfos);
@@ -1016,7 +1016,7 @@ class SingleLineDiagramTest {
                 .build();
 
         SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
-                .currentLimitViolations(List.of(violation))
+                .currentLimitViolationsInfos(List.of(violation))
                 .build();
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, sldRequestInfos);
