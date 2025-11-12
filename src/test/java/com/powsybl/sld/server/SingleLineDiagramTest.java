@@ -12,6 +12,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.config.BaseVoltageConfig;
 import com.powsybl.commons.extensions.Extendable;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.BusbarSectionPositionAdder;
@@ -38,6 +39,7 @@ import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
+import com.powsybl.sld.server.dto.sld.BaseVoltagesConfigInfos;
 import com.powsybl.sld.server.dto.sld.SldRequestInfos;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
@@ -81,6 +83,7 @@ import java.util.*;
 import static com.powsybl.sld.library.SldComponentTypeName.ARROW_ACTIVE;
 import static com.powsybl.sld.library.SldComponentTypeName.ARROW_REACTIVE;
 import static com.powsybl.sld.svg.styles.StyleClassConstants.OVERLOAD_STYLE_CLASS;
+import static com.powsybl.sld.svg.styles.StyleClassConstants.STYLE_PREFIX;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -922,6 +925,50 @@ class SingleLineDiagramTest {
     }
 
     @Test
+    void testNetworkAreaDiagramWithCustomBaseVoltagesConfig() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+
+        BaseVoltageConfig baseVoltage = new BaseVoltageConfig();
+        baseVoltage.setName("vl1");
+        baseVoltage.setMinValue(0.);
+        baseVoltage.setMaxValue(1000.);
+        baseVoltage.setProfile("Default");
+
+        BaseVoltageConfig baseVoltage2 = new BaseVoltageConfig();
+        baseVoltage2.setName("vl2");
+        baseVoltage2.setMinValue(1000.);
+        baseVoltage2.setMaxValue(2000.);
+        baseVoltage2.setProfile("Default");
+
+        BaseVoltagesConfigInfos baseVoltagesConfigInfos = BaseVoltagesConfigInfos.builder()
+                .baseVoltages(List.of(baseVoltage, baseVoltage2))
+                .defaultProfile("Default")
+                .build();
+
+        NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(Set.of("vlFr3A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .positions(Collections.emptyList())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
+                .build();
+
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted());
+        MvcResult result = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
+                .andExpect(status().isOk())
+                .andReturn();
+        String stringResult = result.getResponse().getContentAsString();
+        assertTrue(stringResult.contains("nad-vl1"));
+    }
+
+    @Test
     void testSingleLineDiagramWithViolationDefaultClass() {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetworkWithDepth());
@@ -1049,6 +1096,50 @@ class SingleLineDiagramTest {
         assertNotNull(svg);
         // divided by 1000 then rounded with 1 decimal
         String expected = "ICC = 12.3 kA";
+        assertTrue(svg.contains(expected));
+    }
+
+    @Test
+    void testSingleLineDiagramWithCustomBaseVoltagesConfig() {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
+
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
+                .useName(false)
+                .labelCentered(false)
+                .diagonalLabel(false)
+                .topologicalColoring(false)
+                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
+                .substationLayout("horizontal")
+                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
+                .language("en")
+                .build();
+
+        BaseVoltageConfig baseVoltage = new BaseVoltageConfig();
+        baseVoltage.setName("vl1");
+        baseVoltage.setMinValue(0.);
+        baseVoltage.setMaxValue(1000.);
+        baseVoltage.setProfile("Default");
+
+        BaseVoltageConfig baseVoltage2 = new BaseVoltageConfig();
+        baseVoltage2.setName("vl2");
+        baseVoltage2.setMinValue(1000.);
+        baseVoltage2.setMaxValue(2000.);
+        baseVoltage2.setProfile("Default");
+
+        BaseVoltagesConfigInfos baseVoltagesConfigInfos = BaseVoltagesConfigInfos.builder()
+                .baseVoltages(List.of(baseVoltage, baseVoltage2))
+                .defaultProfile("Default")
+                .build();
+
+        SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
+                .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
+                .build();
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, sldRequestInfos);
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+        String expected = STYLE_PREFIX + "vl1";
         assertTrue(svg.contains(expected));
     }
 
