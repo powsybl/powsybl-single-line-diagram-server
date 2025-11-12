@@ -10,6 +10,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.config.BaseVoltagesConfig;
+import com.powsybl.sld.server.dto.sld.BaseVoltagesConfigInfos;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.VoltageLevel;
@@ -260,7 +262,7 @@ class NetworkAreaDiagramService {
         );
 
         // Build Powsybl parameters
-        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos());
+        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos(), nadRequestInfos.getBaseVoltagesConfigInfos());
 
         int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
         if (nbVoltageLevels > maxVoltageLevels) {
@@ -270,7 +272,7 @@ class NetworkAreaDiagramService {
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
 
-    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
+    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, BaseVoltagesConfigInfos baseVoltagesConfigInfos) {
 
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
@@ -286,8 +288,14 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
         Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
-        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), limitViolationStyles));
-
+        if (baseVoltagesConfigInfos != null) {
+            BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
+            baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos.getBaseVoltages());
+            baseVoltagesConfig.setDefaultProfile(baseVoltagesConfigInfos.getDefaultProfile());
+            nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), baseVoltagesConfig, limitViolationStyles));
+        } else {
+            nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), limitViolationStyles));
+        }
         // Set style provider factory either with geographical data or with the provided positions (if any)
         if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES && nadGenerationContext.getPositions().isEmpty()) {
             nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));

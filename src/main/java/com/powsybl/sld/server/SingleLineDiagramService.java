@@ -7,6 +7,7 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
@@ -16,15 +17,16 @@ import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.SldComponentLibrary;
-import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.EquipmentInfos;
 import com.powsybl.sld.server.dto.SubstationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
+import com.powsybl.sld.server.dto.sld.SldRequestInfos;
 import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
+import com.powsybl.sld.svg.styles.StyleProvider;
 import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
 import com.powsybl.sld.svg.styles.iidm.TopologicalStyleProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +74,7 @@ class SingleLineDiagramService {
         };
     }
 
-    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
+    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, SldRequestInfos sldRequestInfos) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
@@ -114,19 +116,34 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
 
-            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolationsInfos(), OVERLOAD_STYLE_CLASS);
 
-            sldParameters.setStyleProviderFactory((net, parameters) ->
-                diagParams.isTopologicalColoring()
-                    ? new StyleProvidersList(new TopologicalStyleProvider(network, parameters),
-                                             new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, limitViolationStyles),
-                                             new BusLegendStyleProvider())
-                    : new StyleProvidersList(new NominalVoltageStyleProvider(),
-                                             new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, limitViolationStyles),
-                                             new BusLegendStyleProvider())
-            );
+            sldParameters.setStyleProviderFactory((net, parameters) -> {
+                ArrayList<StyleProvider> styleProviders = new ArrayList<>();
+                styleProviders.add(new HighlightLineStateStyleProvider(network));
+                styleProviders.add(new LimitHighlightStyleProvider(network, limitViolationStyles));
+                styleProviders.add(new BusLegendStyleProvider());
+
+                if (sldRequestInfos.getBaseVoltagesConfigInfos() != null) {
+                    BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
+                    baseVoltagesConfig.setBaseVoltages(sldRequestInfos.getBaseVoltagesConfigInfos().getBaseVoltages());
+                    baseVoltagesConfig.setDefaultProfile(sldRequestInfos.getBaseVoltagesConfigInfos().getDefaultProfile());
+                    styleProviders.add(
+                        diagParams.isTopologicalColoring()
+                            ? new TopologicalStyleProvider(baseVoltagesConfig, network, parameters)
+                            : new NominalVoltageStyleProvider(baseVoltagesConfig)
+                    );
+                } else {
+                    styleProviders.add(
+                        diagParams.isTopologicalColoring()
+                            ? new TopologicalStyleProvider(network, parameters)
+                            : new NominalVoltageStyleProvider()
+                    );
+                }
+
+                return new StyleProvidersList(styleProviders);
+            });
+
             sldParameters.setComponentLibrary(compLibrary);
 
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, sldParameters);

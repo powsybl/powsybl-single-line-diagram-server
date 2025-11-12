@@ -9,10 +9,11 @@ package com.powsybl.sld.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
-import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
+import com.powsybl.sld.server.dto.sld.BaseVoltagesConfigInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
+import com.powsybl.sld.server.dto.sld.SldRequestInfos;
 import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -82,7 +84,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
-            @RequestBody(required = false) List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
+            @RequestBody(required = false) SldRequestInfos sldRequestInfos) {
         LOGGER.debug("getVoltageLevelSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId != null ? sanitizeParam(voltageLevelId) : null);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -94,7 +96,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, currentLimitViolationInfos).getSvg();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, Objects.requireNonNullElse(sldRequestInfos, new SldRequestInfos())).getSvg();
     }
 
     @GetMapping(value = "/metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -110,7 +112,8 @@ public class SingleLineDiagramController {
             @Parameter(description = "topologicalColoring") @RequestParam(name = "topologicalColoring", defaultValue = "false") boolean topologicalColoring,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
-            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) {
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
+            @RequestBody(required = false) BaseVoltagesConfigInfos baseVoltagesConfigInfos) {
         LOGGER.debug("getVoltageLevelMetadata request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId != null ? sanitizeParam(voltageLevelId) : null);
 
         var parameters = SingleLineDiagramParameters.builder()
@@ -123,7 +126,10 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, null).getMetadata();
+        SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
+                .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
+                .build();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, sldRequestInfos).getMetadata();
     }
 
     @PostMapping(value = "svg-and-metadata/{networkUuid}/{voltageLevelId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -140,7 +146,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
-            @RequestBody(required = false) List<CurrentLimitViolationInfos> currentLimitViolationInfos) throws JsonProcessingException {
+            @RequestBody(required = false) SldRequestInfos sldRequestInfos) throws JsonProcessingException {
         LOGGER.debug("getVoltageLevelCompleteSvg request received with parameter networkUuid = {}, voltageLevelID = {}", networkUuid, voltageLevelId != null ? sanitizeParam(voltageLevelId) : null);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -152,7 +158,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, currentLimitViolationInfos);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, voltageLevelId, parameters, Objects.requireNonNullElse(sldRequestInfos, new SldRequestInfos()));
         String svg = svgAndMetadata.getSvg();
         String metadata = svgAndMetadata.getMetadata();
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
@@ -180,7 +186,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
-            @RequestBody(required = false) List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
+            @RequestBody(required = false) SldRequestInfos sldRequestInfos) {
         LOGGER.debug("getSubstationSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId != null ? sanitizeParam(substationId) : null);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -192,7 +198,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, currentLimitViolationInfos).getSvg();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, Objects.requireNonNullElse(sldRequestInfos, new SldRequestInfos())).getSvg();
     }
 
     @GetMapping(value = "/substation-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -209,7 +215,8 @@ public class SingleLineDiagramController {
             @Parameter(description = "substationLayout") @RequestParam(name = "substationLayout", defaultValue = HORIZONTAL) String substationLayout,
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
-            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language) {
+            @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
+            @RequestBody(required = false) BaseVoltagesConfigInfos baseVoltagesConfigInfos) {
         LOGGER.debug("getSubstationMetadata request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId != null ? sanitizeParam(substationId) : null);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -221,7 +228,10 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, null).getMetadata();
+        SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
+                .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
+                .build();
+        return singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, sldRequestInfos).getMetadata();
     }
 
     @PostMapping(value = "substation-svg-and-metadata/{networkUuid}/{substationId}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -239,7 +249,7 @@ public class SingleLineDiagramController {
             @Parameter(description = "component library name") @RequestParam(name = "componentLibrary", defaultValue = GridSuiteAndConvergenceComponentLibrary.NAME) String componentLibrary,
             @Parameter(description = "Sld display mode") @RequestParam(name = "sldDisplayMode", defaultValue = "STATE_VARIABLE") SldDisplayMode sldDisplayMode,
             @Parameter(description = "language") @RequestParam(name = "language", defaultValue = "en") String language,
-            @RequestBody(required = false) List<CurrentLimitViolationInfos> currentLimitViolationInfos) throws JsonProcessingException {
+            @RequestBody(required = false) SldRequestInfos sldRequestInfos) throws JsonProcessingException {
         LOGGER.debug("getSubstationFullSvg request received with parameter networkUuid = {}, substationID = {}", networkUuid, substationId != null ? sanitizeParam(substationId) : null);
         var parameters = SingleLineDiagramParameters.builder()
                 .useName(useName)
@@ -251,7 +261,7 @@ public class SingleLineDiagramController {
                 .sldDisplayMode(sldDisplayMode)
                 .language(language)
                 .build();
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, currentLimitViolationInfos);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(networkUuid, variantId, substationId, parameters, Objects.requireNonNullElse(sldRequestInfos, new SldRequestInfos()));
         String svg = svgAndMetadata.getSvg();
         String metadata = svgAndMetadata.getMetadata();
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
