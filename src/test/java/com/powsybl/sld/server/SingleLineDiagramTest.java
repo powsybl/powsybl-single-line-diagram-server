@@ -1073,7 +1073,16 @@ class SingleLineDiagramTest {
     }
 
     @Test
-    void testSingleLineDiagramWithCustomBaseVoltagesConfig() {
+    void testSingleLineDiagramWithCustomBaseVoltagesConfigWithTopologicalColoring() {
+        testSingleLineDiagramWithCustomBaseVoltagesConfig(true);
+    }
+
+    @Test
+    void testSingleLineDiagramWithCustomBaseVoltagesConfigWithoutTopologicalColoring() {
+        testSingleLineDiagramWithCustomBaseVoltagesConfig(false);
+    }
+
+    private void testSingleLineDiagramWithCustomBaseVoltagesConfig(boolean isTopologicalColoring) {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
 
@@ -1081,7 +1090,7 @@ class SingleLineDiagramTest {
                 .useName(false)
                 .labelCentered(false)
                 .diagonalLabel(false)
-                .topologicalColoring(false)
+                .topologicalColoring(isTopologicalColoring)
                 .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
                 .substationLayout("horizontal")
                 .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
