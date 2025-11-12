@@ -1100,7 +1100,42 @@ class SingleLineDiagramTest {
     }
 
     @Test
-    void testSingleLineDiagramWithCustomBaseVoltagesConfig() {
+    void testSingleLineDiagramWithIcc() {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createTwoVoltageLevels());
+
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
+            .useName(false)
+            .labelCentered(false)
+            .diagonalLabel(false)
+            .topologicalColoring(false)
+            .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
+            .substationLayout("horizontal")
+            .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
+            .language("en")
+            .build();
+
+        Map<String, Double> busIdToIcc = Map.of("vl1_1", 12345.6);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", parameters, new SvgGenerationMetadata(List.of(), busIdToIcc));
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+        // divided by 1000 then rounded with 1 decimal
+        String expected = "ICC = 12.3 kA";
+        assertTrue(svg.contains(expected));
+    }
+
+    @Test
+    void testSingleLineDiagramWithCustomBaseVoltagesConfigWithTopologicalColoring() {
+        testSingleLineDiagramWithCustomBaseVoltagesConfig(true);
+    }
+
+    @Test
+    void testSingleLineDiagramWithCustomBaseVoltagesConfigWithoutTopologicalColoring() {
+        testSingleLineDiagramWithCustomBaseVoltagesConfig(false);
+    }
+
+    private void testSingleLineDiagramWithCustomBaseVoltagesConfig(boolean isTopologicalColoring) {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
 
@@ -1108,7 +1143,7 @@ class SingleLineDiagramTest {
                 .useName(false)
                 .labelCentered(false)
                 .diagonalLabel(false)
-                .topologicalColoring(false)
+                .topologicalColoring(isTopologicalColoring)
                 .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
                 .substationLayout("horizontal")
                 .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
