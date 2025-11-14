@@ -14,13 +14,12 @@ import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
-import com.powsybl.sld.layout.*;
+import com.powsybl.sld.layout.HorizontalSubstationLayoutFactory;
+import com.powsybl.sld.layout.LayoutParameters;
+import com.powsybl.sld.layout.SubstationLayoutFactory;
+import com.powsybl.sld.layout.VerticalSubstationLayoutFactory;
 import com.powsybl.sld.library.SldComponentLibrary;
-import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
-import com.powsybl.sld.server.dto.EquipmentInfos;
-import com.powsybl.sld.server.dto.SubstationInfos;
-import com.powsybl.sld.server.dto.SvgAndMetadata;
-import com.powsybl.sld.server.dto.VoltageLevelInfos;
+import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
@@ -36,7 +35,10 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.powsybl.iidm.network.IdentifiableType.SUBSTATION;
@@ -102,6 +104,7 @@ class SingleLineDiagramService {
             } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
                 svgParameters.setBusesLegendAdded(true);
                 sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
+                sldParameters.setLegendWriterFactory(CommonLegendWriter::new);
             } else {
                 throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
             }
