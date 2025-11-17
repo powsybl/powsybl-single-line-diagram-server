@@ -166,7 +166,7 @@ public class CommonLabelProvider extends DefaultLabelProvider {
         Double iccInA = busIdToIccMap == null ? null : busIdToIccMap.get(busId);
 
         String value = iccInA != null
-            ? String.format("%.2f", iccInA / 1000.0)
+            ? String.format("%.1f", iccInA / 1000.0)
             : svgParameters.getUndefinedValueSymbol();
 
         return value + " " + UNIT_KA;
