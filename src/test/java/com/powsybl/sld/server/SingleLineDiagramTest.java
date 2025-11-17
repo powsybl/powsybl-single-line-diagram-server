@@ -33,6 +33,7 @@ import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
+import com.powsybl.sld.server.dto.SvgGenerationMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
@@ -940,7 +941,7 @@ class SingleLineDiagramTest {
                 .limitName(null)
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, List.of(violation));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, new SvgGenerationMetadata(List.of(violation)));
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         assertTrue(svg.contains(OVERLOAD_STYLE_CLASS));
@@ -962,7 +963,7 @@ class SingleLineDiagramTest {
             .language("en")
             .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, List.of());
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, new SvgGenerationMetadata(List.of()));
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
@@ -983,7 +984,7 @@ class SingleLineDiagramTest {
             .language("en")
             .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, List.of());
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, new SvgGenerationMetadata(List.of()));
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
@@ -1009,7 +1010,7 @@ class SingleLineDiagramTest {
                 .limitName("IT20")
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, List.of(violation));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, new SvgGenerationMetadata(List.of(violation)));
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         String expected = OVERLOAD_STYLE_CLASS + "-it20";
