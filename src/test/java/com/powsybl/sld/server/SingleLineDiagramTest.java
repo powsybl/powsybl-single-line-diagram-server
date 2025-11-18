@@ -1018,6 +1018,32 @@ class SingleLineDiagramTest {
     }
 
     @Test
+    void testSingleLineDiagramWithIcc() {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createTwoVoltageLevels());
+
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
+            .useName(false)
+            .labelCentered(false)
+            .diagonalLabel(false)
+            .topologicalColoring(false)
+            .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
+            .substationLayout("horizontal")
+            .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
+            .language("en")
+            .build();
+
+        Map<String, Double> busIdToIcc = Map.of("vl1_1", 12345.6);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", parameters, new SvgGenerationMetadata(List.of(), busIdToIcc));
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+        // divided by 1000 then rounded with 1 decimal
+        String expected = "ICC = 12,3 kA";
+        assertTrue(svg.contains(expected));
+    }
+
+    @Test
     void testCreatePositionsFromCsv() throws Exception {
 
         byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
