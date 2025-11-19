@@ -7,6 +7,7 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
@@ -16,8 +17,8 @@ import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.SldComponentLibrary;
-import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.EquipmentInfos;
+import com.powsybl.sld.server.dto.SldRequestInfos;
 import com.powsybl.sld.server.dto.SubstationInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.VoltageLevelInfos;
@@ -72,7 +73,7 @@ class SingleLineDiagramService {
         };
     }
 
-    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
+    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, SldRequestInfos sldRequestInfos) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
@@ -114,19 +115,24 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
 
-            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolationsInfos(), OVERLOAD_STYLE_CLASS);
 
-            sldParameters.setStyleProviderFactory((net, parameters) ->
-                diagParams.isTopologicalColoring()
-                    ? new StyleProvidersList(new TopologicalStyleProvider(network, parameters),
-                                             new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, limitViolationStyles),
-                                             new BusLegendStyleProvider())
-                    : new StyleProvidersList(new NominalVoltageStyleProvider(),
-                                             new HighlightLineStateStyleProvider(network),
-                                             new LimitHighlightStyleProvider(network, limitViolationStyles),
-                                             new BusLegendStyleProvider())
-            );
+            sldParameters.setStyleProviderFactory((net, parameters) -> {
+                sldRequestInfos.getBaseVoltagesConfigInfos().forEach(vl -> vl.setProfile("Default"));
+                BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
+                baseVoltagesConfig.setBaseVoltages(sldRequestInfos.getBaseVoltagesConfigInfos());
+                baseVoltagesConfig.setDefaultProfile("Default");
+
+                return new StyleProvidersList(
+                    diagParams.isTopologicalColoring()
+                        ? new TopologicalStyleProvider(baseVoltagesConfig, network, parameters)
+                        : new NominalVoltageStyleProvider(baseVoltagesConfig),
+                    new HighlightLineStateStyleProvider(network),
+                    new LimitHighlightStyleProvider(network, limitViolationStyles),
+                    new BusLegendStyleProvider()
+                );
+            });
+
             sldParameters.setComponentLibrary(compLibrary);
 
             SingleLineDiagram.draw(network, id, svgWriter, metadataWriter, sldParameters);
