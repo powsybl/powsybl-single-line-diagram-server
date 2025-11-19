@@ -33,14 +33,13 @@ import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
+import com.powsybl.sld.server.dto.SldRequestInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
 import com.powsybl.sld.server.dto.SvgGenerationMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
-import com.powsybl.sld.server.dto.sld.BaseVoltagesConfigInfos;
-import com.powsybl.sld.server.dto.sld.SldRequestInfos;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
@@ -941,10 +940,7 @@ class SingleLineDiagramTest {
         baseVoltage2.setMaxValue(2000.);
         baseVoltage2.setProfile("Default");
 
-        BaseVoltagesConfigInfos baseVoltagesConfigInfos = BaseVoltagesConfigInfos.builder()
-                .baseVoltages(List.of(baseVoltage, baseVoltage2))
-                .defaultProfile("Default")
-                .build();
+        List<BaseVoltageConfig> baseVoltagesConfigInfos = List.of(baseVoltage, baseVoltage2);
 
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .nadConfigUuid(null)
@@ -1162,10 +1158,7 @@ class SingleLineDiagramTest {
         baseVoltage2.setMaxValue(2000.);
         baseVoltage2.setProfile("Default");
 
-        BaseVoltagesConfigInfos baseVoltagesConfigInfos = BaseVoltagesConfigInfos.builder()
-                .baseVoltages(List.of(baseVoltage, baseVoltage2))
-                .defaultProfile("Default")
-                .build();
+        List<BaseVoltageConfig> baseVoltagesConfigInfos = List.of(baseVoltage, baseVoltage2);
 
         SldRequestInfos sldRequestInfos = SldRequestInfos.builder()
                 .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
