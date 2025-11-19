@@ -1039,7 +1039,7 @@ class SingleLineDiagramTest {
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         // divided by 1000 then rounded with 1 decimal
-        String expected = "ICC = 12,3 kA";
+        String expected = "ICC = 12.3 kA";
         assertTrue(svg.contains(expected));
     }
 
