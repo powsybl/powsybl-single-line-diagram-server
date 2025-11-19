@@ -94,13 +94,13 @@ class NetworkAreaDiagramService {
     private final ObjectMapper objectMapper;
 
     public NetworkAreaDiagramService(NetworkStoreService networkStoreService,
-            GeoDataService geoDataService,
-            FilterService filterService,
-            NetworkAreaExecutionService diagramExecutionService,
-            NadConfigRepository nadConfigRepository,
-            NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository,
-            @Lazy NetworkAreaDiagramService networkAreaDiagramService,
-            ObjectMapper objectMapper) {
+                                     GeoDataService geoDataService,
+                                     FilterService filterService,
+                                     NetworkAreaExecutionService diagramExecutionService,
+                                     NadConfigRepository nadConfigRepository,
+                                     NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository,
+                                     @Lazy NetworkAreaDiagramService networkAreaDiagramService,
+                                     ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
         this.geoDataService = geoDataService;
         this.filterService = filterService;
@@ -119,13 +119,13 @@ class NetworkAreaDiagramService {
     @Transactional
     public List<UUID> createNetworkAreaDiagramConfigs(List<NadConfigInfos> nadConfigs) {
         List<NadConfigEntity> configs = nadConfigs.stream()
-                .map(NadConfigInfos::toEntity)
-                .toList();
+            .map(NadConfigInfos::toEntity)
+            .toList();
 
         List<NadConfigEntity> savedConfigs = nadConfigRepository.saveAll(configs);
         return savedConfigs.stream()
-                .map(NadConfigEntity::getId)
-                .toList();
+            .map(NadConfigEntity::getId)
+            .toList();
     }
 
     @Transactional
@@ -206,8 +206,8 @@ class NetworkAreaDiagramService {
     private Set<String> getVoltageLevelIdsFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
         List<IdentifiableAttributes> filterContent = filterService.exportFilter(networkUuid, variantId, filterUuid);
         return filterContent.stream()
-                .map(IdentifiableAttributes::getId)
-                .collect(Collectors.toSet());
+            .map(IdentifiableAttributes::getId)
+            .collect(Collectors.toSet());
     }
 
     @Transactional
@@ -223,13 +223,13 @@ class NetworkAreaDiagramService {
     public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, NadRequestInfos nadRequestInfos) {
         // Context setup
         NadGenerationContext nadGenerationContext = NadGenerationContext.builder()
-                .networkUuid(networkUuid)
-                .variantId(variantId)
+            .networkUuid(networkUuid)
+            .variantId(variantId)
             .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION))
             // If we already have a NAD config UUID, it means the NAD was already generated,so we keep the automatic generation mode.
             .nadPositionsGenerationMode(nadRequestInfos.getNadConfigUuid() == null ? nadRequestInfos.getNadPositionsGenerationMode() : NadPositionsGenerationMode.AUTOMATIC)
-                .positions(nadRequestInfos.getPositions())
-                .build();
+            .positions(nadRequestInfos.getPositions())
+            .build();
 
         // Positions config fetching
         if (nadRequestInfos.getNadConfigUuid() != null) {
@@ -252,8 +252,8 @@ class NetworkAreaDiagramService {
 
         // Filter out of scope voltage levels
         nadGenerationContext.setVoltageLevelIds(nadGenerationContext.getVoltageLevelIds().stream()
-                .filter(vl -> nadGenerationContext.getNetwork().getVoltageLevel(vl) != null)
-                .collect(Collectors.toSet()));
+            .filter(vl -> nadGenerationContext.getNetwork().getVoltageLevel(vl) != null)
+            .collect(Collectors.toSet()));
         nadGenerationContext.setVoltageLevelFilter(
                 VoltageLevelFilter.createVoltageLevelsFilter(
                         nadGenerationContext.getNetwork(),
@@ -317,11 +317,11 @@ class NetworkAreaDiagramService {
 
         // Add voltage level positions that are not already present
         Set<String> existingVoltageLevelIds = nadGenerationContext.getPositions().stream()
-                .map(NadVoltageLevelPositionInfos::getVoltageLevelId)
-                .collect(Collectors.toSet());
+            .map(NadVoltageLevelPositionInfos::getVoltageLevelId)
+            .collect(Collectors.toSet());
         nadConfigInfos.getPositions().stream()
-                .filter(position -> !existingVoltageLevelIds.contains(position.getVoltageLevelId()))
-                .forEach(nadGenerationContext.getPositions()::add);
+            .filter(position -> !existingVoltageLevelIds.contains(position.getVoltageLevelId()))
+            .forEach(nadGenerationContext.getPositions()::add);
 
         nadGenerationContext.setScalingFactor(nadConfigInfos.getScalingFactor());
     }
@@ -364,10 +364,10 @@ class NetworkAreaDiagramService {
         if (nadGenerationContext.getScalingFactor() == null || nadGenerationContext.getScalingFactor() <= 0) {
             // Let's calculate the scaling factor
             List<String> substations = nadGenerationContext.getVoltageLevelFilter().getVoltageLevels().stream()
-                    .map(VoltageLevel::getNullableSubstation)
-                    .filter(Objects::nonNull)
-                    .map(Substation::getId)
-                    .toList();
+                            .map(VoltageLevel::getNullableSubstation)
+                            .filter(Objects::nonNull)
+                            .map(Substation::getId)
+                            .toList();
 
             List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
                     .filter(entry -> substations.contains(entry.getKey()))
@@ -463,9 +463,9 @@ class NetworkAreaDiagramService {
             return voltageLevelIds;
         }
         return VoltageLevelFilter.createVoltageLevelsDepthFilter(network, new ArrayList<>(voltageLevelIds), 1)
-                .getVoltageLevels().stream()
-                .map(VoltageLevel::getId)
-                .collect(Collectors.toSet());
+                        .getVoltageLevels().stream()
+                        .map(VoltageLevel::getId)
+                        .collect(Collectors.toSet());
     }
 
     private SvgAndMetadata drawSvgAndBuildMetadata(NadGenerationContext nadGenerationContext) {
@@ -565,12 +565,12 @@ class NetworkAreaDiagramService {
             double xLabelPosition = Double.parseDouble(row.get(CsvFileValidator.X_LABEL_POSITION));
             double yLabelPosition = Double.parseDouble(row.get(CsvFileValidator.Y_LABEL_POSITION));
             NadVoltageLevelPositionInfos positionInfos = NadVoltageLevelPositionInfos.builder()
-                    .voltageLevelId(id)
-                    .xPosition(xPosition)
-                    .yPosition(yPosition)
-                    .xLabelPosition(xLabelPosition)
-                    .yLabelPosition(yLabelPosition)
-                    .build();
+                .voltageLevelId(id)
+                .xPosition(xPosition)
+                .yPosition(yPosition)
+                .xLabelPosition(xLabelPosition)
+                .yLabelPosition(yLabelPosition)
+                .build();
             nadVoltageLevelPositionInfos.add(positionInfos);
         }
         return nadVoltageLevelPositionInfos;
@@ -579,7 +579,7 @@ class NetworkAreaDiagramService {
     private List<NadVoltageLevelPositionInfos> getPositionsFromCsv(MultipartFile file) throws IOException {
         try (BOMInputStream bomInputStream = BOMInputStream.builder().setInputStream(file.getInputStream()).setByteOrderMarks(ByteOrderMark.UTF_8).get();
             BufferedReader fileReader = new BufferedReader(new InputStreamReader(bomInputStream, StandardCharsets.UTF_8));
-                CsvMapReader mapReader = new CsvMapReader(fileReader, CsvFileValidator.CSV_PREFERENCE)) {
+            CsvMapReader mapReader = new CsvMapReader(fileReader, CsvFileValidator.CSV_PREFERENCE)) {
             return parsePositions(mapReader);
         }
     }
