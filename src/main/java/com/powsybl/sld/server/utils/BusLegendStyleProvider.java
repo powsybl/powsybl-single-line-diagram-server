@@ -13,7 +13,7 @@ import com.powsybl.sld.svg.styles.StyleClassConstants;
 import java.util.Collections;
 import java.util.List;
 
-import static com.powsybl.sld.server.CommonLabelProvider.*;
+import static com.powsybl.sld.server.CommonLegendWriter.*;
 
 /**
  * @author Kevin Le Saulnier <kevin.lesaulnier at rte-france.com>
