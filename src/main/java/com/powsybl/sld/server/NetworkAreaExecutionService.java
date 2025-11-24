@@ -7,6 +7,8 @@
 
 package com.powsybl.sld.server;
 
+import io.micrometer.context.ContextExecutorService;
+import io.micrometer.context.ContextSnapshotFactory;
 import jakarta.annotation.PreDestroy;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,12 +23,15 @@ import java.util.function.Supplier;
 @Service
 public class NetworkAreaExecutionService {
 
-    private ThreadPoolExecutor executorService;
+    private final ThreadPoolExecutor threadPoolExecutor;
+    private final ExecutorService executorService;
 
     public NetworkAreaExecutionService(@Value("${max-concurrent-nad-generations}") int maxConcurrentNadGenerations,
                                        @NonNull DiagramGenerationObserver diagramGenerationObserver) {
-        executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxConcurrentNadGenerations);
-        diagramGenerationObserver.createThreadPoolMetric(executorService);
+        threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxConcurrentNadGenerations);
+        diagramGenerationObserver.createThreadPoolMetric(threadPoolExecutor);
+        executorService = ContextExecutorService.wrap(threadPoolExecutor,
+                () -> ContextSnapshotFactory.builder().build().captureAll());
     }
 
     @PreDestroy
