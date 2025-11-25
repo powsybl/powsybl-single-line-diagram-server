@@ -63,7 +63,7 @@ public class CommonLabelProvider extends DefaultLabelProvider {
                     new BusLegendInfo.Caption(PREFIX_ANGLE + valueFormatter.formatAngleInDegrees(b.getAngle()), KEY_ANGLE),
                     new BusLegendInfo.Caption(PREFIX_PRODUCTION + formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_CONSUMPTION),
                     new BusLegendInfo.Caption(PREFIX_CONSUMPTION + formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_PRODUCTION),
-                    new BusLegendInfo.Caption(PREFIX_ICC + getAndFormatBusIcc(b.getId()), KEY_ICC)
+                    new BusLegendInfo.Caption(PREFIX_ICC + getFormattedBusIcc(b.getId()), KEY_ICC)
                 ))
             ).toList();
     }
@@ -162,7 +162,7 @@ public class CommonLabelProvider extends DefaultLabelProvider {
         };
     }
 
-    private String getAndFormatBusIcc(String busId) {
+    private String getFormattedBusIcc(String busId) {
         Double iccInA = busIdToIccMap == null ? null : busIdToIccMap.get(busId);
 
         String value = iccInA != null
