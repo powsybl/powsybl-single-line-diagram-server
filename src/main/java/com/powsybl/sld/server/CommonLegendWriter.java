@@ -8,11 +8,20 @@ package com.powsybl.sld.server;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
+import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.svg.*;
 
+import java.util.DoubleSummaryStatistics;
+import java.util.List;
+import java.util.OptionalDouble;
 import java.util.*;
+import java.util.Optional;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.stream.DoubleStream;
+
+import static com.powsybl.sld.svg.SVGWriter.GROUP;
 
 public class CommonLegendWriter extends DefaultSVGLegendWriter {
     private static final String UNIT_MW = "MW";
@@ -67,6 +76,100 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
             : svgParameters.getUndefinedValueSymbol();
 
         return value + " " + UNIT_KA;
+    }
+
+    /*@Override
+    public void drawLegend(VoltageLevelGraph graph, GraphMetadata metadata, StyleProvider styleProvider, Element legendRootElement, double positionX, double positionY) {
+        VoltageLevel voltageLevel = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
+        double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
+        double highVoltageLimit = voltageLevel.getHighVoltageLimit();
+        Double ipMax = getIpMax(voltageLevel);
+
+        Element gNode = legendRootElement.getOwnerDocument().createElement(GROUP);
+        gNode.setAttribute("id", voltageLevel.getId());
+
+        Element label = gNode.getOwnerDocument().createElement("text");
+//        writeStyleClasses(label, styleProvider.getBusLegendCaptionStyles(caption), StyleClassConstants.BUS_LEGEND_INFO);
+        label.setAttribute("id", "test");
+        label.setAttribute("x", String.valueOf(positionX));
+        label.setAttribute("y", String.valueOf(positionY));
+        Text textNode = gNode.getOwnerDocument().createTextNode(String.valueOf(lowVoltageLimit));
+        label.appendChild(textNode);
+        gNode.appendChild(label);
+
+        legendRootElement.appendChild(gNode);
+
+//        super.drawLegend(graph, metadata, styleProvider, legendRootElement, positionX, positionY);
+
+
+    }*/
+
+    @Override
+    public void drawLegend(
+        VoltageLevelGraph graph,
+        GraphMetadata metadata,
+        StyleProvider styleProvider,
+        Element legendRootElement,
+        double positionX,
+        double positionY
+    ) {
+        VoltageLevel voltageLevel = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
+        double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
+        double highVoltageLimit = voltageLevel.getHighVoltageLimit();
+        Double ipMax = getIpMax(voltageLevel);
+
+        Document doc = legendRootElement.getOwnerDocument();
+        Element gNode = doc.createElement(GROUP);
+
+        gNode.setAttribute("id", voltageLevel.getId());
+
+        // ---------- foreignObject ----------
+        Element foreign = doc.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+
+        // dimensions du tableau
+        foreign.setAttribute("x", String.valueOf(positionX));
+        foreign.setAttribute("y", String.valueOf(positionY));
+        foreign.setAttribute("width", "220");
+        foreign.setAttribute("height", "110");
+
+        // ---------- XHTML table ----------
+        Element div = doc.createElementNS("http://www.w3.org/1999/xhtml", "div");
+        div.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+
+        Element table = doc.createElementNS("http://www.w3.org/1999/xhtml", "table");
+        table.setAttribute("class", "legend-table"); // tu pourras la styliser en CSS
+
+        addRow(doc, table, "lowLimit",  String.valueOf(lowVoltageLimit));
+        addRow(doc, table, "highLimit", String.valueOf(highVoltageLimit));
+        addRow(doc, table, "ipMax",     ipMax != null ? String.valueOf(ipMax) : "-");
+
+        div.appendChild(table);
+        foreign.appendChild(div);
+
+        // attach to group
+        gNode.appendChild(foreign);
+        legendRootElement.appendChild(gNode);
+
+        super.drawLegend(graph, metadata, styleProvider, legendRootElement, positionX + 250, positionY);
+    }
+
+    private void addRow(Document doc, Element table, String label, String value) {
+        Element tr = doc.createElementNS("http://www.w3.org/1999/xhtml", "tr");
+
+        Element td1 = doc.createElementNS("http://www.w3.org/1999/xhtml", "td");
+        td1.appendChild(doc.createTextNode(label));
+
+        Element td2 = doc.createElementNS("http://www.w3.org/1999/xhtml", "td");
+        td2.appendChild(doc.createTextNode(value));
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        table.appendChild(tr);
+    }
+
+    private Double getIpMax(@NonNull final VoltageLevel voltageLevel) {
+        return Optional.ofNullable((IdentifiableShortCircuit<VoltageLevel>) voltageLevel.getExtension(IdentifiableShortCircuit.class))
+            .map(IdentifiableShortCircuit::getIpMax).orElse(null);
     }
 
     private String formatPowerSum(DoubleStream stream) {
