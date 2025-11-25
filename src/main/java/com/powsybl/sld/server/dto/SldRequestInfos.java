@@ -7,6 +7,7 @@
 package com.powsybl.sld.server.dto;
 
 import java.util.List;
+import java.util.Map;
 
 import com.powsybl.commons.config.BaseVoltageConfig;
 
@@ -27,4 +28,9 @@ import lombok.Setter;
 public class SldRequestInfos {
     private List<CurrentLimitViolationInfos> currentLimitViolationsInfos;
     private List<BaseVoltageConfig> baseVoltagesConfigInfos;
+    Map<String, Double> busIdToIccValues;
+
+    public SldRequestInfos(List<CurrentLimitViolationInfos> currentLimitViolationsInfos) {
+        this.currentLimitViolationsInfos = currentLimitViolationsInfos;
+    }
 }
