@@ -42,8 +42,8 @@ import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
+import com.powsybl.sld.server.utils.DiagramConstants;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
-import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
@@ -159,13 +159,13 @@ class SingleLineDiagramTest {
         baseVoltage1.setName("vl1");
         baseVoltage1.setMinValue(0.);
         baseVoltage1.setMaxValue(1000.);
-        baseVoltage1.setProfile("Default");
+        baseVoltage1.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
         BaseVoltageConfig baseVoltage2 = new BaseVoltageConfig();
         baseVoltage2.setName("vl2");
         baseVoltage2.setMinValue(1000.);
         baseVoltage2.setMaxValue(2000.);
-        baseVoltage2.setProfile("Default");
+        baseVoltage2.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
         baseVoltages = List.of(baseVoltage1, baseVoltage2);
         sldRequestInfos = new SldRequestInfos();
@@ -229,32 +229,32 @@ class SingleLineDiagramTest {
 
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(baseVoltages)))
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_1_ID, testNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(baseVoltages)))
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         //voltage level not existing
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "NotFound")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(baseVoltages)))
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         //network not existing
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(baseVoltages)))
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         //variant not existing
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(baseVoltages)))
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "vlFr1A")
@@ -338,32 +338,32 @@ class SingleLineDiagramTest {
 
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", testNetworkId, "subFr1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(baseVoltages)))
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_2_ID, testNetworkId, "subFr1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(baseVoltages)))
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         // substation not existing
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", testNetworkId, "NotFound")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(baseVoltages)))
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         // network not existing
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", notFoundNetworkId, "subFr2")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(baseVoltages)))
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         // variant not existing
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr2")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(baseVoltages)))
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?substationLayout=horizontal", testNetworkId, "subFr2")
@@ -1033,13 +1033,13 @@ class SingleLineDiagramTest {
         baseVoltage1.setName("vl1");
         baseVoltage1.setMinValue(0.);
         baseVoltage1.setMaxValue(1000.);
-        baseVoltage1.setProfile("Default");
+        baseVoltage1.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
         BaseVoltageConfig baseVoltage2 = new BaseVoltageConfig();
         baseVoltage2.setName("vl2");
         baseVoltage2.setMinValue(1000.);
         baseVoltage2.setMaxValue(2000.);
-        baseVoltage2.setProfile("Default");
+        baseVoltage2.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
         List<BaseVoltageConfig> baseVoltagesConfigInfos = List.of(baseVoltage1, baseVoltage2);
 
@@ -1076,23 +1076,19 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetworkWithDepth());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-                .useName(true)
-                .labelCentered(false)
-                .diagonalLabel(true)
-                .topologicalColoring(true)
-                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-                .substationLayout("horizontal")
-                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-                .language("en")
-                .build();
-
         CurrentLimitViolationInfos violation = CurrentLimitViolationInfos.builder()
                 .equipmentId("twt1")
                 .limitName(null)
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, new SldRequestInfos(List.of(violation), baseVoltages, null));
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setUseName(true);
+        requestInfos.setDiagonalLabel(true);
+        requestInfos.setTopologicalColoring(true);
+        requestInfos.setCurrentLimitViolationsInfos(List.of(violation));
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         assertTrue(svg.contains(OVERLOAD_STYLE_CLASS));
@@ -1103,18 +1099,14 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString(UUID.randomUUID().toString());
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(FourSubstationsNodeBreakerWithExtensionsFactory.create());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-            .useName(true)
-            .labelCentered(false)
-            .diagonalLabel(true)
-            .topologicalColoring(true)
-            .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-            .substationLayout("horizontal")
-            .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-            .language("en")
-            .build();
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setUseName(true);
+        requestInfos.setDiagonalLabel(true);
+        requestInfos.setTopologicalColoring(true);
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, new SldRequestInfos(List.of(), baseVoltages, null));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
@@ -1124,18 +1116,14 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString(UUID.randomUUID().toString());
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(FourSubstationsNodeBreakerFactory.create());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-            .useName(true)
-            .labelCentered(false)
-            .diagonalLabel(true)
-            .topologicalColoring(true)
-            .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-            .substationLayout("horizontal")
-            .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-            .language("en")
-            .build();
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setUseName(true);
+        requestInfos.setDiagonalLabel(true);
+        requestInfos.setTopologicalColoring(true);
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, new SldRequestInfos(List.of(), baseVoltages, null));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
@@ -1145,23 +1133,16 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetworkWithDepth());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-                .useName(false)
-                .labelCentered(false)
-                .diagonalLabel(false)
-                .topologicalColoring(false)
-                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-                .substationLayout("horizontal")
-                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-                .language("en")
-                .build();
-
         CurrentLimitViolationInfos violation = CurrentLimitViolationInfos.builder()
                 .equipmentId("twt1")
                 .limitName("IT20")
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, new SldRequestInfos(List.of(violation), baseVoltages, null));
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of(violation));
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         String expected = OVERLOAD_STYLE_CLASS + "-it20";
@@ -1173,20 +1154,14 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.randomUUID();
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createTwoVoltageLevels());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-                .useName(false)
-                .labelCentered(false)
-                .diagonalLabel(false)
-                .topologicalColoring(false)
-                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-                .substationLayout("horizontal")
-                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-                .language("en")
-                .build();
-
         Map<String, Double> busIdToIcc = Map.of("vl1_1", 12345.6);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", parameters, new SldRequestInfos(List.of(), baseVoltages, busIdToIcc));
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
+        requestInfos.setBusIdToIccValues(busIdToIcc);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         // divided by 1000 then rounded with 1 decimal
@@ -1208,18 +1183,11 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-                .useName(false)
-                .labelCentered(false)
-                .diagonalLabel(false)
-                .topologicalColoring(isTopologicalColoring)
-                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-                .substationLayout("horizontal")
-                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-                .language("en")
-                .build();
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setTopologicalColoring(isTopologicalColoring);
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, sldRequestInfos);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
 
@@ -1450,18 +1418,11 @@ class SingleLineDiagramTest {
 
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-                .useName(false)
-                .labelCentered(false)
-                .diagonalLabel(false)
-                .topologicalColoring(false)
-                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-                .substationLayout("horizontal")
-                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-                .language("en")
-                .build();
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "vlFr1A", parameters, new SldRequestInfos(List.of(), baseVoltages, null));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "vlFr1A", requestInfos);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
@@ -1477,18 +1438,11 @@ class SingleLineDiagramTest {
 
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-                .useName(false)
-                .labelCentered(false)
-                .diagonalLabel(false)
-                .topologicalColoring(false)
-                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-                .substationLayout("horizontal")
-                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-                .language("en")
-                .build();
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr1", parameters, new SldRequestInfos(List.of(), baseVoltages, null));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr1", requestInfos);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });

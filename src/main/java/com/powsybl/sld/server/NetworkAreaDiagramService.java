@@ -38,6 +38,7 @@ import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.CsvFileValidator;
+import com.powsybl.sld.server.utils.DiagramConstants;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import com.powsybl.sld.server.utils.ResourceUtils;
 import com.powsybl.sld.server.utils.TopologicalStyleProvider;
@@ -289,10 +290,10 @@ class NetworkAreaDiagramService {
         nadParameters.setLayoutParameters(layoutParameters);
         Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
 
-        baseVoltagesConfigInfos.forEach(vl -> vl.setProfile("Default"));
+        baseVoltagesConfigInfos.forEach(vl -> vl.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE));
         BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
         baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos);
-        baseVoltagesConfig.setDefaultProfile("Default");
+        baseVoltagesConfig.setDefaultProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(
                 nadGenerationContext.getNetwork(),

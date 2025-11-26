@@ -63,13 +63,13 @@ class SingleLineDiagramService {
 
     private static SubstationLayoutFactory getSubstationLayoutFactory(String substationLayout) {
         return switch (substationLayout) {
-            case "horizontal" -> new HorizontalSubstationLayoutFactory();
-            case "vertical" -> new VerticalSubstationLayoutFactory();
+            case DiagramConstants.SUBSTATION_LAYOUT_HORIZONTAL -> new HorizontalSubstationLayoutFactory();
+            case DiagramConstants.SUBSTATION_LAYOUT_VERTICAL -> new VerticalSubstationLayoutFactory();
             default -> throw new PowsyblException("Substation layout " + substationLayout + " incorrect");
         };
     }
 
-    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, SldRequestInfos sldRequestInfos) {
+    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SldRequestInfos sldRequestInfos) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
@@ -78,33 +78,36 @@ class SingleLineDiagramService {
         try (var svgWriter = new StringWriter();
              var metadataWriter = new StringWriter()) {
 
-            SldComponentLibrary compLibrary = SldComponentLibrary.find(diagParams.getComponentLibrary())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + diagParams.getComponentLibrary() + "' not found"));
+            SldComponentLibrary compLibrary = SldComponentLibrary.find(sldRequestInfos.getComponentLibrary())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + sldRequestInfos.getComponentLibrary() + "' not found"));
 
             SvgParameters svgParameters = new SvgParameters(SVG_PARAMETERS);
-            svgParameters.setLabelCentered(diagParams.isLabelCentered());
-            svgParameters.setLabelDiagonal(diagParams.isDiagonalLabel());
-            svgParameters.setUseName(diagParams.isUseName());
+            svgParameters.setLabelCentered(sldRequestInfos.isCenterLabel());
+            svgParameters.setLabelDiagonal(sldRequestInfos.isDiagonalLabel());
+            svgParameters.setUseName(sldRequestInfos.isUseName());
             svgParameters.setUndefinedValueSymbol("\u2014");
-            svgParameters.setLanguageTag(diagParams.getLanguage());
+            svgParameters.setLanguageTag(sldRequestInfos.getLanguage());
             svgParameters.setUnifyVoltageLevelColors(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
 
             SldParameters sldParameters = new SldParameters();
 
-            if (diagParams.getSldDisplayMode() == SldDisplayMode.FEEDER_POSITION) {
-                svgParameters.setBusesLegendAdded(false);
-                svgParameters.setLabelDiagonal(true);
-                sldParameters.setLabelProviderFactory(PositionDiagramLabelProvider.newLabelProviderFactory(id));
-            } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
-                svgParameters.setBusesLegendAdded(true);
-                sldParameters.setLabelProviderFactory(CommonLabelProvider.newCommonLabelProviderFactory(sldRequestInfos.getBusIdToIccValues()));
-            } else {
-                throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
+            switch (sldRequestInfos.getSldDisplayMode()) {
+                case SldDisplayMode.FEEDER_POSITION:
+                    svgParameters.setBusesLegendAdded(false);
+                    svgParameters.setLabelDiagonal(true);
+                    sldParameters.setLabelProviderFactory(PositionDiagramLabelProvider.newLabelProviderFactory(id));
+                    break;
+                case SldDisplayMode.STATE_VARIABLE:
+                    svgParameters.setBusesLegendAdded(true);
+                    sldParameters.setLabelProviderFactory(CommonLabelProvider.newCommonLabelProviderFactory(sldRequestInfos.getBusIdToIccValues()));
+                    break;
+                default:
+                    throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", sldRequestInfos.getSldDisplayMode()));
             }
 
             var voltageLevelLayoutFactory = CustomVoltageLevelLayoutFactoryCreator.newCustomVoltageLevelLayoutFactoryCreator();
-            var substationLayoutFactory = getSubstationLayoutFactory(diagParams.getSubstationLayout());
+            var substationLayoutFactory = getSubstationLayoutFactory(sldRequestInfos.getSubstationLayout());
 
             sldParameters.setSvgParameters(svgParameters);
             sldParameters.setSubstationLayoutFactory(substationLayoutFactory);
@@ -114,13 +117,13 @@ class SingleLineDiagramService {
             Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolationsInfos(), OVERLOAD_STYLE_CLASS);
 
             sldParameters.setStyleProviderFactory((net, parameters) -> {
-                sldRequestInfos.getBaseVoltagesConfigInfos().forEach(vl -> vl.setProfile("Default"));
+                sldRequestInfos.getBaseVoltagesConfigInfos().forEach(vl -> vl.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE));
                 BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
                 baseVoltagesConfig.setBaseVoltages(sldRequestInfos.getBaseVoltagesConfigInfos());
-                baseVoltagesConfig.setDefaultProfile("Default");
+                baseVoltagesConfig.setDefaultProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
                 return new StyleProvidersList(
-                    diagParams.isTopologicalColoring()
+                    sldRequestInfos.isTopologicalColoring()
                         ? new TopologicalStyleProvider(baseVoltagesConfig, network, parameters)
                         : new NominalVoltageStyleProvider(baseVoltagesConfig),
                     new HighlightLineStateStyleProvider(network),

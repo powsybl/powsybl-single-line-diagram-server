@@ -10,9 +10,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.powsybl.commons.config.BaseVoltageConfig;
+import com.powsybl.sld.server.GridSuiteAndConvergenceComponentLibrary;
+import com.powsybl.sld.server.utils.DiagramConstants;
+import com.powsybl.sld.server.utils.SldDisplayMode;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,15 +24,36 @@ import lombok.Setter;
  */
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Getter
 @Setter
 public class SldRequestInfos {
+    private boolean useName = false;
+    private boolean centerLabel = false;
+    private boolean diagonalLabel = false;
+    private boolean topologicalColoring = false;
+    private String componentLibrary = GridSuiteAndConvergenceComponentLibrary.NAME;
+    private String substationLayout = DiagramConstants.SUBSTATION_LAYOUT_HORIZONTAL;
+    private SldDisplayMode sldDisplayMode = SldDisplayMode.STATE_VARIABLE;
+    private String language = "en";
     private List<CurrentLimitViolationInfos> currentLimitViolationsInfos;
     private List<BaseVoltageConfig> baseVoltagesConfigInfos;
     Map<String, Double> busIdToIccValues;
 
-    public SldRequestInfos(List<CurrentLimitViolationInfos> currentLimitViolationsInfos) {
-        this.currentLimitViolationsInfos = currentLimitViolationsInfos;
+    public void setComponentLibrary(String componentLibrary) {
+        this.componentLibrary = (componentLibrary == null || componentLibrary.isBlank())
+            ? GridSuiteAndConvergenceComponentLibrary.NAME
+            : componentLibrary;
+    }
+
+    public void setSubstationLayout(String substationLayout) {
+        this.substationLayout = (substationLayout == null || substationLayout.isBlank())
+            ? DiagramConstants.SUBSTATION_LAYOUT_HORIZONTAL
+            : substationLayout;
+    }
+
+    public void setSldDisplayMode(SldDisplayMode sldDisplayMode) {
+        this.sldDisplayMode = (sldDisplayMode == null)
+            ? SldDisplayMode.STATE_VARIABLE
+            : sldDisplayMode;
     }
 }
