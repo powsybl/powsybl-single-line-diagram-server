@@ -16,11 +16,7 @@ import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
 import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.SldComponentLibrary;
-import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
-import com.powsybl.sld.server.dto.EquipmentInfos;
-import com.powsybl.sld.server.dto.SubstationInfos;
-import com.powsybl.sld.server.dto.SvgAndMetadata;
-import com.powsybl.sld.server.dto.VoltageLevelInfos;
+import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
@@ -72,7 +68,7 @@ class SingleLineDiagramService {
         };
     }
 
-    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
+    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, SvgGenerationMetadata svgGenerationMetadata) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
@@ -101,7 +97,7 @@ class SingleLineDiagramService {
                 sldParameters.setLabelProviderFactory(PositionDiagramLabelProvider.newLabelProviderFactory(id));
             } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
                 svgParameters.setBusesLegendAdded(true);
-                sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
+                sldParameters.setLabelProviderFactory(CommonLabelProvider.newCommonLabelProviderFactory(svgGenerationMetadata != null ? svgGenerationMetadata.getBusIdToIccValues() : null));
             } else {
                 throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
             }
@@ -114,7 +110,7 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
 
-            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(svgGenerationMetadata != null ? svgGenerationMetadata.getCurrentLimitViolationInfos() : null, OVERLOAD_STYLE_CLASS);
 
             sldParameters.setStyleProviderFactory((net, parameters) ->
                 diagParams.isTopologicalColoring()
