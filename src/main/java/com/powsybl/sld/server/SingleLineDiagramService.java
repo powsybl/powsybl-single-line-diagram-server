@@ -46,9 +46,12 @@ import static com.powsybl.sld.svg.styles.StyleClassConstants.OVERLOAD_STYLE_CLAS
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class SingleLineDiagramService {
+    private static final double DEFAULT_LAYOUT_PADDING = 20;
+    private static final double LAYOUT_BOTTOM_PADDING = 50;
 
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
-            .setAdaptCellHeightToContent(true);
+            .setAdaptCellHeightToContent(true)
+            .setDiagrammPadding(DEFAULT_LAYOUT_PADDING, DEFAULT_LAYOUT_PADDING, DEFAULT_LAYOUT_PADDING, LAYOUT_BOTTOM_PADDING);
 
     private static final SvgParameters SVG_PARAMETERS = new SvgParameters()
             .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
