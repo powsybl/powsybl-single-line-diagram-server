@@ -23,15 +23,15 @@ import java.util.function.Supplier;
 @Service
 public class NetworkAreaExecutionService {
 
-    private final ThreadPoolExecutor threadPoolExecutor;
     private final ExecutorService executorService;
 
     public NetworkAreaExecutionService(@Value("${max-concurrent-nad-generations}") int maxConcurrentNadGenerations,
                                        @NonNull DiagramGenerationObserver diagramGenerationObserver) {
-        threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxConcurrentNadGenerations);
+        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxConcurrentNadGenerations);
         diagramGenerationObserver.createThreadPoolMetric(threadPoolExecutor);
+        ContextSnapshotFactory snapshotFactory = ContextSnapshotFactory.builder().build();
         executorService = ContextExecutorService.wrap(threadPoolExecutor,
-                () -> ContextSnapshotFactory.builder().build().captureAll());
+            snapshotFactory::captureAll);
     }
 
     @PreDestroy
