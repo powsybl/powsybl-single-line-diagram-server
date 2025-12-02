@@ -33,6 +33,7 @@ import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
+import com.powsybl.sld.server.dto.SvgGenerationMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
@@ -56,10 +57,10 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -85,9 +86,8 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * @author Abdelsalem Hedhili <abdelsalem.hedhili at rte-france.com>
@@ -106,20 +106,20 @@ class SingleLineDiagramTest {
     @Autowired
     private NetworkAreaDiagramService networkAreaDiagramService;
 
-    @MockBean
+    @MockitoBean
     private NadConfigRepository nadConfigRepository;
 
-    @MockBean
+    @MockitoBean
     private NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository;
 
-    @MockBean
+    @MockitoBean
     private PositionDiagramLabelProvider positionDiagramLabelProvider;
 
-    @MockBean
+    @MockitoBean
     private NetworkStoreService networkStoreService;
-    @MockBean
+    @MockitoBean
     private GeoDataService geoDataService;
-    @MockBean
+    @MockitoBean
     private FilterService filterService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -941,7 +941,7 @@ class SingleLineDiagramTest {
                 .limitName(null)
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, List.of(violation));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, new SvgGenerationMetadata(List.of(violation)));
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         assertTrue(svg.contains(OVERLOAD_STYLE_CLASS));
@@ -963,7 +963,7 @@ class SingleLineDiagramTest {
             .language("en")
             .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, List.of());
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, new SvgGenerationMetadata(List.of()));
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
@@ -984,7 +984,7 @@ class SingleLineDiagramTest {
             .language("en")
             .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, List.of());
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, new SvgGenerationMetadata(List.of()));
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
@@ -1010,10 +1010,36 @@ class SingleLineDiagramTest {
                 .limitName("IT20")
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, List.of(violation));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, new SvgGenerationMetadata(List.of(violation)));
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         String expected = OVERLOAD_STYLE_CLASS + "-it20";
+        assertTrue(svg.contains(expected));
+    }
+
+    @Test
+    void testSingleLineDiagramWithIcc() {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createTwoVoltageLevels());
+
+        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
+            .useName(false)
+            .labelCentered(false)
+            .diagonalLabel(false)
+            .topologicalColoring(false)
+            .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
+            .substationLayout("horizontal")
+            .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
+            .language("en")
+            .build();
+
+        Map<String, Double> busIdToIcc = Map.of("vl1_1", 12345.6);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", parameters, new SvgGenerationMetadata(List.of(), busIdToIcc));
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+        // divided by 1000 then rounded with 1 decimal
+        String expected = "ICC = 12.3 kA";
         assertTrue(svg.contains(expected));
     }
 
@@ -1591,6 +1617,10 @@ class SingleLineDiagramTest {
         // vl1 should have 2 busId displayed in bus legend
         assertTrue(stringResult.contains(">vl1_0<"));
         assertTrue(stringResult.contains(">vl1_1<"));
+        // VL contains generator but no loadflow has been run -> 0 MW
+        assertTrue(stringResult.contains(">P = 0 MW<"));
+        // VL contains no load -> — MW
+        assertTrue(stringResult.contains(">C = — MW<"));
 
         result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vl2"))
             .andExpect(status().isOk())
