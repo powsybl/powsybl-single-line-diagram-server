@@ -100,7 +100,8 @@ class SingleLineDiagramService {
                 sldParameters.setLabelProviderFactory(PositionDiagramLabelProvider.newLabelProviderFactory(id));
             } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
                 svgParameters.setBusesLegendAdded(true);
-                sldParameters.setLabelProviderFactory(CommonLabelProvider.newCommonLabelProviderFactory(svgGenerationMetadata != null ? svgGenerationMetadata.getBusIdToIccValues() : null));
+                sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
+                sldParameters.setLegendWriterFactory(CommonLegendWriter.createFactory(svgGenerationMetadata != null ? svgGenerationMetadata.getBusIdToIccValues() : null));
             } else {
                 throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
             }
