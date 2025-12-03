@@ -41,11 +41,17 @@ public class CommonLabelProvider extends DefaultLabelProvider {
     public CommonLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
         super(network, componentLibrary, layoutParameters, svgParameters);
         this.busIdToIccMap = null;
+        this.setDisplayCurrentFeederInfo(true);
+        this.setDisplayArrowForCurrentFeederInfo(false);
+        this.setDisplayPermanentLimitPercentageFeederInfo(true);
     }
 
     public CommonLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters, Map<String, Double> busIdToIccMap) {
         super(network, componentLibrary, layoutParameters, svgParameters);
         this.busIdToIccMap = busIdToIccMap;
+        this.setDisplayCurrentFeederInfo(true);
+        this.setDisplayArrowForCurrentFeederInfo(false);
+        this.setDisplayPermanentLimitPercentageFeederInfo(true);
     }
 
     public static LabelProviderFactory newCommonLabelProviderFactory(Map<String, Double> busIdToIccMap) {
