@@ -14,10 +14,7 @@ import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
-import com.powsybl.sld.layout.HorizontalSubstationLayoutFactory;
-import com.powsybl.sld.layout.LayoutParameters;
-import com.powsybl.sld.layout.SubstationLayoutFactory;
-import com.powsybl.sld.layout.VerticalSubstationLayoutFactory;
+import com.powsybl.sld.layout.*;
 import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.utils.*;
@@ -35,10 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.powsybl.iidm.network.IdentifiableType.SUBSTATION;
@@ -52,9 +46,12 @@ import static com.powsybl.sld.svg.styles.StyleClassConstants.OVERLOAD_STYLE_CLAS
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class SingleLineDiagramService {
+    private static final double DEFAULT_LAYOUT_PADDING = 20;
+    private static final double LAYOUT_BOTTOM_PADDING = 50;
 
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
-            .setAdaptCellHeightToContent(true);
+            .setAdaptCellHeightToContent(true)
+            .setDiagrammPadding(DEFAULT_LAYOUT_PADDING, DEFAULT_LAYOUT_PADDING, DEFAULT_LAYOUT_PADDING, LAYOUT_BOTTOM_PADDING);
 
     private static final SvgParameters SVG_PARAMETERS = new SvgParameters()
             .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
@@ -74,7 +71,7 @@ class SingleLineDiagramService {
         };
     }
 
-    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
+    SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SingleLineDiagramParameters diagParams, SvgGenerationMetadata svgGenerationMetadata) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
@@ -103,8 +100,7 @@ class SingleLineDiagramService {
                 sldParameters.setLabelProviderFactory(PositionDiagramLabelProvider.newLabelProviderFactory(id));
             } else if (diagParams.getSldDisplayMode() == SldDisplayMode.STATE_VARIABLE) {
                 svgParameters.setBusesLegendAdded(true);
-                sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
-                sldParameters.setLegendWriterFactory(CommonLegendWriter::new);
+                sldParameters.setLabelProviderFactory(CommonLabelProvider.newCommonLabelProviderFactory(svgGenerationMetadata != null ? svgGenerationMetadata.getBusIdToIccValues() : null));
             } else {
                 throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", diagParams.getSldDisplayMode()));
             }
@@ -117,7 +113,7 @@ class SingleLineDiagramService {
             sldParameters.setVoltageLevelLayoutFactoryCreator(voltageLevelLayoutFactory);
             sldParameters.setLayoutParameters(layoutParameters);
 
-            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, OVERLOAD_STYLE_CLASS);
+            Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(svgGenerationMetadata != null ? svgGenerationMetadata.getCurrentLimitViolationInfos() : null, OVERLOAD_STYLE_CLASS);
 
             sldParameters.setStyleProviderFactory((net, parameters) ->
                 diagParams.isTopologicalColoring()
