@@ -287,7 +287,7 @@ class NetworkAreaDiagramService {
         nadParameters.setLayoutParameters(layoutParameters);
         Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), limitViolationStyles));
-        nadParameters.setLabelProviderFactory(NadLabelProvider::new);
+        nadParameters.setDisplayAngle(false);
 
         // Set style provider factory either with geographical data or with the provided positions (if any)
         if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES && nadGenerationContext.getPositions().isEmpty()) {
