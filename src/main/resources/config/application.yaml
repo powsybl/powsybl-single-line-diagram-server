@@ -22,6 +22,10 @@ gridsuite:
 powsybl-ws:
   database:
     name: diagram
+  autoconfigure:
+    base-exception-handler:
+      enable: false
+
 
 # 3 maximum concurrent Network Area Diagram generations for the current configuration
 max-concurrent-nad-generations: 3
@@ -29,3 +33,4 @@ max-concurrent-nad-generations: 3
 diagram-server:
   nad:
     max-voltage-levels: 1600
+
