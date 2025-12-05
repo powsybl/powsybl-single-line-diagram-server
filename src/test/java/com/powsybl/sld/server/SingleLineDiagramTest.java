@@ -269,12 +269,6 @@ class SingleLineDiagramTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
-        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?sldDisplayMode=" + SldDisplayMode.FEEDER_POSITION.name() + "&variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
-
         //voltage level not existing
         mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "NotFound")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -292,6 +286,13 @@ class SingleLineDiagramTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
+
+        sldRequestInfos.setSldDisplayMode(SldDisplayMode.FEEDER_POSITION);
+        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
     }
 
     @Test
