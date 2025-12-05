@@ -15,8 +15,9 @@ import com.powsybl.sld.model.nodes.*;
 import com.powsybl.sld.svg.DefaultLabelProvider;
 import com.powsybl.sld.svg.SvgParameters;
 
-import java.util.*;
-import java.util.stream.DoubleStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class CommonLabelProvider extends DefaultLabelProvider {
     private static final String PLANNED_OUTAGE_BRANCH_NODE_DECORATOR = "LOCK";
@@ -118,12 +119,5 @@ public class CommonLabelProvider extends DefaultLabelProvider {
             case Internal2WTNode ignored -> new NodeDecorator(decoratorType, getInternal2WTDecoratorPosition(node.getOrientation()));
             case null, default -> new NodeDecorator(decoratorType, getGenericDecoratorPosition());
         };
-    }
-
-    private static OptionalDouble sumDoubleStream(DoubleStream stream) {
-        DoubleSummaryStatistics stats = stream.summaryStatistics();
-        return stats.getCount() == 0
-            ? OptionalDouble.empty()
-            : OptionalDouble.of(stats.getSum());
     }
 }
