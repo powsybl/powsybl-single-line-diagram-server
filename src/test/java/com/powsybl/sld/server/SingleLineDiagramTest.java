@@ -1216,9 +1216,8 @@ class SingleLineDiagramTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
         String stringResultWithOmitionAndExtension = resultWithOmitionAndExtension.getResponse().getContentAsString();
-        assertTrue(stringResultWithOmitionAndExtension.contains("\"additionalMetadata\":{\"nbVoltageLevels\":3"));
+        assertTrue(stringResultWithOmitionAndExtension.contains("\"additionalMetadata\":{\"nbVoltageLevels\":2"));
         assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
-        assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
         assertTrue(stringResultWithOmitionAndExtension.contains("{\"id\":\"vlEs1B\",\"name\":\"vlEs1B\",\"substationId\":\"subEs1\""));
     }
 

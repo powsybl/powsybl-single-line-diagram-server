@@ -219,59 +219,82 @@ class NetworkAreaDiagramService {
 
     @Transactional(readOnly = true)
     public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, NadRequestInfos nadRequestInfos) {
-        // Context setup
-        NadGenerationContext nadGenerationContext = NadGenerationContext.builder()
+        NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder = NadGenerationContext.builder()
             .networkUuid(networkUuid)
             .variantId(variantId)
-            .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION))
-            // If we already have a NAD config UUID, it means the NAD was already generated,so we keep the automatic generation mode.
-            .nadPositionsGenerationMode(nadRequestInfos.getNadConfigUuid() == null ? nadRequestInfos.getNadPositionsGenerationMode() : NadPositionsGenerationMode.AUTOMATIC)
-            .positions(nadRequestInfos.getPositions())
-            .build();
+            .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION));
 
-        // Positions config fetching
-        if (nadRequestInfos.getNadConfigUuid() != null) {
-            handleNadConfigPositions(nadRequestInfos.getNadConfigUuid(), nadGenerationContext);
-        } else if (nadRequestInfos.getNadPositionsGenerationMode() == NadPositionsGenerationMode.CONFIGURED) {
-            handleConfiguredPositions(nadGenerationContext);
-        }
+        // Initial VLs
+        NadGenerationContext nadGenerationContext = initVoltageLevelsAndPositions(nadGenerationContextBuilder, nadRequestInfos);
 
-        // Filter fetching
+        // Modify the initial VLs
+        // This order is important
+
+        // Add VLs from filter
         if (nadRequestInfos.getFilterUuid() != null) {
             nadGenerationContext.getVoltageLevelIds().addAll(getVoltageLevelIdsFromFilter(networkUuid, variantId, nadRequestInfos.getFilterUuid()));
         }
 
-        // Manual user selection processing
-        nadGenerationContext.getVoltageLevelIds().addAll(nadRequestInfos.getVoltageLevelIds());
-        nadGenerationContext.getVoltageLevelIds().removeAll(nadRequestInfos.getVoltageLevelToOmitIds());
+        // Add VLs from expansion
         if (!nadRequestInfos.getVoltageLevelToExpandIds().isEmpty()) {
             nadGenerationContext.getVoltageLevelIds().addAll(getExpandedVoltageLevelIds(nadRequestInfos.getVoltageLevelToExpandIds(), nadGenerationContext.getNetwork()));
         }
 
-        // Filter out of scope voltage levels
-        nadGenerationContext.setVoltageLevelIds(nadGenerationContext.getVoltageLevelIds().stream()
-            .filter(vl -> nadGenerationContext.getNetwork().getVoltageLevel(vl) != null)
-            .collect(Collectors.toSet()));
-        nadGenerationContext.setVoltageLevelFilter(
-                VoltageLevelFilter.createVoltageLevelsFilter(
-                        nadGenerationContext.getNetwork(),
-                        new ArrayList<>(nadGenerationContext.getVoltageLevelIds())
-                )
-        );
+        // Add VLs from list
+        nadGenerationContext.getVoltageLevelIds().addAll(nadRequestInfos.getVoltageLevelIds());
 
-        // Build Powsybl parameters
-        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos());
+        // Remove VLs from list
+        nadGenerationContext.getVoltageLevelIds().removeAll(nadRequestInfos.getVoltageLevelToOmitIds());
 
+        // Remove non existent VLs
+        removeNonExistentVLs(nadGenerationContext);
+
+        // Maximum number of VLs
         int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
         if (nbVoltageLevels > maxVoltageLevels) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, String.format("You need to reduce the number of voltage levels to be displayed in the network area diagram (current %s, maximum %s)", nbVoltageLevels, maxVoltageLevels));
         }
 
+        // Build Powsybl parameters
+        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos());
+
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
 
-    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
+    private void removeNonExistentVLs(NadGenerationContext nadGenerationContext) {
+        nadGenerationContext.setVoltageLevelIds(nadGenerationContext.getVoltageLevelIds().stream()
+            .filter(vl -> nadGenerationContext.getNetwork().getVoltageLevel(vl) != null)
+            .collect(Collectors.toSet()));
+        nadGenerationContext.setVoltageLevelFilter(
+            VoltageLevelFilter.createVoltageLevelsFilter(
+                nadGenerationContext.getNetwork(),
+                new ArrayList<>(nadGenerationContext.getVoltageLevelIds())
+            )
+        );
+    }
 
+    private NadGenerationContext initVoltageLevelsAndPositions(NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder, NadRequestInfos nadRequestInfos) {
+        if (!nadRequestInfos.getPositions().isEmpty()) { // Init from positions
+            nadGenerationContextBuilder.voltageLevelIds(new HashSet<>(nadRequestInfos.getVoltageLevelIds()));
+            nadGenerationContextBuilder.positions(new ArrayList<>(nadRequestInfos.getPositions()));
+            nadGenerationContextBuilder.nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC);
+        } else {
+            if (nadRequestInfos.getNadConfigUuid() != null) { // Init from nad config
+                initFromNadConfig(nadGenerationContextBuilder, nadRequestInfos.getNadConfigUuid());
+                nadGenerationContextBuilder.nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC);
+            } else { // Init from list without positions
+                nadGenerationContextBuilder.voltageLevelIds(new HashSet<>(nadRequestInfos.getVoltageLevelIds()));
+                nadGenerationContextBuilder.nadPositionsGenerationMode(nadRequestInfos.getNadPositionsGenerationMode());
+                if (nadRequestInfos.getNadPositionsGenerationMode() == NadPositionsGenerationMode.CONFIGURED) {
+                    initFromConfiguredPositions(nadGenerationContextBuilder);
+                }
+            }
+        }
+
+        return nadGenerationContextBuilder.build();
+    }
+
+    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
         }
@@ -289,7 +312,7 @@ class NetworkAreaDiagramService {
         nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), limitViolationStyles));
 
         // Set style provider factory either with geographical data or with the provided positions (if any)
-        if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES && nadGenerationContext.getPositions().isEmpty()) {
+        if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES) {
             nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
         } else {
             nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
@@ -298,38 +321,23 @@ class NetworkAreaDiagramService {
         nadGenerationContext.setNadParameters(nadParameters);
     }
 
-    private void handleNadConfigPositions(UUID nadConfigUuid, NadGenerationContext nadGenerationContext) {
+    private void initFromNadConfig(NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder, UUID nadConfigUuid) {
         NadConfigInfos nadConfigInfos = getNetworkAreaDiagramConfig(nadConfigUuid);
-
-        nadGenerationContext.getVoltageLevelIds().addAll(nadConfigInfos.getVoltageLevelIds());
-
-        // Add voltage level positions that are not already present
-        Set<String> existingVoltageLevelIds = nadGenerationContext.getPositions().stream()
-            .map(NadVoltageLevelPositionInfos::getVoltageLevelId)
-            .collect(Collectors.toSet());
-        nadConfigInfos.getPositions().stream()
-            .filter(position -> !existingVoltageLevelIds.contains(position.getVoltageLevelId()))
-            .forEach(nadGenerationContext.getPositions()::add);
-
-        nadGenerationContext.setScalingFactor(nadConfigInfos.getScalingFactor());
+        nadGenerationContextBuilder.voltageLevelIds(new HashSet<>(nadConfigInfos.getVoltageLevelIds()));
+        nadGenerationContextBuilder.positions(new ArrayList<>(nadConfigInfos.getPositions()));
+        nadGenerationContextBuilder.scalingFactor(nadConfigInfos.getScalingFactor());
     }
 
-    private void handleConfiguredPositions(NadGenerationContext nadGenerationContext) {
-        // Add voltage level positions that are not already present
-        Set<String> existingVoltageLevelIds = nadGenerationContext.getPositions().stream()
-                .map(NadVoltageLevelPositionInfos::getVoltageLevelId)
-                .collect(Collectors.toSet());
-
-        // Get the VL positions that were previously saved using csv file.
+    private void initFromConfiguredPositions(NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder) {
         List<NadVoltageLevelConfiguredPositionEntity> nadVoltageLevelPositionInfos = nadVoltageLevelConfiguredPositionRepository.findAll();
         if (nadVoltageLevelPositionInfos.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No configured positions found!");
         }
-        nadVoltageLevelPositionInfos
+        nadGenerationContextBuilder.positions(
+            nadVoltageLevelPositionInfos
                 .stream()
-                .filter(position -> !existingVoltageLevelIds.contains(position.getVoltageLevelId()))
                 .map(NadVoltageLevelConfiguredPositionEntity::toDto)
-                .forEach(nadGenerationContext.getPositions()::add);
+                .toList());
     }
 
     private LayoutFactory prepareGeographicalLayoutFactory(NadGenerationContext nadGenerationContext) {
