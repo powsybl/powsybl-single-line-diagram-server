@@ -91,6 +91,7 @@ class SingleLineDiagramService {
             svgParameters.setLanguageTag(diagParams.getLanguage());
             svgParameters.setUnifyVoltageLevelColors(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
+            layoutParameters.setSpaceForFeederInfos(80);
 
             SldParameters sldParameters = new SldParameters();
 
