@@ -12,6 +12,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.config.BaseVoltageConfig;
 import com.powsybl.commons.extensions.Extendable;
 import com.powsybl.iidm.network.*;
 import com.powsybl.iidm.network.extensions.BusbarSectionPositionAdder;
@@ -32,8 +33,8 @@ import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
+import com.powsybl.sld.server.dto.SldRequestInfos;
 import com.powsybl.sld.server.dto.SvgAndMetadata;
-import com.powsybl.sld.server.dto.SvgGenerationMetadata;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadGenerationContext;
 import com.powsybl.sld.server.dto.nad.NadRequestInfos;
@@ -41,8 +42,8 @@ import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
+import com.powsybl.sld.server.utils.DiagramConstants;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
-import com.powsybl.sld.server.utils.SingleLineDiagramParameters;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
@@ -80,6 +81,7 @@ import java.util.*;
 import static com.powsybl.sld.library.SldComponentTypeName.ARROW_ACTIVE;
 import static com.powsybl.sld.library.SldComponentTypeName.ARROW_REACTIVE;
 import static com.powsybl.sld.svg.styles.StyleClassConstants.OVERLOAD_STYLE_CLASS;
+import static com.powsybl.sld.svg.styles.StyleClassConstants.STYLE_PREFIX;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -127,6 +129,8 @@ class SingleLineDiagramTest {
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_NOT_FOUND_ID = "variant_notFound";
+    private List<BaseVoltageConfig> baseVoltages;
+    private SldRequestInfos sldRequestInfos;
     private FileSystem fileSystem;
     private List<NadVoltageLevelPositionInfos> positions;
 
@@ -150,6 +154,22 @@ class SingleLineDiagramTest {
                     .toList());
             return entities;
         }).when(nadVoltageLevelConfiguredPositionRepository).saveAll(anyList());
+
+        BaseVoltageConfig baseVoltage1 = new BaseVoltageConfig();
+        baseVoltage1.setName("vl1");
+        baseVoltage1.setMinValue(0.);
+        baseVoltage1.setMaxValue(1000.);
+        baseVoltage1.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
+
+        BaseVoltageConfig baseVoltage2 = new BaseVoltageConfig();
+        baseVoltage2.setName("vl2");
+        baseVoltage2.setMinValue(1000.);
+        baseVoltage2.setMaxValue(2000.);
+        baseVoltage2.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
+
+        baseVoltages = List.of(baseVoltage1, baseVoltage2);
+        sldRequestInfos = new SldRequestInfos();
+        sldRequestInfos.setBaseVoltagesConfigInfos(baseVoltages);
     }
 
     @AfterEach
@@ -165,79 +185,114 @@ class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
         given(networkStoreService.getNetwork(notFoundNetworkId, null)).willThrow(new PowsyblException());
 
-        MvcResult result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vlFr1A"))
+        MvcResult result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
                 .andReturn();
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
-        result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_1_ID, testNetworkId, "vlFr1A"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
-            .andReturn();
+        result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_1_ID, testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+                .andReturn();
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
-        result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
-            .andReturn();
+        result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+                .andReturn();
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
         //voltage level not existing
-        mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "notFound"))
+        mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "notFound")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         //network not existing
-        mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A"))
+        mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         //variant not existing
-        mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A"))
-            .andExpect(status().isNotFound());
+        mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isNotFound());
 
-        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "vlFr1A"))
+        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
-        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_1_ID, testNetworkId, "vlFr1A"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
-
-        //voltage level not existing
-        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "NotFound"))
-                .andExpect(status().isNotFound());
-
-        //network not existing
-        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A"))
-                .andExpect(status().isNotFound());
-
-        //variant not existing
-        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A"))
-            .andExpect(status().isNotFound());
-
-        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "vlFr1A"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
-
-        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
-
-        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?sldDisplayMode=" + SldDisplayMode.FEEDER_POSITION.name() + "&variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A"))
+        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_1_ID, testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         //voltage level not existing
-        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "NotFound"))
+        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "NotFound")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         //network not existing
-        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A"))
+        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         //variant not existing
-        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A"))
-            .andExpect(status().isNotFound());
+        mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isNotFound());
+
+        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        //voltage level not existing
+        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "NotFound")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isNotFound());
+
+        //network not existing
+        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isNotFound());
+
+        //variant not existing
+        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isNotFound());
+
+        sldRequestInfos.setSldDisplayMode(SldDisplayMode.FEEDER_POSITION);
+        mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
     }
 
     @Test
@@ -248,77 +303,111 @@ class SingleLineDiagramTest {
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
         given(networkStoreService.getNetwork(notFoundNetworkId, null)).willThrow(new PowsyblException());
 
-        MvcResult result = mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}", testNetworkId, "subFr1"))
+        MvcResult result = mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}", testNetworkId, "subFr1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
                 .andReturn();
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
-        result = mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}?variantId=" + VARIANT_1_ID, testNetworkId, "subFr1"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
-            .andReturn();
+        result = mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}?variantId=" + VARIANT_1_ID, testNetworkId, "subFr1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
+                .andReturn();
         assertEquals("<?xml", result.getResponse().getContentAsString().substring(0, 5));
 
         // substation not existing
-        mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}", testNetworkId, "notFound"))
+        mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}", testNetworkId, "notFound")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         // network not existing
-        mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}", notFoundNetworkId, "subFr1"))
+        mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}", notFoundNetworkId, "subFr1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         // variant not existing
-        mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr1"))
-            .andExpect(status().isNotFound());
-
-        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", testNetworkId, "subFr1"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
-
-        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_2_ID, testNetworkId, "subFr1"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
-
-        // substation not existing
-        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", testNetworkId, "NotFound"))
+        mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
-        // network not existing
-        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", notFoundNetworkId, "subFr2"))
-                .andExpect(status().isNotFound());
-
-        // variant not existing
-        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr2"))
-            .andExpect(status().isNotFound());
-
-        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?substationLayout=horizontal", testNetworkId, "subFr2"))
+        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", testNetworkId, "subFr1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
-        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?substationLayout=horizontal", testNetworkId, "subFr2"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
-
-        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_2_ID + "&substationLayout=vertical", testNetworkId, "subFr2"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
-
-        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?topologicalColoring=true&substationLayout=horizontal", testNetworkId, "subFr2"))
+        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_2_ID, testNetworkId, "subFr1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
         // substation not existing
-        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}", testNetworkId, "NotFound"))
+        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", testNetworkId, "NotFound")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         // network not existing
-        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}", notFoundNetworkId, "subFr2"))
+        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", notFoundNetworkId, "subFr2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
                 .andExpect(status().isNotFound());
 
         // variant not existing
-        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr2"))
-            .andExpect(status().isNotFound());
+        mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isNotFound());
+
+        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?substationLayout=horizontal", testNetworkId, "subFr2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?substationLayout=horizontal", testNetworkId, "subFr2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_2_ID + "&substationLayout=vertical", testNetworkId, "subFr2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?topologicalColoring=true&substationLayout=horizontal", testNetworkId, "subFr2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+        // substation not existing
+        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}", testNetworkId, "NotFound")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isNotFound());
+
+        // network not existing
+        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}", notFoundNetworkId, "subFr2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isNotFound());
+
+        // variant not existing
+        mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr2")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(sldRequestInfos)))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -377,6 +466,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -402,6 +492,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -434,6 +525,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -458,6 +550,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -494,6 +587,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -548,6 +642,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -584,6 +679,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(List.of(positionFromUser))
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -612,6 +708,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(List.of(positionFromUser))
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -657,6 +754,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -695,6 +793,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -736,6 +835,7 @@ class SingleLineDiagramTest {
                 .nadConfigUuid(null)
                 .nadPositionsGenerationMode(nadPositionsGenerationMode)
                 .voltageLevelIds(Set.of("vlFr1A"))
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, nadRequestInfos);
@@ -785,6 +885,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -812,6 +913,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.CONFIGURED)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -837,6 +939,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -865,6 +968,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .currentLimitViolationsInfos(List.of(
                     CurrentLimitViolationInfos.builder()
                         .equipmentId("twt1")
@@ -899,6 +1003,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .currentLimitViolationsInfos(List.of(
                     CurrentLimitViolationInfos.builder()
                         .equipmentId("twt1")
@@ -921,27 +1026,70 @@ class SingleLineDiagramTest {
     }
 
     @Test
+    void testNetworkAreaDiagramWithCustomBaseVoltagesConfig() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
+
+        BaseVoltageConfig baseVoltage1 = new BaseVoltageConfig();
+        baseVoltage1.setName("vl1");
+        baseVoltage1.setMinValue(0.);
+        baseVoltage1.setMaxValue(1000.);
+        baseVoltage1.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
+
+        BaseVoltageConfig baseVoltage2 = new BaseVoltageConfig();
+        baseVoltage2.setName("vl2");
+        baseVoltage2.setMinValue(1000.);
+        baseVoltage2.setMaxValue(2000.);
+        baseVoltage2.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
+
+        List<BaseVoltageConfig> baseVoltagesConfigInfos = List.of(baseVoltage1, baseVoltage2);
+
+        NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
+                .nadConfigUuid(null)
+                .filterUuid(null)
+                .voltageLevelIds(Set.of("vlFr3A"))
+                .voltageLevelToExpandIds(Collections.emptySet())
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .positions(Collections.emptyList())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
+                .build();
+
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted());
+        MvcResult result = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
+                .andExpect(status().isOk())
+                .andReturn();
+        String stringResult = result.getResponse().getContentAsString();
+
+        /*
+         * all the equipments should have a voltage level < 1000
+         * ie all should be associated to baseVoltage1 (vl1) and none to baseVoltage2 (vl2)
+         */
+        assertTrue(stringResult.contains("nad-vl1"));
+        assertTrue(!stringResult.contains("nad-vl2"));
+    }
+
+    @Test
     void testSingleLineDiagramWithViolationDefaultClass() {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetworkWithDepth());
-
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-                .useName(true)
-                .labelCentered(false)
-                .diagonalLabel(true)
-                .topologicalColoring(true)
-                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-                .substationLayout("horizontal")
-                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-                .language("en")
-                .build();
 
         CurrentLimitViolationInfos violation = CurrentLimitViolationInfos.builder()
                 .equipmentId("twt1")
                 .limitName(null)
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, new SvgGenerationMetadata(List.of(violation)));
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setUseName(true);
+        requestInfos.setDiagonalLabel(true);
+        requestInfos.setTopologicalColoring(true);
+        requestInfos.setCurrentLimitViolationsInfos(List.of(violation));
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         assertTrue(svg.contains(OVERLOAD_STYLE_CLASS));
@@ -952,18 +1100,14 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString(UUID.randomUUID().toString());
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(FourSubstationsNodeBreakerWithExtensionsFactory.create());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-            .useName(true)
-            .labelCentered(false)
-            .diagonalLabel(true)
-            .topologicalColoring(true)
-            .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-            .substationLayout("horizontal")
-            .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-            .language("en")
-            .build();
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setUseName(true);
+        requestInfos.setDiagonalLabel(true);
+        requestInfos.setTopologicalColoring(true);
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, new SvgGenerationMetadata(List.of()));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
@@ -973,18 +1117,14 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString(UUID.randomUUID().toString());
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(FourSubstationsNodeBreakerFactory.create());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-            .useName(true)
-            .labelCentered(false)
-            .diagonalLabel(true)
-            .topologicalColoring(true)
-            .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-            .substationLayout("horizontal")
-            .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-            .language("en")
-            .build();
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setUseName(true);
+        requestInfos.setDiagonalLabel(true);
+        requestInfos.setTopologicalColoring(true);
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", parameters, new SvgGenerationMetadata(List.of()));
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
     }
@@ -994,23 +1134,16 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetworkWithDepth());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-                .useName(false)
-                .labelCentered(false)
-                .diagonalLabel(false)
-                .topologicalColoring(false)
-                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-                .substationLayout("horizontal")
-                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-                .language("en")
-                .build();
-
         CurrentLimitViolationInfos violation = CurrentLimitViolationInfos.builder()
                 .equipmentId("twt1")
                 .limitName("IT20")
                 .build();
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", parameters, new SvgGenerationMetadata(List.of(violation)));
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of(violation));
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         String expected = OVERLOAD_STYLE_CLASS + "-it20";
@@ -1022,25 +1155,49 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.randomUUID();
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createTwoVoltageLevels());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-            .useName(false)
-            .labelCentered(false)
-            .diagonalLabel(false)
-            .topologicalColoring(false)
-            .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-            .substationLayout("horizontal")
-            .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-            .language("en")
-            .build();
-
         Map<String, Double> busIdToIcc = Map.of("vl1_1", 12345.6);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", parameters, new SvgGenerationMetadata(List.of(), busIdToIcc));
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
+        requestInfos.setBusIdToIccValues(busIdToIcc);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         // divided by 1000 then rounded with 1 decimal
         String expected = "ICC = 12.3 kA";
         assertTrue(svg.contains(expected));
+    }
+
+    @Test
+    void testSingleLineDiagramWithCustomBaseVoltagesConfigWithTopologicalColoring() {
+        testSingleLineDiagramWithCustomBaseVoltagesConfig(true);
+    }
+
+    @Test
+    void testSingleLineDiagramWithCustomBaseVoltagesConfigWithoutTopologicalColoring() {
+        testSingleLineDiagramWithCustomBaseVoltagesConfig(false);
+    }
+
+    private void testSingleLineDiagramWithCustomBaseVoltagesConfig(boolean isTopologicalColoring) {
+        UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
+
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setTopologicalColoring(isTopologicalColoring);
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", requestInfos);
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+
+        /*
+         * all the equipments should have a voltage level < 1000
+         * ie all should be associated to baseVoltage1 (vl1) and none to baseVoltage2 (vl2)
+         */
+        assertTrue(svg.contains(STYLE_PREFIX + "vl1"));
+        assertTrue(!svg.contains(STYLE_PREFIX + "vl2"));
     }
 
     @Test
@@ -1138,6 +1295,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1164,6 +1322,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Set.of("vlFr2A"))
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1205,6 +1364,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Set.of("vlFr2A"))
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1238,6 +1398,7 @@ class SingleLineDiagramTest {
             .voltageLevelToOmitIds(Collections.emptySet())
             .positions(Collections.emptyList())
             .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+            .baseVoltagesConfigInfos(baseVoltages)
             .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1257,18 +1418,11 @@ class SingleLineDiagramTest {
 
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-                .useName(false)
-                .labelCentered(false)
-                .diagonalLabel(false)
-                .topologicalColoring(false)
-                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-                .substationLayout("horizontal")
-                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-                .language("en")
-                .build();
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "vlFr1A", parameters, null);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "vlFr1A", requestInfos);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
@@ -1284,18 +1438,11 @@ class SingleLineDiagramTest {
 
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createNetwork());
 
-        SingleLineDiagramParameters parameters = SingleLineDiagramParameters.builder()
-                .useName(false)
-                .labelCentered(false)
-                .diagonalLabel(false)
-                .topologicalColoring(false)
-                .componentLibrary(GridSuiteAndConvergenceComponentLibrary.NAME)
-                .substationLayout("horizontal")
-                .sldDisplayMode(SldDisplayMode.STATE_VARIABLE)
-                .language("en")
-                .build();
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
-        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr1", parameters, null);
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr1", requestInfos);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
         assertNotNull(additionalMetadata);
         Map<String, String> convertedMetadata = objectMapper.convertValue(additionalMetadata, new TypeReference<>() { });
@@ -1569,6 +1716,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1591,6 +1739,7 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
+                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1607,7 +1756,9 @@ class SingleLineDiagramTest {
         UUID testNetworkId = UUID.fromString("7928181c-7977-4592-ba19-88027e4254e4");
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createTwoVoltageLevels());
 
-        MvcResult result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vl1"))
+        MvcResult result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vl1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(sldRequestInfos)))
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
             .andReturn();
@@ -1621,7 +1772,9 @@ class SingleLineDiagramTest {
         // VL contains no load -> — MW
         assertTrue(stringResult.contains(">C = — MW<"));
 
-        result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vl2"))
+        result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vl2")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(sldRequestInfos)))
             .andExpect(status().isOk())
             .andExpect(content().contentTypeCompatibleWith(SingleLineDiagramController.IMAGE_SVG_PLUS_XML))
             .andReturn();

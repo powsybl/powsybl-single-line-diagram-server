@@ -10,6 +10,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
 import com.powsybl.commons.PowsyblException;
+import com.powsybl.commons.config.BaseVoltageConfig;
+import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.Substation;
 import com.powsybl.iidm.network.VoltageLevel;
@@ -36,6 +38,7 @@ import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
 import com.powsybl.sld.server.utils.CsvFileValidator;
+import com.powsybl.sld.server.utils.DiagramConstants;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import com.powsybl.sld.server.utils.ResourceUtils;
 import com.powsybl.sld.server.utils.TopologicalStyleProvider;
@@ -256,7 +259,7 @@ class NetworkAreaDiagramService {
         }
 
         // Build Powsybl parameters
-        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos());
+        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos(), nadRequestInfos.getBaseVoltagesConfigInfos());
 
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
@@ -294,7 +297,7 @@ class NetworkAreaDiagramService {
         return nadGenerationContextBuilder.build();
     }
 
-    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos) {
+    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, List<BaseVoltageConfig> baseVoltagesConfigInfos) {
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
         }
@@ -309,7 +312,17 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
         Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
-        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(nadGenerationContext.getNetwork(), limitViolationStyles));
+
+        baseVoltagesConfigInfos.forEach(vl -> vl.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE));
+        BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
+        baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos);
+        baseVoltagesConfig.setDefaultProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
+
+        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(
+                nadGenerationContext.getNetwork(),
+                baseVoltagesConfig,
+                limitViolationStyles
+        ));
 
         // Set style provider factory either with geographical data or with the provided positions (if any)
         if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES) {
