@@ -21,6 +21,7 @@ import static com.powsybl.sld.server.CommonLegendWriter.*;
 public class BusLegendStyleProvider extends EmptyStyleProvider {
     private static final String PRODUCTION = StyleClassConstants.STYLE_PREFIX + KEY_PRODUCTION;
     private static final String CONSUMPTION = StyleClassConstants.STYLE_PREFIX + KEY_CONSUMPTION;
+    private static final String ICC = StyleClassConstants.STYLE_PREFIX + KEY_ICC;
 
     @Override
     public List<String> getBusLegendCaptionStyles(BusLegendInfo.Caption caption) {
@@ -29,6 +30,7 @@ public class BusLegendStyleProvider extends EmptyStyleProvider {
             case KEY_ANGLE -> List.of(StyleClassConstants.ANGLE);
             case KEY_PRODUCTION -> List.of(PRODUCTION);
             case KEY_CONSUMPTION -> List.of(CONSUMPTION);
+            case KEY_ICC -> List.of(ICC);
             default -> Collections.emptyList();
         };
     }
