@@ -25,38 +25,9 @@ public class CommonLabelProvider extends DefaultLabelProvider {
 
     public CommonLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
         super(network, componentLibrary, layoutParameters, svgParameters);
-        this.busIdToIccMap = null;
         this.setDisplayCurrent(true);
         this.setDisplayArrowForCurrent(false);
         this.setDisplayPermanentLimitPercentage(true);
-    }
-
-    public CommonLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters, Map<String, Double> busIdToIccMap) {
-        super(network, componentLibrary, layoutParameters, svgParameters);
-        this.busIdToIccMap = busIdToIccMap;
-        this.setDisplayCurrent(true);
-        this.setDisplayArrowForCurrent(false);
-        this.setDisplayPermanentLimitPercentage(true);
-    }
-
-    public static LabelProviderFactory newCommonLabelProviderFactory(Map<String, Double> busIdToIccMap) {
-        return (network, compLibrary, layoutParameters, svgParameters) -> new CommonLabelProvider(network, compLibrary, layoutParameters, svgParameters, busIdToIccMap);
-    }
-
-    @Override
-    public List<BusLegendInfo> getBusLegendInfos(VoltageLevelGraph graph) {
-        VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
-        return vl.getBusView().getBusStream()
-            .map(b ->
-                new BusLegendInfo(b.getId(), List.of(
-                    new BusLegendInfo.Caption(b.getId(), KEY_BUS_ID),
-                    new BusLegendInfo.Caption(PREFIX_VOLTAGE + valueFormatter.formatVoltage(b.getV(), UNIT_KV), KEY_VOLTAGE),
-                    new BusLegendInfo.Caption(PREFIX_ANGLE + valueFormatter.formatAngleInDegrees(b.getAngle()), KEY_ANGLE),
-                    new BusLegendInfo.Caption(PREFIX_PRODUCTION + formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_CONSUMPTION),
-                    new BusLegendInfo.Caption(PREFIX_CONSUMPTION + formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_PRODUCTION),
-                    new BusLegendInfo.Caption(PREFIX_ICC + getFormattedBusIcc(b.getId()), KEY_ICC)
-                ))
-            ).toList();
     }
 
     @Override
