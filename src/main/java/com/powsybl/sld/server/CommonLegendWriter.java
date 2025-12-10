@@ -11,16 +11,21 @@ import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.svg.*;
+import com.powsybl.sld.svg.styles.StyleClassConstants;
+import com.powsybl.sld.svg.styles.StyleProvider;
+import com.powsybl.sld.util.IdUtil;
+import lombok.NonNull;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
 import java.util.OptionalDouble;
 import java.util.*;
 import java.util.Optional;
-import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.stream.DoubleStream;
 
+import static com.powsybl.diagram.util.CssUtil.writeStyleClasses;
 import static com.powsybl.sld.svg.SVGWriter.GROUP;
 
 public class CommonLegendWriter extends DefaultSVGLegendWriter {
@@ -28,13 +33,6 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
     private static final String UNIT_KV = "kV";
     private static final String UNIT_KA = "kA";
 
-    private static final String PREFIX_VOLTAGE = "U = ";
-    private static final String PREFIX_ANGLE = "θ = ";
-    private static final String PREFIX_PRODUCTION = "P = ";
-    private static final String PREFIX_CONSUMPTION = "C = ";
-    private static final String PREFIX_ICC = "ICC = ";
-
-    private static final String KEY_BUS_ID = "busId";
     public static final String KEY_VOLTAGE = "v";
     public static final String KEY_ANGLE = "angle";
     public static final String KEY_CONSUMPTION = "consumption-sum";
@@ -42,6 +40,8 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
     public static final String KEY_ICC = "icc";
 
     private final Map<String, Double> iccByBusId;
+    private static final String SVG_NS = "http://www.w3.org/2000/svg";
+    private static final String XHTML_NS = "http://www.w3.org/1999/xhtml";
 
     public static LegendWriterFactory createFactory(Map<String, Double> iccByBusId) {
         return (network, svgParameters) -> new CommonLegendWriter(network, svgParameters, iccByBusId);
@@ -58,12 +58,11 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         return vl.getBusView().getBusStream()
             .map(b ->
                 new BusLegendInfo(b.getId(), List.of(
-                    new BusLegendInfo.Caption(b.getId(), KEY_BUS_ID),
-                    new BusLegendInfo.Caption(PREFIX_VOLTAGE + valueFormatter.formatVoltage(b.getV(), UNIT_KV), KEY_VOLTAGE),
-                    new BusLegendInfo.Caption(PREFIX_ANGLE + valueFormatter.formatAngleInDegrees(b.getAngle()), KEY_ANGLE),
-                    new BusLegendInfo.Caption(PREFIX_PRODUCTION + formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_CONSUMPTION),
-                    new BusLegendInfo.Caption(PREFIX_CONSUMPTION + formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_PRODUCTION),
-                    new BusLegendInfo.Caption(PREFIX_ICC + getFormattedBusIcc(b.getId()), KEY_ICC)
+                    new BusLegendInfo.Caption(valueFormatter.formatVoltage(b.getV(), UNIT_KV), KEY_VOLTAGE),
+                    new BusLegendInfo.Caption(valueFormatter.formatAngleInDegrees(b.getAngle()), KEY_ANGLE),
+                    new BusLegendInfo.Caption(formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_CONSUMPTION),
+                    new BusLegendInfo.Caption(formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_PRODUCTION),
+                    new BusLegendInfo.Caption(getFormattedBusIcc(b.getId()), KEY_ICC)
                 ))
             ).toList();
     }
@@ -77,32 +76,6 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
 
         return value + " " + UNIT_KA;
     }
-
-    /*@Override
-    public void drawLegend(VoltageLevelGraph graph, GraphMetadata metadata, StyleProvider styleProvider, Element legendRootElement, double positionX, double positionY) {
-        VoltageLevel voltageLevel = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
-        double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
-        double highVoltageLimit = voltageLevel.getHighVoltageLimit();
-        Double ipMax = getIpMax(voltageLevel);
-
-        Element gNode = legendRootElement.getOwnerDocument().createElement(GROUP);
-        gNode.setAttribute("id", voltageLevel.getId());
-
-        Element label = gNode.getOwnerDocument().createElement("text");
-//        writeStyleClasses(label, styleProvider.getBusLegendCaptionStyles(caption), StyleClassConstants.BUS_LEGEND_INFO);
-        label.setAttribute("id", "test");
-        label.setAttribute("x", String.valueOf(positionX));
-        label.setAttribute("y", String.valueOf(positionY));
-        Text textNode = gNode.getOwnerDocument().createTextNode(String.valueOf(lowVoltageLimit));
-        label.appendChild(textNode);
-        gNode.appendChild(label);
-
-        legendRootElement.appendChild(gNode);
-
-//        super.drawLegend(graph, metadata, styleProvider, legendRootElement, positionX, positionY);
-
-
-    }*/
 
     @Override
     public void drawLegend(
@@ -124,7 +97,7 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         gNode.setAttribute("id", voltageLevel.getId());
 
         // ---------- foreignObject ----------
-        Element foreign = doc.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+        Element foreign = doc.createElementNS(SVG_NS, "foreignObject");
 
         // dimensions du tableau
         foreign.setAttribute("x", String.valueOf(positionX));
@@ -133,15 +106,15 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         foreign.setAttribute("height", "110");
 
         // ---------- XHTML table ----------
-        Element div = doc.createElementNS("http://www.w3.org/1999/xhtml", "div");
-        div.setAttribute("xmlns", "http://www.w3.org/1999/xhtml");
+        Element div = doc.createElementNS(XHTML_NS, "div");
+        div.setAttribute("xmlns", XHTML_NS);
 
-        Element table = doc.createElementNS("http://www.w3.org/1999/xhtml", "table");
+        Element table = doc.createElementNS(XHTML_NS, "table");
         table.setAttribute("class", "legend-table"); // tu pourras la styliser en CSS
 
-        addRow(doc, table, "lowLimit",  String.valueOf(lowVoltageLimit));
+        addRow(doc, table, "lowLimit", String.valueOf(lowVoltageLimit));
         addRow(doc, table, "highLimit", String.valueOf(highVoltageLimit));
-        addRow(doc, table, "ipMax",     ipMax != null ? String.valueOf(ipMax) : "-");
+        addRow(doc, table, "ipMax", ipMax != null ? String.valueOf(ipMax) : "-");
 
         div.appendChild(table);
         foreign.appendChild(div);
@@ -150,16 +123,16 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         gNode.appendChild(foreign);
         legendRootElement.appendChild(gNode);
 
-        super.drawLegend(graph, metadata, styleProvider, legendRootElement, positionX + 250, positionY);
+        keepDrawingLegend(graph, metadata, styleProvider, legendRootElement, positionX + 250, positionY);
     }
 
     private void addRow(Document doc, Element table, String label, String value) {
-        Element tr = doc.createElementNS("http://www.w3.org/1999/xhtml", "tr");
+        Element tr = doc.createElementNS(XHTML_NS, "tr");
 
-        Element td1 = doc.createElementNS("http://www.w3.org/1999/xhtml", "td");
+        Element td1 = doc.createElementNS(XHTML_NS, "td");
         td1.appendChild(doc.createTextNode(label));
 
-        Element td2 = doc.createElementNS("http://www.w3.org/1999/xhtml", "td");
+        Element td2 = doc.createElementNS(XHTML_NS, "td");
         td2.appendChild(doc.createTextNode(value));
 
         tr.appendChild(td1);
@@ -185,5 +158,104 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         return stats.getCount() == 0
             ? OptionalDouble.empty()
             : OptionalDouble.of(stats.getSum());
+    }
+
+    protected static final int CIRCLE_RADIUS_NODE_INFOS_SIZE = 10;
+
+    public void keepDrawingLegend(VoltageLevelGraph graph, GraphMetadata metadata, StyleProvider styleProvider, Element legendRootElement, double positionX, double positionY) {
+        Document doc = legendRootElement.getOwnerDocument();
+
+        //
+        // ---- GLOBAL FOREIGN OBJECT ----
+        //
+        Element foreign = doc.createElementNS(SVG_NS, "foreignObject");
+        foreign.setAttribute("x", String.valueOf(positionX));
+        foreign.setAttribute("y", String.valueOf(positionY));
+        foreign.setAttribute("width", "1200"); //TODO: to calculate ? move before 1st table
+        foreign.setAttribute("height", "400"); //TODO: to calculate ?
+
+        //
+        // ---- ROOT HTML WRAPPER ----
+        //
+        Element root = doc.createElementNS(XHTML_NS, "div");
+        root.setAttribute("class", "legend-root");
+        // legend-root = display:flex → bus-block côte à côte
+
+        //
+        // ---- GET ALL BUS LEGENDS ----
+        //
+        List<BusLegendInfo> buses = getBusLegendInfos(graph);
+
+        for (BusLegendInfo bus : buses) {
+            String unescapedIdNode = metadata.getSvgParameters().getPrefixId() + "NODE_" + bus.busId();
+            String idNode = IdUtil.escapeId(unescapedIdNode);
+            //
+            // ---- ONE BUS BLOCK ----
+            //
+            Element block = doc.createElementNS(XHTML_NS, "div");
+            block.setAttribute("class", "bus-block");
+            block.setAttribute("id", idNode);
+
+            //
+            // ---- TITLE (circle + bus name) ----
+            //
+            Element title = doc.createElementNS(XHTML_NS, "div");
+            title.setAttribute("class", "bus-title");
+
+            Element circle = doc.createElementNS(XHTML_NS, "div");
+            circle.setAttribute("id", IdUtil.escapeId(unescapedIdNode + "_circle"));
+            circle.appendChild(doc.createTextNode(" "));
+
+            List<String> circleClasses = styleProvider.getBusStyles(bus.busId(), graph);
+            circleClasses.add("bus-circle");
+            writeStyleClasses(circle, circleClasses);
+
+            Element name = doc.createElementNS(XHTML_NS, "span");
+            name.setTextContent(bus.busId());
+
+            title.appendChild(circle);
+            title.appendChild(name);
+
+            //
+            // ---- TABLE OF THIS BUS ----
+            //
+            Element table = doc.createElementNS(XHTML_NS, "table");
+            table.setAttribute("class", "bus-table");
+
+            for (BusLegendInfo.Caption caption : bus.captions()) {
+                Element tr = doc.createElementNS(XHTML_NS, "tr");
+                writeStyleClasses(tr, styleProvider.getBusLegendCaptionStyles(caption), StyleClassConstants.BUS_LEGEND_INFO);
+                tr.setAttribute("id", IdUtil.escapeId(idNode + "_" + caption.type()));
+
+                Element tdKey = doc.createElementNS(XHTML_NS, "td");
+                tdKey.setAttribute("class", "label-cell");
+                tdKey.setTextContent(getCaptionTypeColumnLabel(caption));
+
+                Element tdVal = doc.createElementNS(XHTML_NS, "td");
+                tdVal.setAttribute("class", "value-cell");
+                tdVal.setTextContent(caption.label());
+
+                tr.appendChild(tdKey);
+                tr.appendChild(tdVal);
+                table.appendChild(tr);
+            }
+
+            block.appendChild(title);
+            block.appendChild(table);
+            root.appendChild(block);
+        }
+
+        foreign.appendChild(root);
+        legendRootElement.appendChild(foreign);
+    }
+
+    private String getCaptionTypeColumnLabel(BusLegendInfo.Caption caption) {
+        return switch (caption.type()) {
+            case KEY_VOLTAGE -> "U";
+            case KEY_ANGLE -> "θ";
+            case KEY_PRODUCTION -> "P";
+            case KEY_CONSUMPTION -> "C";
+            default -> "";
+        };
     }
 }
