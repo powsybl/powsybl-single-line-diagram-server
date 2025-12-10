@@ -92,6 +92,7 @@ class SingleLineDiagramService {
             svgParameters.setLanguageTag(sldRequestInfos.getLanguage());
             svgParameters.setUnifyVoltageLevelColors(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
+            layoutParameters.setSpaceForFeederInfos(80);
 
             SldParameters sldParameters = new SldParameters();
 
@@ -103,7 +104,8 @@ class SingleLineDiagramService {
                     break;
                 case SldDisplayMode.STATE_VARIABLE:
                     svgParameters.setBusesLegendAdded(true);
-                    sldParameters.setLabelProviderFactory(CommonLabelProvider.newCommonLabelProviderFactory(sldRequestInfos.getBusIdToIccValues()));
+                    sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
+                    sldParameters.setLegendWriterFactory(CommonLegendWriter.createFactory(sldRequestInfos.getBusIdToIccValues()));
                     break;
                 default:
                     throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", sldRequestInfos.getSldDisplayMode()));

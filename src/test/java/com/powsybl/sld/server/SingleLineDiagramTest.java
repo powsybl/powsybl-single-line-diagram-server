@@ -1673,7 +1673,7 @@ class SingleLineDiagramTest {
         PositionDiagramLabelProvider labelProvider = new PositionDiagramLabelProvider(testNetwork, componentLibrary, layoutParameters, svgParameters, "vl1");
 
         List<FeederInfo> feederInfos1 = labelProvider.getFeederInfos((FeederNode) g.getNode("loadA"));
-        assertEquals(2, feederInfos1.size());
+        assertEquals(3, feederInfos1.size());
         assertEquals(ARROW_ACTIVE, feederInfos1.get(0).getComponentType());
         assertEquals(ARROW_REACTIVE, feederInfos1.get(1).getComponentType());
         assertTrue(feederInfos1.get(0).getRightLabel().isPresent());
