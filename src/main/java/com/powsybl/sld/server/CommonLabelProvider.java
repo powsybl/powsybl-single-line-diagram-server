@@ -25,6 +25,9 @@ public class CommonLabelProvider extends DefaultLabelProvider {
 
     public CommonLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
         super(network, componentLibrary, layoutParameters, svgParameters);
+        this.setDisplayCurrent(true);
+        this.setDisplayArrowForCurrent(false);
+        this.setDisplayPermanentLimitPercentage(true);
     }
 
     @Override
