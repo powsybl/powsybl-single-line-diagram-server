@@ -108,7 +108,7 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
 
     private Double getIpMax(@NonNull final VoltageLevel voltageLevel) {
         return Optional.ofNullable((IdentifiableShortCircuit<VoltageLevel>) voltageLevel.getExtension(IdentifiableShortCircuit.class))
-            .map(IdentifiableShortCircuit::getIpMax).orElse(null);
+            .map(IdentifiableShortCircuit::getIpMax).orElse(Double.NaN);
     }
 
     private String formatPowerSum(DoubleStream stream) {
