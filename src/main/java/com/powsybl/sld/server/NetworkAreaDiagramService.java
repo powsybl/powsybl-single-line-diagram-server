@@ -238,16 +238,17 @@ class NetworkAreaDiagramService {
             nadGenerationContext.getVoltageLevelIds().addAll(getVoltageLevelIdsFromFilter(networkUuid, variantId, nadRequestInfos.getFilterUuid()));
         }
 
-        // Add VLs from expansion
-        if (!nadRequestInfos.getVoltageLevelToExpandIds().isEmpty()) {
-            nadGenerationContext.getVoltageLevelIds().addAll(getExpandedVoltageLevelIds(nadRequestInfos.getVoltageLevelToExpandIds(), nadGenerationContext.getNetwork()));
-        }
-
         // Add VLs from list
         nadGenerationContext.getVoltageLevelIds().addAll(nadRequestInfos.getVoltageLevelIds());
 
         // Remove VLs from list
         nadGenerationContext.getVoltageLevelIds().removeAll(nadRequestInfos.getVoltageLevelToOmitIds());
+
+        // Add VLs from expansion
+        // Expansion takes priority over remove
+        if (!nadRequestInfos.getVoltageLevelToExpandIds().isEmpty()) {
+            nadGenerationContext.getVoltageLevelIds().addAll(getExpandedVoltageLevelIds(nadRequestInfos.getVoltageLevelToExpandIds(), nadGenerationContext.getNetwork()));
+        }
 
         // Remove non existent VLs
         removeNonExistentVLs(nadGenerationContext);
