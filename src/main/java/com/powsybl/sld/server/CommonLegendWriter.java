@@ -27,6 +27,7 @@ import java.util.stream.DoubleStream;
 
 import static com.powsybl.diagram.util.CssUtil.writeStyleClasses;
 import static com.powsybl.sld.svg.SVGWriter.GROUP;
+import static com.powsybl.sld.svg.styles.StyleClassConstants.BUS_LEGEND_INFO;
 
 public class CommonLegendWriter extends DefaultSVGLegendWriter {
     private static final String UNIT_MW = "MW";
@@ -83,74 +84,28 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         GraphMetadata metadata,
         StyleProvider styleProvider,
         Element legendRootElement,
-        double positionX,
-        double positionY
+        double x,
+        double y
     ) {
-        VoltageLevel voltageLevel = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
-        double lowVoltageLimit = voltageLevel.getLowVoltageLimit();
-        double highVoltageLimit = voltageLevel.getHighVoltageLimit();
-        Double ipMax = getIpMax(voltageLevel);
-
+        VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
         Document doc = legendRootElement.getOwnerDocument();
-        Element gNode = doc.createElement(GROUP);
 
-        gNode.setAttribute("id", voltageLevel.getId());
+        // create foreign block that will contain the whole HTML legend
+        Element foreign = createForeignObject(doc, x, y, 2000, 300);
 
-        // ---------- foreignObject ----------
-        Element foreign = doc.createElementNS(SVG_NS, "foreignObject");
+        // create flew div that will contain each block (voltage level and buses)
+        Element legendRoot = doc.createElementNS(XHTML_NS, "div");
+        legendRoot.setAttribute("class", "legend-root");
 
-        // dimensions du tableau
-        foreign.setAttribute("x", String.valueOf(positionX));
-        foreign.setAttribute("y", String.valueOf(positionY));
-        foreign.setAttribute("width", "1000"); //TODO: to calculate ?
-        foreign.setAttribute("height", "200");
+        // create voltage level legend block
+        Element leftBlock = createVoltageLevelBlock(doc, vl);
+        legendRoot.appendChild(leftBlock);
 
-        // ---------- XHTML table ----------
-        Element div = doc.createElementNS(XHTML_NS, "div");
-        div.setAttribute("class", "legend-root");
+        // create legend block for each bus
+        addBusBlocks(legendRoot, graph, metadata, styleProvider);
 
-        Element voltageLevelTableDiv = doc.createElementNS(XHTML_NS, "div");
-        voltageLevelTableDiv.setAttribute("class", "legend-block");
-
-        Element title = doc.createElementNS(XHTML_NS, "div");
-        title.setAttribute("class", "legend-title");
-
-        Element name = doc.createElementNS(XHTML_NS, "span");
-        name.setTextContent("⦿ " + voltageLevel.getId());
-
-        title.appendChild(name);
-
-        Element table = doc.createElementNS(XHTML_NS, "table");
-        table.setAttribute("class", "legend-table"); // tu pourras la styliser en CSS
-
-        addRow(doc, table, "Umin", valueFormatter.formatVoltage(lowVoltageLimit, UNIT_KV));
-        addRow(doc, table, "Uman", valueFormatter.formatVoltage(highVoltageLimit, UNIT_KV));
-        addRow(doc, table, "IMACC", valueFormatter.formatCurrent(ipMax != null ? ipMax / 1000 : null, UNIT_KA));
-
-        voltageLevelTableDiv.appendChild(title);
-        voltageLevelTableDiv.appendChild(table);
-        div.appendChild(voltageLevelTableDiv);
-        foreign.appendChild(div);
-
-        // attach to group
-        gNode.appendChild(foreign);
-        legendRootElement.appendChild(gNode);
-
-        keepDrawingLegend(graph, metadata, styleProvider, div);
-    }
-
-    private void addRow(Document doc, Element table, String label, String value) {
-        Element tr = doc.createElementNS(XHTML_NS, "tr");
-
-        Element td1 = doc.createElementNS(XHTML_NS, "td");
-        td1.appendChild(doc.createTextNode(label));
-
-        Element td2 = doc.createElementNS(XHTML_NS, "td");
-        td2.appendChild(doc.createTextNode(value));
-
-        tr.appendChild(td1);
-        tr.appendChild(td2);
-        table.appendChild(tr);
+        foreign.appendChild(legendRoot);
+        legendRootElement.appendChild(foreign);
     }
 
     private Double getIpMax(@NonNull final VoltageLevel voltageLevel) {
@@ -173,75 +128,6 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
             : OptionalDouble.of(stats.getSum());
     }
 
-    public void keepDrawingLegend(VoltageLevelGraph graph, GraphMetadata metadata, StyleProvider styleProvider, Element legendDiv) {
-        Document doc = legendDiv.getOwnerDocument();
-        // legend-root = display:flex → bus-block côte à côte
-
-        //
-        // ---- GET ALL BUS LEGENDS ----
-        //
-        List<BusLegendInfo> buses = getBusLegendInfos(graph);
-
-        for (BusLegendInfo bus : buses) {
-            String unescapedIdNode = metadata.getSvgParameters().getPrefixId() + "NODE_" + bus.busId();
-            String idNode = IdUtil.escapeId(unescapedIdNode);
-            //
-            // ---- ONE BUS BLOCK ----
-            //
-            Element block = doc.createElementNS(XHTML_NS, "div");
-            block.setAttribute("class", "legend-block");
-            block.setAttribute("id", idNode);
-
-            //
-            // ---- TITLE (circle + bus name) ----
-            //
-            Element title = doc.createElementNS(XHTML_NS, "div");
-            title.setAttribute("class", "legend-title");
-
-            Element circle = doc.createElementNS(XHTML_NS, "div");
-            circle.setAttribute("id", IdUtil.escapeId(unescapedIdNode + "_circle"));
-            circle.appendChild(doc.createTextNode(" "));
-
-            List<String> circleClasses = styleProvider.getBusStyles(bus.busId(), graph);
-            circleClasses.add("bus-circle");
-            writeStyleClasses(circle, circleClasses);
-
-            Element name = doc.createElementNS(XHTML_NS, "span");
-            name.setTextContent(bus.busId());
-
-            title.appendChild(circle);
-            title.appendChild(name);
-
-            //
-            // ---- TABLE OF THIS BUS ----
-            //
-            Element table = doc.createElementNS(XHTML_NS, "table");
-            table.setAttribute("class", "legend-table");
-
-            for (BusLegendInfo.Caption caption : bus.captions()) {
-                Element tr = doc.createElementNS(XHTML_NS, "tr");
-                writeStyleClasses(tr, styleProvider.getBusLegendCaptionStyles(caption), StyleClassConstants.BUS_LEGEND_INFO);
-                tr.setAttribute("id", IdUtil.escapeId(idNode + "_" + caption.type()));
-
-                Element tdKey = doc.createElementNS(XHTML_NS, "td");
-                tdKey.setAttribute("class", "label-cell");
-                tdKey.setTextContent(getCaptionTypeColumnLabel(caption));
-
-                Element tdVal = doc.createElementNS(XHTML_NS, "td");
-                tdVal.setAttribute("class", "value-cell");
-                tdVal.setTextContent(caption.label());
-
-                tr.appendChild(tdKey);
-                tr.appendChild(tdVal);
-                table.appendChild(tr);
-            }
-
-            block.appendChild(title);
-            block.appendChild(table);
-            legendDiv.appendChild(block);
-        }
-    }
-
     private String getCaptionTypeColumnLabel(BusLegendInfo.Caption caption) {
         return switch (caption.type()) {
             case KEY_VOLTAGE -> "U";
@@ -251,5 +137,142 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
             case KEY_ICC -> "ICC";
             default -> "";
         };
+    }
+
+    // Methods to draw HTML legend
+    private Element createForeignObject(Document doc, double x, double y, int width, int height) {
+        Element foreign = doc.createElementNS(SVG_NS, "foreignObject");
+
+        foreign.setAttribute("x", String.valueOf(x));
+        foreign.setAttribute("y", String.valueOf(y));
+        foreign.setAttribute("width", String.valueOf(width));
+        foreign.setAttribute("height", String.valueOf(height));
+
+        return foreign;
+    }
+
+    private Element createVoltageLevelBlock(Document doc, VoltageLevel vl) {
+        Element block = doc.createElementNS(XHTML_NS, "div");
+        block.setAttribute("class", "legend-block");
+
+        // Title
+        Element title = createTitle(doc, "⦿ " + vl.getId(), null);
+        block.appendChild(title);
+
+        // Table
+        Element table = doc.createElementNS(XHTML_NS, "table");
+        table.setAttribute("class", "legend-table");
+
+        addRow(doc, table, "Umin", valueFormatter.formatVoltage(vl.getLowVoltageLimit(), UNIT_KV));
+        addRow(doc, table, "Umax", valueFormatter.formatVoltage(vl.getHighVoltageLimit(), UNIT_KV));
+        addRow(doc, table, "IMACC", valueFormatter.formatCurrent(getIpMax(vl), UNIT_KA));
+
+        block.appendChild(table);
+        return block;
+    }
+
+    private void addBusBlocks(
+        Element legendRoot,
+        VoltageLevelGraph graph,
+        GraphMetadata metadata,
+        StyleProvider styleProvider
+    ) {
+        Document doc = legendRoot.getOwnerDocument();
+
+        for (BusLegendInfo bus : getBusLegendInfos(graph)) {
+            String baseId = metadata.getSvgParameters().getPrefixId() + "NODE_" + bus.busId();
+            String escapedId = IdUtil.escapeId(baseId);
+
+            Element block = createBusBlock(doc, bus, escapedId, styleProvider, graph);
+            legendRoot.appendChild(block);
+        }
+    }
+
+    private Element createBusBlock(
+        Document doc,
+        BusLegendInfo bus,
+        String id,
+        StyleProvider styleProvider,
+        VoltageLevelGraph graph
+    ) {
+        Element block = doc.createElementNS(XHTML_NS, "div");
+        block.setAttribute("class", "legend-block");
+        block.setAttribute("id", id);
+
+        // Title
+        Element title = createTitle(doc, bus.busId(), styleProvider.getBusStyles(bus.busId(), graph));
+        block.appendChild(title);
+
+        // Table
+        Element table = doc.createElementNS(XHTML_NS, "table");
+        table.setAttribute("class", "legend-table");
+
+        for (BusLegendInfo.Caption caption : bus.captions()) {
+            Element row = createCaptionRow(doc, id, caption, styleProvider);
+            table.appendChild(row);
+        }
+
+        block.appendChild(table);
+        return block;
+    }
+
+    private Element createTitle(Document doc, String text, List<String> circleClasses) {
+        Element title = doc.createElementNS(XHTML_NS, "div");
+        title.setAttribute("class", "legend-title");
+
+        // circle wrapper
+        if (circleClasses != null) {
+            Element circle = doc.createElementNS(XHTML_NS, "div");
+            writeStyleClasses(circle, circleClasses, "bus-circle");
+            circle.appendChild(doc.createTextNode(" ")); // empty div are illegal and causes bugs once displayed
+            title.appendChild(circle);
+        }
+
+        // name
+        Element name = doc.createElementNS(XHTML_NS, "span");
+        name.setTextContent(text);
+
+        title.appendChild(name);
+
+        return title;
+    }
+
+    private Element createCaptionRow(
+        Document doc,
+        String id,
+        BusLegendInfo.Caption caption,
+        StyleProvider styleProvider
+    ) {
+        Element tr = doc.createElementNS(XHTML_NS, "tr");
+
+        writeStyleClasses(tr, styleProvider.getBusLegendCaptionStyles(caption), BUS_LEGEND_INFO);
+
+        tr.setAttribute("id", IdUtil.escapeId(id + "_" + caption.type()));
+
+        Element key = doc.createElementNS(XHTML_NS, "td");
+        key.setAttribute("class", "label-cell");
+        key.setTextContent(getCaptionTypeColumnLabel(caption));
+
+        Element val = doc.createElementNS(XHTML_NS, "td");
+        val.setAttribute("class", "value-cell");
+        val.setTextContent(caption.label());
+
+        tr.appendChild(key);
+        tr.appendChild(val);
+        return tr;
+    }
+
+    private void addRow(Document doc, Element table, String label, String value) {
+        Element tr = doc.createElementNS(XHTML_NS, "tr");
+
+        Element td1 = doc.createElementNS(XHTML_NS, "td");
+        td1.appendChild(doc.createTextNode(label));
+
+        Element td2 = doc.createElementNS(XHTML_NS, "td");
+        td2.appendChild(doc.createTextNode(value));
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        table.appendChild(tr);
     }
 }
