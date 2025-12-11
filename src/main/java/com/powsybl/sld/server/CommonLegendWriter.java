@@ -39,8 +39,10 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
     public static final String KEY_ICC = "icc";
 
     private final Map<String, Double> iccByBusId;
+
     private static final String SVG_NS = "http://www.w3.org/2000/svg";
     private static final String XHTML_NS = "http://www.w3.org/1999/xhtml";
+    private static final String CLASS = "class";
 
     public static LegendWriterFactory createFactory(Map<String, Double> iccByBusId) {
         return (network, svgParameters) -> new CommonLegendWriter(network, svgParameters, iccByBusId);
@@ -93,7 +95,7 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
 
         // create flew div that will contain each block (voltage level and buses)
         Element legendRoot = doc.createElementNS(XHTML_NS, "div");
-        legendRoot.setAttribute("class", "legend-root");
+        legendRoot.setAttribute(CLASS, "legend-root");
 
         // create voltage level legend block
         Element leftBlock = createVoltageLevelBlock(doc, vl);
@@ -151,13 +153,13 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
 
     private Element createVoltageLevelBlock(Document doc, VoltageLevel vl) {
         Element block = doc.createElementNS(XHTML_NS, "div");
-        block.setAttribute("class", "legend-block");
+        block.setAttribute(CLASS, "legend-block");
 
         Element title = createTitle(doc, "⦿ " + vl.getId(), null);
         block.appendChild(title);
 
         Element table = doc.createElementNS(XHTML_NS, "table");
-        table.setAttribute("class", "legend-table");
+        table.setAttribute(CLASS, "legend-table");
 
         addRow(doc, table, "Umin", valueFormatter.formatVoltage(vl.getLowVoltageLimit(), UNIT_KV));
         addRow(doc, table, "Umax", valueFormatter.formatVoltage(vl.getHighVoltageLimit(), UNIT_KV));
@@ -192,14 +194,14 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         VoltageLevelGraph graph
     ) {
         Element block = doc.createElementNS(XHTML_NS, "div");
-        block.setAttribute("class", "legend-block");
+        block.setAttribute(CLASS, "legend-block");
         block.setAttribute("id", id);
 
         Element title = createTitle(doc, bus.busId(), styleProvider.getBusStyles(bus.busId(), graph));
         block.appendChild(title);
 
         Element table = doc.createElementNS(XHTML_NS, "table");
-        table.setAttribute("class", "legend-table");
+        table.setAttribute(CLASS, "legend-table");
 
         for (BusLegendInfo.Caption caption : bus.captions()) {
             Element row = createCaptionRow(doc, id, caption, styleProvider);
@@ -212,7 +214,7 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
 
     private Element createTitle(Document doc, String text, List<String> circleClasses) {
         Element title = doc.createElementNS(XHTML_NS, "div");
-        title.setAttribute("class", "legend-title");
+        title.setAttribute(CLASS, "legend-title");
 
         if (circleClasses != null) {
             Element circle = doc.createElementNS(XHTML_NS, "div");
@@ -242,11 +244,11 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         tr.setAttribute("id", IdUtil.escapeId(id + "_" + caption.type()));
 
         Element key = doc.createElementNS(XHTML_NS, "td");
-        key.setAttribute("class", "label-cell");
+        key.setAttribute(CLASS, "label-cell");
         key.setTextContent(getCaptionTypeColumnLabel(caption));
 
         Element val = doc.createElementNS(XHTML_NS, "td");
-        val.setAttribute("class", "value-cell");
+        val.setAttribute(CLASS, "value-cell");
         val.setTextContent(caption.label());
 
         tr.appendChild(key);
