@@ -11,7 +11,6 @@ import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.svg.*;
-import com.powsybl.sld.svg.styles.StyleClassConstants;
 import com.powsybl.sld.svg.styles.StyleProvider;
 import com.powsybl.sld.util.IdUtil;
 import lombok.NonNull;
@@ -26,7 +25,6 @@ import java.util.Optional;
 import java.util.stream.DoubleStream;
 
 import static com.powsybl.diagram.util.CssUtil.writeStyleClasses;
-import static com.powsybl.sld.svg.SVGWriter.GROUP;
 import static com.powsybl.sld.svg.styles.StyleClassConstants.BUS_LEGEND_INFO;
 
 public class CommonLegendWriter extends DefaultSVGLegendWriter {
@@ -155,11 +153,9 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         Element block = doc.createElementNS(XHTML_NS, "div");
         block.setAttribute("class", "legend-block");
 
-        // Title
         Element title = createTitle(doc, "⦿ " + vl.getId(), null);
         block.appendChild(title);
 
-        // Table
         Element table = doc.createElementNS(XHTML_NS, "table");
         table.setAttribute("class", "legend-table");
 
@@ -199,11 +195,9 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         block.setAttribute("class", "legend-block");
         block.setAttribute("id", id);
 
-        // Title
         Element title = createTitle(doc, bus.busId(), styleProvider.getBusStyles(bus.busId(), graph));
         block.appendChild(title);
 
-        // Table
         Element table = doc.createElementNS(XHTML_NS, "table");
         table.setAttribute("class", "legend-table");
 
@@ -220,7 +214,6 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         Element title = doc.createElementNS(XHTML_NS, "div");
         title.setAttribute("class", "legend-title");
 
-        // circle wrapper
         if (circleClasses != null) {
             Element circle = doc.createElementNS(XHTML_NS, "div");
             writeStyleClasses(circle, circleClasses, "bus-circle");
@@ -228,7 +221,6 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
             title.appendChild(circle);
         }
 
-        // name
         Element name = doc.createElementNS(XHTML_NS, "span");
         name.setTextContent(text);
 
