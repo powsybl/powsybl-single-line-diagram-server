@@ -155,7 +155,18 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         Element block = doc.createElementNS(XHTML_NS, "div");
         block.setAttribute(CLASS, "legend-block");
 
-        Element title = createTitle(doc, "⦿ " + vl.getId(), null);
+        Element title = doc.createElementNS(XHTML_NS, "div");
+        title.setAttribute(CLASS, "legend-title");
+
+        Element iconSpan = doc.createElementNS(XHTML_NS, "span");
+        iconSpan.setAttribute(CLASS, "vl-title-icon");
+        iconSpan.setTextContent("⦿");
+        title.appendChild(iconSpan);
+
+        Element labelSpan = doc.createElementNS(XHTML_NS, "span");
+        labelSpan.setTextContent(vl.getId());
+        title.appendChild(labelSpan);
+
         block.appendChild(title);
 
         Element table = doc.createElementNS(XHTML_NS, "table");
@@ -216,12 +227,10 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         Element title = doc.createElementNS(XHTML_NS, "div");
         title.setAttribute(CLASS, "legend-title");
 
-        if (circleClasses != null) {
-            Element circle = doc.createElementNS(XHTML_NS, "div");
-            writeStyleClasses(circle, circleClasses, "bus-circle");
-            circle.appendChild(doc.createTextNode(" ")); // empty div are illegal and causes bugs once displayed
-            title.appendChild(circle);
-        }
+        Element circle = doc.createElementNS(XHTML_NS, "div");
+        writeStyleClasses(circle, circleClasses, "bus-circle");
+        circle.appendChild(doc.createTextNode(" ")); // empty div are illegal and causes bugs once displayed
+        title.appendChild(circle);
 
         Element name = doc.createElementNS(XHTML_NS, "span");
         name.setTextContent(text);
