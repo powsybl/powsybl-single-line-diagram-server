@@ -46,8 +46,6 @@ import com.powsybl.sld.server.utils.TopologicalStyleProvider;
 import lombok.NonNull;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Lazy;
@@ -68,7 +66,6 @@ import java.util.stream.Collectors;
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class NetworkAreaDiagramService {
-    
     @Value("${diagram-server.nad.max-voltage-levels}")
     private int maxVoltageLevels;
 
