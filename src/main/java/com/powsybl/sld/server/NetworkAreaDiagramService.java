@@ -134,13 +134,12 @@ class NetworkAreaDiagramService {
 
     @Transactional
     public UUID duplicateNetworkAreaDiagramConfig(UUID originNadConfigUuid) {
-        NadConfigEntity nadConfigEntityOpt = nadConfigRepository.findById(originNadConfigUuid)
+        NadConfigEntity nadConfigEntity = nadConfigRepository.findById(originNadConfigUuid)
             .orElseThrow(() ->
                 new RuntimeException("Failed to duplicate NAD config: no configuration found for UUID " + originNadConfigUuid)
             );
 
-        NadConfigEntity nadConfigEntityToDuplicate = nadConfigEntityOpt.get();
-        NadConfigEntity duplicateEntity = new NadConfigEntity(nadConfigEntityToDuplicate);
+        NadConfigEntity duplicateEntity = new NadConfigEntity(nadConfigEntity);
         duplicateEntity.setId(UUID.randomUUID()); // Assign new ID for the duplicate
         return nadConfigRepository.save(duplicateEntity).getId();
     }
