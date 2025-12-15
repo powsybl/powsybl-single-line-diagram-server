@@ -11,9 +11,7 @@ import lombok.NonNull;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import lombok.Setter;
@@ -40,7 +38,7 @@ public class FilterService {
     public static final String FILTER_END_POINT_EXPORT = "/filters/{id}/export";
 
     public FilterService(@Value("${gridsuite.services.filter-server.base-uri:http://filter-server/}") String filterServerBaseUri,
-                          RestTemplate restTemplate) {
+                         RestTemplate restTemplate) {
         this.filterServerBaseUri = filterServerBaseUri;
         this.restTemplate = restTemplate;
     }
@@ -58,13 +56,8 @@ public class FilterService {
             uriComponentsBuilder.queryParam(QUERY_PARAM_VARIANT_ID, variantId);
         }
         var uriComponent = uriComponentsBuilder.buildAndExpand(filterUuid);
-
-        try {
-            return restTemplate.exchange(uriComponent.toUriString(), HttpMethod.GET, null,
-                    new ParameterizedTypeReference<List<IdentifiableAttributes>>() {
-                    }).getBody();
-        } catch (HttpStatusCodeException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        return restTemplate.exchange(uriComponent.toUriString(), HttpMethod.GET, null,
+            new ParameterizedTypeReference<List<IdentifiableAttributes>>() {
+            }).getBody();
     }
 }

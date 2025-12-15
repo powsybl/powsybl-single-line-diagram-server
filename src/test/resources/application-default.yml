@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: single-line-diagram-server
   jpa:
     database: H2
     properties:
