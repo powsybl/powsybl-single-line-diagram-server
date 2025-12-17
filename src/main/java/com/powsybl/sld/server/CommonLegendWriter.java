@@ -37,6 +37,9 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
     public static final String KEY_CONSUMPTION = "consumption-sum";
     public static final String KEY_PRODUCTION = "production-sum";
     public static final String KEY_ICC = "icc";
+    public static final String KEY_UMIN = "Umin";
+    public static final String KEY_UMAX = "Umax";
+    public static final String KEY_IMACC = "IMACC";
 
     private final Map<String, Double> iccByBusId;
 
@@ -108,9 +111,23 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         legendRootElement.appendChild(foreign);
     }
 
-    private Double getIpMax(@NonNull final VoltageLevel voltageLevel) {
-        return Optional.ofNullable((IdentifiableShortCircuit<VoltageLevel>) voltageLevel.getExtension(IdentifiableShortCircuit.class))
-            .map(IdentifiableShortCircuit::getIpMax).orElse(Double.NaN);
+    private String getFormattedIpMax(@NonNull final VoltageLevel voltageLevel) {
+        Optional<Double> imaccOpt = Optional.ofNullable((IdentifiableShortCircuit<VoltageLevel>) voltageLevel.getExtension(IdentifiableShortCircuit.class))
+            .map(IdentifiableShortCircuit::getIpMax);
+        if (imaccOpt.isEmpty()) {
+            return svgParameters.getUndefinedValueSymbol() + " " + UNIT_KA;
+        }
+
+        double imaccInKa = imaccOpt.get() / 1000.0;
+
+        String value;
+        if (imaccInKa >= 100_000) {
+            value = String.format(Locale.US, "%.1e", imaccInKa);
+        } else {
+            value = String.format(Locale.US, "%.1f", imaccInKa);
+        }
+
+        return value + " " + UNIT_KA;
     }
 
     private String formatPowerSum(DoubleStream stream) {
@@ -172,9 +189,9 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         Element table = doc.createElementNS(XHTML_NS, "table");
         table.setAttribute(CLASS, "legend-table");
 
-        addRow(doc, table, "Umin", valueFormatter.formatVoltage(vl.getLowVoltageLimit(), UNIT_KV));
-        addRow(doc, table, "Umax", valueFormatter.formatVoltage(vl.getHighVoltageLimit(), UNIT_KV));
-        addRow(doc, table, "IMACC", valueFormatter.formatCurrent(getIpMax(vl), UNIT_KA));
+        addRow(doc, table, KEY_UMIN, valueFormatter.formatVoltage(vl.getLowVoltageLimit(), UNIT_KV));
+        addRow(doc, table, KEY_UMAX, valueFormatter.formatVoltage(vl.getHighVoltageLimit(), UNIT_KV));
+        addRow(doc, table, KEY_IMACC, getFormattedIpMax(vl));
 
         block.appendChild(table);
         return block;
