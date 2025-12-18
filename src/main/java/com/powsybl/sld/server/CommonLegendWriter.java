@@ -8,31 +8,44 @@ package com.powsybl.sld.server;
 
 import com.powsybl.iidm.network.Network;
 import com.powsybl.iidm.network.VoltageLevel;
+import com.powsybl.iidm.network.extensions.IdentifiableShortCircuit;
 import com.powsybl.sld.model.graphs.VoltageLevelGraph;
 import com.powsybl.sld.svg.*;
+import com.powsybl.sld.svg.styles.StyleProvider;
+import com.powsybl.sld.util.IdUtil;
+import lombok.NonNull;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
+import java.util.DoubleSummaryStatistics;
+import java.util.List;
+import java.util.OptionalDouble;
 import java.util.*;
+import java.util.Optional;
 import java.util.stream.DoubleStream;
+
+import static com.powsybl.diagram.util.CssUtil.writeStyleClasses;
+import static com.powsybl.sld.svg.styles.StyleClassConstants.BUS_LEGEND_INFO;
 
 public class CommonLegendWriter extends DefaultSVGLegendWriter {
     private static final String UNIT_MW = "MW";
     private static final String UNIT_KV = "kV";
     private static final String UNIT_KA = "kA";
 
-    private static final String PREFIX_VOLTAGE = "U = ";
-    private static final String PREFIX_ANGLE = "θ = ";
-    private static final String PREFIX_PRODUCTION = "P = ";
-    private static final String PREFIX_CONSUMPTION = "C = ";
-    private static final String PREFIX_ICC = "ICC = ";
-
-    private static final String KEY_BUS_ID = "busId";
     public static final String KEY_VOLTAGE = "v";
     public static final String KEY_ANGLE = "angle";
     public static final String KEY_CONSUMPTION = "consumption-sum";
     public static final String KEY_PRODUCTION = "production-sum";
     public static final String KEY_ICC = "icc";
+    public static final String KEY_UMIN = "Umin";
+    public static final String KEY_UMAX = "Umax";
+    public static final String KEY_IMACC = "IMACC";
 
     private final Map<String, Double> iccByBusId;
+
+    private static final String SVG_NS = "http://www.w3.org/2000/svg";
+    private static final String XHTML_NS = "http://www.w3.org/1999/xhtml";
+    private static final String CLASS = "class";
 
     public static LegendWriterFactory createFactory(Map<String, Double> iccByBusId) {
         return (network, svgParameters) -> new CommonLegendWriter(network, svgParameters, iccByBusId);
@@ -49,12 +62,11 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         return vl.getBusView().getBusStream()
             .map(b ->
                 new BusLegendInfo(b.getId(), List.of(
-                    new BusLegendInfo.Caption(b.getId(), KEY_BUS_ID),
-                    new BusLegendInfo.Caption(PREFIX_VOLTAGE + valueFormatter.formatVoltage(b.getV(), UNIT_KV), KEY_VOLTAGE),
-                    new BusLegendInfo.Caption(PREFIX_ANGLE + valueFormatter.formatAngleInDegrees(b.getAngle()), KEY_ANGLE),
-                    new BusLegendInfo.Caption(PREFIX_PRODUCTION + formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_CONSUMPTION),
-                    new BusLegendInfo.Caption(PREFIX_CONSUMPTION + formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_PRODUCTION),
-                    new BusLegendInfo.Caption(PREFIX_ICC + getFormattedBusIcc(b.getId()), KEY_ICC)
+                    new BusLegendInfo.Caption(valueFormatter.formatVoltage(b.getV(), UNIT_KV), KEY_VOLTAGE),
+                    new BusLegendInfo.Caption(valueFormatter.formatAngleInDegrees(b.getAngle()), KEY_ANGLE),
+                    new BusLegendInfo.Caption(formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_CONSUMPTION),
+                    new BusLegendInfo.Caption(formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_PRODUCTION),
+                    new BusLegendInfo.Caption(getFormattedBusIcc(b.getId()), KEY_ICC)
                 ))
             ).toList();
     }
@@ -65,6 +77,55 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         String value = iccInA != null
             ? String.format(Locale.US, "%.1f", iccInA / 1000.0)
             : svgParameters.getUndefinedValueSymbol();
+
+        return value + " " + UNIT_KA;
+    }
+
+    @Override
+    public void drawLegend(
+        VoltageLevelGraph graph,
+        GraphMetadata metadata,
+        StyleProvider styleProvider,
+        Element legendRootElement,
+        double x,
+        double y
+    ) {
+        VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
+        Document doc = legendRootElement.getOwnerDocument();
+
+        // create foreign block that will contain the whole HTML legend
+        Element foreign = createForeignObject(doc, x, y, 2000, 300);
+
+        // create flew div that will contain each block (voltage level and buses)
+        Element legendRoot = doc.createElementNS(XHTML_NS, "div");
+        legendRoot.setAttribute(CLASS, "legend-root");
+
+        // create voltage level legend block
+        Element leftBlock = createVoltageLevelBlock(doc, vl);
+        legendRoot.appendChild(leftBlock);
+
+        // create legend block for each bus
+        addBusBlocks(legendRoot, graph, metadata, styleProvider);
+
+        foreign.appendChild(legendRoot);
+        legendRootElement.appendChild(foreign);
+    }
+
+    private String getFormattedIpMax(@NonNull final VoltageLevel voltageLevel) {
+        Optional<Double> imaccOpt = Optional.ofNullable((IdentifiableShortCircuit<VoltageLevel>) voltageLevel.getExtension(IdentifiableShortCircuit.class))
+            .map(IdentifiableShortCircuit::getIpMax);
+        if (imaccOpt.isEmpty()) {
+            return svgParameters.getUndefinedValueSymbol() + " " + UNIT_KA;
+        }
+
+        double imaccInKa = imaccOpt.get() / 1000.0;
+
+        String value;
+        if (imaccInKa >= 100_000) {
+            value = String.format(Locale.US, "%.1e", imaccInKa);
+        } else {
+            value = String.format(Locale.US, "%.1f", imaccInKa);
+        }
 
         return value + " " + UNIT_KA;
     }
@@ -82,5 +143,156 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         return stats.getCount() == 0
             ? OptionalDouble.empty()
             : OptionalDouble.of(stats.getSum());
+    }
+
+    private String getCaptionTypeColumnLabel(BusLegendInfo.Caption caption) {
+        return switch (caption.type()) {
+            case KEY_VOLTAGE -> "U";
+            case KEY_ANGLE -> "θ";
+            case KEY_PRODUCTION -> "P";
+            case KEY_CONSUMPTION -> "C";
+            case KEY_ICC -> "ICC";
+            default -> "";
+        };
+    }
+
+    // Methods to draw HTML legend
+    private Element createForeignObject(Document doc, double x, double y, int width, int height) {
+        Element foreign = doc.createElementNS(SVG_NS, "foreignObject");
+
+        foreign.setAttribute("x", String.valueOf(x));
+        foreign.setAttribute("y", String.valueOf(y));
+        foreign.setAttribute("width", String.valueOf(width));
+        foreign.setAttribute("height", String.valueOf(height));
+
+        return foreign;
+    }
+
+    private Element createVoltageLevelBlock(Document doc, VoltageLevel vl) {
+        Element block = doc.createElementNS(XHTML_NS, "div");
+        block.setAttribute(CLASS, "legend-block");
+
+        Element title = doc.createElementNS(XHTML_NS, "div");
+        title.setAttribute(CLASS, "legend-title");
+
+        Element iconSpan = doc.createElementNS(XHTML_NS, "span");
+        iconSpan.setAttribute(CLASS, "vl-title-icon");
+        iconSpan.setTextContent("⦿");
+        title.appendChild(iconSpan);
+
+        Element labelSpan = doc.createElementNS(XHTML_NS, "span");
+        labelSpan.setTextContent(vl.getId());
+        title.appendChild(labelSpan);
+
+        block.appendChild(title);
+
+        Element table = doc.createElementNS(XHTML_NS, "table");
+        table.setAttribute(CLASS, "legend-table");
+
+        addRow(doc, table, KEY_UMIN, valueFormatter.formatVoltage(vl.getLowVoltageLimit(), UNIT_KV));
+        addRow(doc, table, KEY_UMAX, valueFormatter.formatVoltage(vl.getHighVoltageLimit(), UNIT_KV));
+        addRow(doc, table, KEY_IMACC, getFormattedIpMax(vl));
+
+        block.appendChild(table);
+        return block;
+    }
+
+    private void addBusBlocks(
+        Element legendRoot,
+        VoltageLevelGraph graph,
+        GraphMetadata metadata,
+        StyleProvider styleProvider
+    ) {
+        Document doc = legendRoot.getOwnerDocument();
+
+        for (BusLegendInfo bus : getBusLegendInfos(graph)) {
+            String baseId = metadata.getSvgParameters().getPrefixId() + "NODE_" + bus.busId();
+            String escapedId = IdUtil.escapeId(baseId);
+
+            Element block = createBusBlock(doc, bus, escapedId, styleProvider, graph);
+            legendRoot.appendChild(block);
+        }
+    }
+
+    private Element createBusBlock(
+        Document doc,
+        BusLegendInfo bus,
+        String id,
+        StyleProvider styleProvider,
+        VoltageLevelGraph graph
+    ) {
+        Element block = doc.createElementNS(XHTML_NS, "div");
+        block.setAttribute(CLASS, "legend-block");
+        block.setAttribute("id", id);
+
+        Element title = createTitle(doc, bus.busId(), styleProvider.getBusStyles(bus.busId(), graph));
+        block.appendChild(title);
+
+        Element table = doc.createElementNS(XHTML_NS, "table");
+        table.setAttribute(CLASS, "legend-table");
+
+        for (BusLegendInfo.Caption caption : bus.captions()) {
+            Element row = createCaptionRow(doc, id, caption, styleProvider);
+            table.appendChild(row);
+        }
+
+        block.appendChild(table);
+        return block;
+    }
+
+    private Element createTitle(Document doc, String text, List<String> circleClasses) {
+        Element title = doc.createElementNS(XHTML_NS, "div");
+        title.setAttribute(CLASS, "legend-title");
+
+        Element circle = doc.createElementNS(XHTML_NS, "div");
+        writeStyleClasses(circle, circleClasses, "bus-circle");
+        circle.appendChild(doc.createTextNode(" ")); // empty div are illegal and causes bugs once displayed
+        title.appendChild(circle);
+
+        Element name = doc.createElementNS(XHTML_NS, "span");
+        name.setTextContent(text);
+
+        title.appendChild(name);
+
+        return title;
+    }
+
+    private Element createCaptionRow(
+        Document doc,
+        String id,
+        BusLegendInfo.Caption caption,
+        StyleProvider styleProvider
+    ) {
+        Element tr = doc.createElementNS(XHTML_NS, "tr");
+
+        writeStyleClasses(tr, styleProvider.getBusLegendCaptionStyles(caption), BUS_LEGEND_INFO);
+
+        tr.setAttribute("id", IdUtil.escapeId(id + "_" + caption.type()));
+
+        Element key = doc.createElementNS(XHTML_NS, "td");
+        key.setAttribute(CLASS, "label-cell");
+        key.setTextContent(getCaptionTypeColumnLabel(caption));
+
+        Element val = doc.createElementNS(XHTML_NS, "td");
+        val.setAttribute(CLASS, "value-cell");
+        val.setTextContent(caption.label());
+
+        tr.appendChild(key);
+        tr.appendChild(val);
+        return tr;
+    }
+
+    private void addRow(Document doc, Element table, String label, String value) {
+        Element tr = doc.createElementNS(XHTML_NS, "tr");
+
+        Element td1 = doc.createElementNS(XHTML_NS, "td");
+        td1.appendChild(doc.createTextNode(label));
+
+        Element td2 = doc.createElementNS(XHTML_NS, "td");
+        td2.appendChild(doc.createTextNode(value));
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        table.appendChild(tr);
     }
 }
