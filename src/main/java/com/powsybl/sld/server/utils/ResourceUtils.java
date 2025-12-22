@@ -9,7 +9,6 @@ package com.powsybl.sld.server.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.sld.server.dto.SubstationGeoData;
 import com.powsybl.sld.server.dto.nad.ElementParametersInfos;
 
@@ -21,7 +20,7 @@ import java.util.List;
 
 public final class ResourceUtils {
     private ResourceUtils() {
-        throw new AssertionError("Utility class should not be instantiated");
+        //Utility class should not be instantiated
     }
 
     public static List<SubstationGeoData> fromStringToSubstationGeoData(String jsonResponse, ObjectMapper objectMapper) {
@@ -29,7 +28,7 @@ public final class ResourceUtils {
             return objectMapper.readValue(jsonResponse, new TypeReference<>() {
             });
         } catch (JsonProcessingException e) {
-            throw new PowsyblException("Failed to parse JSON response", e);
+            throw new RuntimeException("Failed to parse JSON response", e);
         }
     }
 
@@ -38,7 +37,7 @@ public final class ResourceUtils {
             return objectMapper.readValue(jsonResponse, new TypeReference<>() {
             });
         } catch (JsonProcessingException e) {
-            throw new PowsyblException("Failed to parse JSON response", e);
+            throw new RuntimeException("Failed to parse JSON response", e);
         }
     }
 

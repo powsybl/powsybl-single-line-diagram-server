@@ -26,9 +26,7 @@ import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
 import com.powsybl.sld.svg.styles.iidm.TopologicalStyleProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -75,14 +73,14 @@ class SingleLineDiagramService {
     SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SldRequestInfos sldRequestInfos) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Voltage level or substation " + id + " not found");
+            throw new RuntimeException("Voltage level or substation " + id + " not found");
         }
 
         try (var svgWriter = new StringWriter();
              var metadataWriter = new StringWriter()) {
 
             SldComponentLibrary compLibrary = SldComponentLibrary.find(sldRequestInfos.getComponentLibrary())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Component library '" + sldRequestInfos.getComponentLibrary() + "' not found"));
+                    .orElseThrow(() -> new RuntimeException("Component library '" + sldRequestInfos.getComponentLibrary() + "' not found"));
 
             SvgParameters svgParameters = new SvgParameters(SVG_PARAMETERS);
             svgParameters.setLabelCentered(sldRequestInfos.isCenterLabel());
