@@ -17,6 +17,6 @@ class SingleLineDiagramBusinessErrorCodeTest {
     @ParameterizedTest
     @EnumSource(SingleLineDiagramBusinessErrorCode.class)
     void valueMatchesEnumName(SingleLineDiagramBusinessErrorCode code) {
-        assertThat(code.value()).startsWith("singleLineDiagram..");
+        assertThat(code.value()).startsWith("singleLineDiagram.");
     }
 }
