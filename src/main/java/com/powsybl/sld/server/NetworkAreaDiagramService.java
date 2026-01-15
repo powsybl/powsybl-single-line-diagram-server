@@ -257,7 +257,7 @@ class NetworkAreaDiagramService {
         // Maximum number of VLs
         int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
         if (nbVoltageLevels > maxVoltageLevels) {
-            throw new SingleLineDiagramBusinessException(MAX_VOLTAGE_LEVELS_DISPLAYED, String.format("You need to reduce the number of voltage levels to be displayed in the network area diagram (current %s, maximum %s)", nbVoltageLevels, maxVoltageLevels));
+            throw new SingleLineDiagramBusinessException(MAX_VOLTAGE_LEVELS_DISPLAYED, "You need to reduce the number of voltage levels to be displayed in the network area diagram", Map.of("nbVoltageLevels", nbVoltageLevels, "maxVoltageLevels", maxVoltageLevels));
         }
 
         // Build Powsybl parameters

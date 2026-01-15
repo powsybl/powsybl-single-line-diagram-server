@@ -6,6 +6,7 @@
  */
 package com.powsybl.sld.server;
 
+import com.powsybl.ws.commons.error.ServerNameProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,11 +14,11 @@ import org.springframework.stereotype.Component;
  * @author Mohamed Ben-rejeb {@literal <mohamed.ben-rejeb at rte-france.com>}
  */
 @Component
-public class ServerNameProvider implements com.powsybl.ws.commons.error.ServerNameProvider {
+public class PropertyServerNameProvider implements ServerNameProvider {
 
     private final String name;
 
-    public ServerNameProvider(@Value("${spring.application.name:single-line-diagram-server}") String name) {
+    public PropertyServerNameProvider(@Value("${spring.application.name:single-line-diagram-server}") String name) {
         this.name = name;
     }
 

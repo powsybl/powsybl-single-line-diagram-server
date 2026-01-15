@@ -1429,7 +1429,7 @@ class SingleLineDiagramTest {
             .andExpect(result -> {
                 Throwable ex = result.getResolvedException();
                 assertNotNull(ex);
-                assertEquals(String.format("You need to reduce the number of voltage levels to be displayed in the network area diagram (current %s, maximum %s)", vlIds.size(), maxVls), ex.getMessage());
+                assertEquals("You need to reduce the number of voltage levels to be displayed in the network area diagram", ex.getMessage());
             });
     }
 
