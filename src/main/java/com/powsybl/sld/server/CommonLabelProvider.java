@@ -48,6 +48,9 @@ public class CommonLabelProvider extends DefaultLabelProvider {
                     addDecoratorFor3WT(nodeDecorators, middle3WTNode, direction);
                 }
             }
+            case Middle2WTNode ignored -> {
+                /* No decorator for Middle2WTNode */
+            }
             default -> addDecoratorForGenericEquipment(nodeDecorators, equipmentNode, direction);
         }
     }

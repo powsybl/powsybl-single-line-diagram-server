@@ -1171,8 +1171,8 @@ class SingleLineDiagramTest {
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         // divided by 1000 then rounded with 1 decimal
-        String expected = "ICC = 12.3 kA";
-        assertTrue(svg.contains(expected));
+        assertTrue(svg.contains(">12.3 kA<"));
+        assertTrue(svg.contains(">ICC<"));
     }
 
     @Test
@@ -1789,9 +1789,11 @@ class SingleLineDiagramTest {
         assertTrue(stringResult.contains(">vl1_0<"));
         assertTrue(stringResult.contains(">vl1_1<"));
         // VL contains generator but no loadflow has been run -> 0 MW
-        assertTrue(stringResult.contains(">P = 0 MW<"));
+        assertTrue(stringResult.contains(">P<"));
+        assertTrue(stringResult.contains(">0 MW<"));
         // VL contains no load -> — MW
-        assertTrue(stringResult.contains(">C = — MW<"));
+        assertTrue(stringResult.contains(">C<"));
+        assertTrue(stringResult.contains(">— MW<"));
 
         result = mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "vl2")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -56,7 +56,7 @@ import static com.powsybl.sld.svg.styles.StyleClassConstants.OVERLOAD_STYLE_CLAS
 @Service
 class SingleLineDiagramService {
     private static final double DEFAULT_LAYOUT_PADDING = 20;
-    private static final double LAYOUT_BOTTOM_PADDING = 50;
+    private static final double LAYOUT_BOTTOM_PADDING = 100;
 
     private static final LayoutParameters LAYOUT_PARAMETERS = new LayoutParameters()
             .setAdaptCellHeightToContent(true)
