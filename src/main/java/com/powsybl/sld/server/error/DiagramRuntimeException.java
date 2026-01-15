@@ -9,13 +9,13 @@ package com.powsybl.sld.server.error;
 /**
  * @author Mohamed Benrejeb <mohamed.benrejeb at rte-france.com>
  */
-public class SingleLineDiagramRuntimeException extends RuntimeException {
+public class DiagramRuntimeException extends RuntimeException {
 
-    public SingleLineDiagramRuntimeException(String message) {
+    public DiagramRuntimeException(String message) {
         super(message);
     }
 
-    public SingleLineDiagramRuntimeException(String message, Throwable cause) {
+    public DiagramRuntimeException(String message, Throwable cause) {
         super(message, cause);
     }
 

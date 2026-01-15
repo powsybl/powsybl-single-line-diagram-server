@@ -21,19 +21,19 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
  */
 
 @ControllerAdvice
-public class SingleLineDiagramExceptionHandler extends AbstractBusinessExceptionHandler<SingleLineDiagramBusinessException, SingleLineDiagramBusinessErrorCode> {
+public class DiagramExceptionHandler extends AbstractBusinessExceptionHandler<DiagramBusinessException, DiagramBusinessErrorCode> {
 
-    protected SingleLineDiagramExceptionHandler(ServerNameProvider serverNameProvider) {
+    protected DiagramExceptionHandler(ServerNameProvider serverNameProvider) {
         super(serverNameProvider);
     }
 
     @Override
-    protected @NonNull SingleLineDiagramBusinessErrorCode getBusinessCode(SingleLineDiagramBusinessException e) {
+    protected @NonNull DiagramBusinessErrorCode getBusinessCode(DiagramBusinessException e) {
         return e.getBusinessErrorCode();
     }
 
     @Override
-    protected HttpStatus mapStatus(SingleLineDiagramBusinessErrorCode businessErrorCode) {
+    protected HttpStatus mapStatus(DiagramBusinessErrorCode businessErrorCode) {
         return switch (businessErrorCode) {
             case EQUIPMENT_NOT_FOUND, MAX_VOLTAGE_LEVELS_DISPLAYED, INVALID_CONFIG_REQUEST, INVALID_EQUIPMENT,
                  INVALID_SUBSTATION_LAYOUT,
@@ -41,8 +41,8 @@ public class SingleLineDiagramExceptionHandler extends AbstractBusinessException
         };
     }
 
-    @ExceptionHandler(SingleLineDiagramBusinessException.class)
-    public ResponseEntity<PowsyblWsProblemDetail> handleComputationException(SingleLineDiagramBusinessException exception, HttpServletRequest request) {
+    @ExceptionHandler(DiagramBusinessException.class)
+    public ResponseEntity<PowsyblWsProblemDetail> handleComputationException(DiagramBusinessException exception, HttpServletRequest request) {
         return super.handleDomainException(exception, request);
     }
 }

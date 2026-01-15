@@ -8,7 +8,7 @@ package com.powsybl.sld.server.error;
 
 import org.junit.jupiter.api.Test;
 
-import static com.powsybl.sld.server.error.SingleLineDiagramBusinessErrorCode.EQUIPMENT_NOT_FOUND;
+import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.EQUIPMENT_NOT_FOUND;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -19,7 +19,7 @@ class SingleLineDiagramExceptionTest {
     @Test
     void testMessageAndThrowableConstructor() {
         var cause = new RuntimeException("test");
-        var e = new SingleLineDiagramBusinessException(EQUIPMENT_NOT_FOUND, "test", cause);
+        var e = new DiagramBusinessException(EQUIPMENT_NOT_FOUND, "test", cause);
         assertEquals(EQUIPMENT_NOT_FOUND, e.getBusinessErrorCode());
         assertEquals("test", e.getMessage());
         assertEquals(cause, e.getCause());
@@ -27,7 +27,7 @@ class SingleLineDiagramExceptionTest {
 
     @Test
     void testBusinessErrorCodeConstructor() {
-        var e = new SingleLineDiagramBusinessException(EQUIPMENT_NOT_FOUND, "test");
+        var e = new DiagramBusinessException(EQUIPMENT_NOT_FOUND, "test");
         assertEquals("test", e.getMessage());
         assertEquals(EQUIPMENT_NOT_FOUND, e.getBusinessErrorCode());
     }

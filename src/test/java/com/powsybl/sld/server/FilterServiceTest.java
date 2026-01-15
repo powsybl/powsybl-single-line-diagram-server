@@ -9,7 +9,7 @@ package com.powsybl.sld.server;
 import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
-import com.powsybl.sld.server.error.SingleLineDiagramRuntimeException;
+import com.powsybl.sld.server.error.DiagramRuntimeException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -87,8 +87,8 @@ class FilterServiceTest {
                 ArgumentMatchers.eq(HttpMethod.GET),
                 ArgumentMatchers.isNull(),
                 ArgumentMatchers.<ParameterizedTypeReference<List<IdentifiableAttributes>>>any())
-        ).thenThrow(new SingleLineDiagramRuntimeException("Filter not found"));
+        ).thenThrow(new DiagramRuntimeException("Filter not found"));
 
-        assertThrows(SingleLineDiagramRuntimeException.class, () -> filterService.exportFilter(networkUuid, variantId, filterUuid));
+        assertThrows(DiagramRuntimeException.class, () -> filterService.exportFilter(networkUuid, variantId, filterUuid));
     }
 }

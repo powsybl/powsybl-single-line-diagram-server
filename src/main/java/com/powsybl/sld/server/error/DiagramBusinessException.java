@@ -16,30 +16,30 @@ import java.util.Objects;
 /**
  * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
  */
-public class SingleLineDiagramBusinessException extends AbstractBusinessException {
+public class DiagramBusinessException extends AbstractBusinessException {
 
-    private final SingleLineDiagramBusinessErrorCode errorCode;
+    private final DiagramBusinessErrorCode errorCode;
     private final transient Map<String, Object> businessErrorValues;
 
     @NonNull
     @Override
-    public SingleLineDiagramBusinessErrorCode getBusinessErrorCode() {
+    public DiagramBusinessErrorCode getBusinessErrorCode() {
         return errorCode;
     }
 
-    public SingleLineDiagramBusinessException(SingleLineDiagramBusinessErrorCode errorCode, String message, Throwable cause) {
+    public DiagramBusinessException(DiagramBusinessErrorCode errorCode, String message, Throwable cause) {
         super(message, cause);
         this.errorCode = errorCode;
         this.businessErrorValues = Map.of();
     }
 
-    public SingleLineDiagramBusinessException(SingleLineDiagramBusinessErrorCode errorCode, String message) {
+    public DiagramBusinessException(DiagramBusinessErrorCode errorCode, String message) {
         super(message);
         this.errorCode = Objects.requireNonNull(errorCode);
         this.businessErrorValues = Map.of();
     }
 
-    public SingleLineDiagramBusinessException(SingleLineDiagramBusinessErrorCode errorCode, String message, Map<String, Object> businessErrorValues) {
+    public DiagramBusinessException(DiagramBusinessErrorCode errorCode, String message, Map<String, Object> businessErrorValues) {
         super(message);
         this.errorCode = Objects.requireNonNull(errorCode);
         this.businessErrorValues = businessErrorValues != null ? Map.copyOf(businessErrorValues) : Map.of();

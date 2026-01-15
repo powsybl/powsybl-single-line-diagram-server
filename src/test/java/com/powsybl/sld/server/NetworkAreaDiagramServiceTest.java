@@ -9,7 +9,7 @@ package com.powsybl.sld.server;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
-import com.powsybl.sld.server.error.SingleLineDiagramBusinessException;
+import com.powsybl.sld.server.error.DiagramBusinessException;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 
 import jakarta.transaction.Transactional;
@@ -207,14 +207,14 @@ class NetworkAreaDiagramServiceTest {
         NadVoltageLevelPositionInfos newPositionNoIdNoVoltageLevelId = new NadVoltageLevelPositionInfos();
         newPositionNoIdNoVoltageLevelId.setXPosition(14.6);
         nadConfigUpdate.setPositions(List.of(newPositionNoIdNoVoltageLevelId));
-        assertThrows(SingleLineDiagramBusinessException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate), "Missing id or voltageLevelId");
+        assertThrows(DiagramBusinessException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate), "Missing id or voltageLevelId");
 
         // Test that the update fails if we send a position with an ID that do not exist for this nad config
         NadVoltageLevelPositionInfos newPositionUnknownId = new NadVoltageLevelPositionInfos();
         newPositionUnknownId.setId(NONEXISTANT_UUID);
         newPositionUnknownId.setXPosition(25.2);
         nadConfigUpdate.setPositions(List.of(newPositionUnknownId));
-        assertThrows(SingleLineDiagramBusinessException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate), "Missing id or voltageLevelId");
+        assertThrows(DiagramBusinessException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate), "Missing id or voltageLevelId");
     }
 
     @Test

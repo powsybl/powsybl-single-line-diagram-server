@@ -15,8 +15,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  */
 class SingleLineDiagramBusinessErrorCodeTest {
     @ParameterizedTest
-    @EnumSource(SingleLineDiagramBusinessErrorCode.class)
-    void valueMatchesEnumName(SingleLineDiagramBusinessErrorCode code) {
-        assertThat(code.value()).startsWith("singleLineDiagram.");
+    @EnumSource(DiagramBusinessErrorCode.class)
+    void valueMatchesEnumName(DiagramBusinessErrorCode code) {
+        assertThat(code.value()).startsWith("diagram.");
     }
 }

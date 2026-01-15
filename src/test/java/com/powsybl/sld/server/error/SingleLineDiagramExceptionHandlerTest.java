@@ -15,8 +15,8 @@ import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.util.Map;
 
-import static com.powsybl.sld.server.error.SingleLineDiagramBusinessErrorCode.INVALID_CONFIG_REQUEST;
-import static com.powsybl.sld.server.error.SingleLineDiagramBusinessErrorCode.MAX_VOLTAGE_LEVELS_DISPLAYED;
+import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.INVALID_CONFIG_REQUEST;
+import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.MAX_VOLTAGE_LEVELS_DISPLAYED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -26,22 +26,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SingleLineDiagramExceptionHandlerTest {
 
-    private SingleLineDiagramExceptionHandler handler;
+    private DiagramExceptionHandler handler;
 
     @BeforeEach
     void setUp() {
-        handler = new SingleLineDiagramExceptionHandler(() -> "single-line-diagram");
+        handler = new DiagramExceptionHandler(() -> "single-line-diagram");
     }
 
     @Test
     void mapsBusinessErrorValues() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/sld");
-        SingleLineDiagramBusinessException exception = new SingleLineDiagramBusinessException(MAX_VOLTAGE_LEVELS_DISPLAYED, "max voltage levels displayed reached", Map.of("nbVoltageLevels", 12, "maxVoltageLevels", 10));
+        DiagramBusinessException exception = new DiagramBusinessException(MAX_VOLTAGE_LEVELS_DISPLAYED, "max voltage levels displayed reached", Map.of("nbVoltageLevels", 12, "maxVoltageLevels", 10));
         ResponseEntity<PowsyblWsProblemDetail> response = handler.handleComputationException(exception, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNotNull();
-        assertEquals("singleLineDiagram.maxVoltageLevelDisplayed", response.getBody().getBusinessErrorCode());
+        assertEquals("diagram.maxVoltageLevelDisplayed", response.getBody().getBusinessErrorCode());
         assertEquals(12, response.getBody().getBusinessErrorValues().get("nbVoltageLevels"));
         assertEquals(10, response.getBody().getBusinessErrorValues().get("maxVoltageLevels"));
     }
@@ -49,12 +49,12 @@ class SingleLineDiagramExceptionHandlerTest {
     @Test
     void mapsBadRequestBusinessErrorToStatus() {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/sld");
-        SingleLineDiagramBusinessException exception = new SingleLineDiagramBusinessException(INVALID_CONFIG_REQUEST, "Invalid config request");
+        DiagramBusinessException exception = new DiagramBusinessException(INVALID_CONFIG_REQUEST, "Invalid config request");
         ResponseEntity<PowsyblWsProblemDetail> response = handler.handleComputationException(exception, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody()).isNotNull();
-        assertEquals("singleLineDiagram.invalidConfigRequest", response.getBody().getBusinessErrorCode());
+        assertEquals("diagram.invalidConfigRequest", response.getBody().getBusinessErrorCode());
     }
 }
 
