@@ -6,13 +6,11 @@
  */
 package com.powsybl.sld.server.utils;
 
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
+import com.powsybl.sld.server.error.DiagramRuntimeException;
 
 import java.util.*;
 
@@ -21,7 +19,7 @@ import java.util.*;
  */
 public final class DiagramUtils {
     private DiagramUtils() {
-        throw new AssertionError("Utility class should not be instantiated");
+        // Utility class should not be instantiated
     }
 
     public static Network getNetwork(UUID networkUuid, String variantId, NetworkStoreService networkStoreService, PreloadingStrategy preloadingStrategy) {
@@ -31,16 +29,17 @@ public final class DiagramUtils {
                 network.getVariantManager().setWorkingVariant(variantId);
             }
             return network;
-        } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (Exception e) {
+            throw new DiagramRuntimeException("Could not get network with id: " + networkUuid, e);
         }
+
     }
 
     /**
      * Creates a map of equipment ID to CSS style class for limit violations.
      *
      * @param limitViolationInfos Set of limit violation information
-     * @param baseStyleClass Base CSS class for violations (e.g., "sld-overload" or "nad-overloaded")
+     * @param baseStyleClass      Base CSS class for violations (e.g., "sld-overload" or "nad-overloaded")
      * @return Map from equipment ID to CSS style class, or empty map if no violations
      */
     public static Map<String, String> createLimitViolationStyles(List<CurrentLimitViolationInfos> limitViolationInfos, String baseStyleClass) {

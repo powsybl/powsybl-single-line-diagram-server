@@ -14,7 +14,7 @@ import static com.vladmihalcea.sql.SQLStatementCountValidator.*;
 public final class TestUtils {
 
     private TestUtils() {
-        throw new IllegalCallerException("Utility class");
+        // Utility class
     }
 
     public static void assertRequestsCount(long select, long insert, long update, long delete) {
