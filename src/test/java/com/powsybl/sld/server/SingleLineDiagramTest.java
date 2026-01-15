@@ -445,8 +445,10 @@ class SingleLineDiagramTest {
 
         String faultSubstationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"long\":2.2943506}}]";
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, List.of("subFr1"))).willReturn(faultSubstationGeoDataJson);
+
+        List<Substation> substations = List.of(network.getSubstation("subFr1"));
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
-            networkAreaDiagramService.assignGeoDataCoordinates(context, List.of(network.getSubstation("subFr1"))));
+            networkAreaDiagramService.assignGeoDataCoordinates(context, substations));
 
         // Assert the exception message
         assertEquals("Failed to parse JSON response", exception.getMessage());

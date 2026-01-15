@@ -50,7 +50,7 @@ public class FilterService {
     public List<IdentifiableAttributes> exportFilter(@NonNull UUID networkUuid, String variantId, @NonNull UUID filterUuid) {
         String endPointUrl = getFilterServerURI() + FILTER_END_POINT_EXPORT;
 
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(endPointUrl);
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(endPointUrl);
         uriComponentsBuilder.queryParam(QUERY_PARAM_NETWORK_UUID, networkUuid);
         if (variantId != null && !variantId.isBlank()) {
             uriComponentsBuilder.queryParam(QUERY_PARAM_VARIANT_ID, variantId);
