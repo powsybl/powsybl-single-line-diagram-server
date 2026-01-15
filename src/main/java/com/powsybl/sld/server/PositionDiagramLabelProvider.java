@@ -15,6 +15,7 @@ import com.powsybl.sld.model.nodes.BusNode;
 import com.powsybl.sld.model.nodes.EquipmentNode;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.model.nodes.Node;
+import com.powsybl.sld.server.error.SingleLineDiagramRuntimeException;
 import com.powsybl.sld.svg.LabelPosition;
 import com.powsybl.sld.svg.LabelProviderFactory;
 import com.powsybl.sld.svg.SvgParameters;
@@ -67,7 +68,7 @@ public class PositionDiagramLabelProvider extends CommonLabelProvider {
             if (identifiable != null) {
                 ConnectablePosition<?> connectablePosition = (ConnectablePosition<?>) identifiable.getExtension(ConnectablePosition.class);
                 if (connectablePosition != null) {
-                    Integer order = getOrderPositions(connectablePosition, vl, identifiable);
+                    Integer order = getOrderPositions(connectablePosition, vl, identifiable, false);
                     if (order != null) {
                         label += " (pos: " + order + ")";
                     }
@@ -92,7 +93,7 @@ public class PositionDiagramLabelProvider extends CommonLabelProvider {
         return position.getFeeder().getOrder().orElse(null);
     }
 
-    static Integer getBranchOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch) {
+    static Integer getBranchOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, Branch<?> branch, boolean throwException) {
         Optional<ConnectablePosition.Feeder> feeder = Optional.empty();
         if (branch.getTerminal1().getVoltageLevel().getId().equals(voltageLevel.getId())) {
             feeder = Optional.ofNullable(position.getFeeder1());
@@ -100,11 +101,14 @@ public class PositionDiagramLabelProvider extends CommonLabelProvider {
             feeder = Optional.ofNullable(position.getFeeder2());
         } else {
             LOGGER.error("Given voltageLevel {} not found in terminal 1 and terminal 2 of branch", voltageLevel.getId());
+            if (throwException) {
+                throw new SingleLineDiagramRuntimeException(String.format("Given voltageLevel %s not found in terminal 1 and terminal 2 of branch", voltageLevel.getId()));
+            }
         }
         return feeder.flatMap(ConnectablePosition.Feeder::getOrder).orElse(null);
     }
 
-    static Integer get3wtOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt) {
+    static Integer get3wtOrder(ConnectablePosition<?> position, VoltageLevel voltageLevel, ThreeWindingsTransformer twt, boolean throwException) {
         Optional<ConnectablePosition.Feeder> feeder = Optional.empty();
         if (twt.getLeg1().getTerminal().getVoltageLevel().getId().equals(voltageLevel.getId())) {
             feeder = Optional.ofNullable(position.getFeeder1());
@@ -114,19 +118,25 @@ public class PositionDiagramLabelProvider extends CommonLabelProvider {
             feeder = Optional.ofNullable(position.getFeeder3());
         } else {
             LOGGER.error("Given voltageLevel {} not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId());
+            if (throwException) {
+                throw new SingleLineDiagramRuntimeException(String.format("Given voltageLevel %s not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId()));
+            }
         }
         return feeder.flatMap(ConnectablePosition.Feeder::getOrder).orElse(null);
     }
 
-    static Integer getOrderPositions(ConnectablePosition<?> position, VoltageLevel voltageLevel, Identifiable<?> identifiable) {
+    static Integer getOrderPositions(ConnectablePosition<?> position, VoltageLevel voltageLevel, Identifiable<?> identifiable, boolean throwException) {
         if (identifiable instanceof Injection) {
             return getInjectionOrder(position);
         } else if (identifiable instanceof Branch) {
-            return getBranchOrder(position, voltageLevel, (Branch<?>) identifiable);
+            return getBranchOrder(position, voltageLevel, (Branch<?>) identifiable, throwException);
         } else if (identifiable instanceof ThreeWindingsTransformer) {
-            return get3wtOrder(position, voltageLevel, (ThreeWindingsTransformer) identifiable);
+            return get3wtOrder(position, voltageLevel, (ThreeWindingsTransformer) identifiable, throwException);
         } else {
             LOGGER.error("Given connectable not supported: {}", identifiable.getClass().getName());
+            if (throwException) {
+                throw new SingleLineDiagramRuntimeException(String.format("Given connectable %s not supported: ", identifiable.getClass().getName()));
+            }
         }
         return null;
     }

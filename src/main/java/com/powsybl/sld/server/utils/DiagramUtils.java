@@ -10,7 +10,7 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
-import com.powsybl.sld.server.error.SldServerRuntimeException;
+import com.powsybl.sld.server.error.SingleLineDiagramRuntimeException;
 
 import java.util.*;
 
@@ -30,7 +30,7 @@ public final class DiagramUtils {
             }
             return network;
         } catch (Exception e) {
-            throw new SldServerRuntimeException("Could not get network with id: " + networkUuid, e);
+            throw new SingleLineDiagramRuntimeException("Could not get network with id: " + networkUuid, e);
         }
 
     }

@@ -6,7 +6,6 @@
  */
 package com.powsybl.sld.server;
 
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;
@@ -15,9 +14,14 @@ import com.powsybl.iidm.network.VoltageLevel;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.SingleLineDiagram;
 import com.powsybl.sld.SldParameters;
-import com.powsybl.sld.layout.*;
+import com.powsybl.sld.layout.HorizontalSubstationLayoutFactory;
+import com.powsybl.sld.layout.LayoutParameters;
+import com.powsybl.sld.layout.SubstationLayoutFactory;
+import com.powsybl.sld.layout.VerticalSubstationLayoutFactory;
 import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.server.dto.*;
+import com.powsybl.sld.server.error.SingleLineDiagramBusinessException;
+import com.powsybl.sld.server.error.SingleLineDiagramRuntimeException;
 import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
@@ -31,11 +35,17 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.powsybl.iidm.network.IdentifiableType.SUBSTATION;
 import static com.powsybl.iidm.network.IdentifiableType.VOLTAGE_LEVEL;
+import static com.powsybl.sld.server.error.SingleLineDiagramBusinessErrorCode.EQUIPMENT_NOT_FOUND;
+import static com.powsybl.sld.server.error.SingleLineDiagramBusinessErrorCode.INVALID_CONFIG_REQUEST;
+import static com.powsybl.sld.server.error.SingleLineDiagramBusinessErrorCode.INVALID_EQUIPMENT;
+import static com.powsybl.sld.server.error.SingleLineDiagramBusinessErrorCode.INVALID_SUBSTATION_LAYOUT;
 import static com.powsybl.sld.svg.styles.StyleClassConstants.OVERLOAD_STYLE_CLASS;
 
 /**
@@ -66,21 +76,21 @@ class SingleLineDiagramService {
         return switch (substationLayout) {
             case DiagramConstants.SUBSTATION_LAYOUT_HORIZONTAL -> new HorizontalSubstationLayoutFactory();
             case DiagramConstants.SUBSTATION_LAYOUT_VERTICAL -> new VerticalSubstationLayoutFactory();
-            default -> throw new PowsyblException("Substation layout " + substationLayout + " incorrect");
+            default -> throw new SingleLineDiagramBusinessException(INVALID_SUBSTATION_LAYOUT, "Substation layout " + substationLayout + " incorrect");
         };
     }
 
     SvgAndMetadata generateSvgAndMetadata(UUID networkUuid, String variantId, String id, SldRequestInfos sldRequestInfos) {
         Network network = getNetwork(networkUuid, variantId, networkStoreService);
         if (network.getVoltageLevel(id) == null && network.getSubstation(id) == null) {
-            throw new RuntimeException("Voltage level or substation " + id + " not found");
+            throw new SingleLineDiagramBusinessException(EQUIPMENT_NOT_FOUND, "Voltage level or substation " + id + " not found");
         }
 
         try (var svgWriter = new StringWriter();
              var metadataWriter = new StringWriter()) {
 
             SldComponentLibrary compLibrary = SldComponentLibrary.find(sldRequestInfos.getComponentLibrary())
-                    .orElseThrow(() -> new RuntimeException("Component library '" + sldRequestInfos.getComponentLibrary() + "' not found"));
+                    .orElseThrow(() -> new SingleLineDiagramRuntimeException("Component library '" + sldRequestInfos.getComponentLibrary() + "' not found"));
 
             SvgParameters svgParameters = new SvgParameters(SVG_PARAMETERS);
             svgParameters.setLabelCentered(sldRequestInfos.isCenterLabel());
@@ -106,7 +116,7 @@ class SingleLineDiagramService {
                     sldParameters.setLegendWriterFactory(CommonLegendWriter.createFactory(sldRequestInfos.getBusIdToIccValues()));
                     break;
                 default:
-                    throw new PowsyblException(String.format("Given sld display mode %s doesn't exist", sldRequestInfos.getSldDisplayMode()));
+                    throw new SingleLineDiagramBusinessException(INVALID_CONFIG_REQUEST, String.format("Given sld display mode %s doesn't exist", sldRequestInfos.getSldDisplayMode()));
             }
 
             var voltageLevelLayoutFactory = CustomVoltageLevelLayoutFactoryCreator.newCustomVoltageLevelLayoutFactoryCreator();
@@ -160,7 +170,7 @@ class SingleLineDiagramService {
             Substation substation = network.getSubstation(id);
             return new SubstationInfos(substation);
         } else {
-            throw new PowsyblException("Given id '" + id + "' is not a substation or voltage level id in given network '" + network.getId() + "'");
+            throw new SingleLineDiagramBusinessException(INVALID_EQUIPMENT, "Given id '" + id + "' is not a substation or voltage level id in given network '" + network.getId() + "'");
         }
     }
 

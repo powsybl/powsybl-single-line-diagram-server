@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.sld.server.dto.SubstationGeoData;
 import com.powsybl.sld.server.dto.nad.ElementParametersInfos;
 
+import java.io.UncheckedIOException;
 import java.util.List;
 
 /**
@@ -28,7 +29,7 @@ public final class ResourceUtils {
             return objectMapper.readValue(jsonResponse, new TypeReference<>() {
             });
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to parse JSON response", e);
+            throw new UncheckedIOException("Failed to parse JSON response", e);
         }
     }
 
@@ -37,7 +38,7 @@ public final class ResourceUtils {
             return objectMapper.readValue(jsonResponse, new TypeReference<>() {
             });
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to parse JSON response", e);
+            throw new UncheckedIOException("Failed to parse JSON response", e);
         }
     }
 
