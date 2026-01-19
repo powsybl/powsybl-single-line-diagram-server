@@ -301,7 +301,7 @@ class NetworkAreaDiagramService {
 
     private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, List<BaseVoltageConfig> baseVoltagesConfigInfos) {
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
-            throw new DiagramBusinessException(NO_VOLTAGE_LEVEL_ID_PROVIDED, "No voltage level was found");
+            throw new DiagramBusinessException(NO_VOLTAGE_LEVEL_ID_PROVIDED, "No voltage level was provided to the NAD generation input");
         }
 
         SvgParameters svgParameters = new SvgParameters()
