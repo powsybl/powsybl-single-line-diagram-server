@@ -14,6 +14,7 @@ import com.powsybl.ws.commons.error.BusinessErrorCode;
 public enum DiagramBusinessErrorCode implements BusinessErrorCode {
     EQUIPMENT_NOT_FOUND("diagram.equipmentNotFound"),
     MAX_VOLTAGE_LEVELS_DISPLAYED("diagram.maxVoltageLevelDisplayed"),
+    INVALID_CSV("diagram.invalidCsv"),
     INVALID_CONFIG_REQUEST("diagram.invalidConfigRequest"),
     INVALID_EQUIPMENT("diagram.invalidEquipment"),
     INVALID_SUBSTATION_LAYOUT("diagram.invalidSubstationLayout"),

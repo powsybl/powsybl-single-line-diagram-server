@@ -35,8 +35,9 @@ public class DiagramExceptionHandler extends AbstractBusinessExceptionHandler<Di
     @Override
     protected HttpStatus mapStatus(DiagramBusinessErrorCode businessErrorCode) {
         return switch (businessErrorCode) {
-            case EQUIPMENT_NOT_FOUND, MAX_VOLTAGE_LEVELS_DISPLAYED, INVALID_CONFIG_REQUEST, INVALID_EQUIPMENT,
-                 INVALID_SUBSTATION_LAYOUT,
+            case INVALID_CSV, INVALID_CONFIG_REQUEST, INVALID_EQUIPMENT,
+                 INVALID_SUBSTATION_LAYOUT -> HttpStatus.BAD_REQUEST;
+            case EQUIPMENT_NOT_FOUND, MAX_VOLTAGE_LEVELS_DISPLAYED,
                  NO_VOLTAGE_LEVEL_ID_PROVIDED -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }

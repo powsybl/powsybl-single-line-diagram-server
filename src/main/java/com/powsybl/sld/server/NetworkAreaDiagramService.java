@@ -62,6 +62,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.EQUIPMENT_NOT_FOUND;
+import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.INVALID_CSV;
 import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.MAX_VOLTAGE_LEVELS_DISPLAYED;
 import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.NO_VOLTAGE_LEVEL_ID_PROVIDED;
 
@@ -545,7 +546,7 @@ class NetworkAreaDiagramService {
     @Transactional
     public void createNadPositionsConfigFromCsv(MultipartFile file) {
         if (!CsvFileValidator.hasCSVFormat(file)) {
-            throw new DiagramRuntimeException("Invalid CSV format!");
+            throw new DiagramBusinessException(INVALID_CSV, "Invalid CSV format!");
         }
 
         List<NadVoltageLevelPositionInfos> positions;
@@ -565,7 +566,7 @@ class NetworkAreaDiagramService {
     private List<NadVoltageLevelPositionInfos> parsePositions(CsvMapReader mapReader) throws IOException {
         String[] headers = CsvFileValidator.getHeaders(mapReader);
         if (headers.length == 0) {
-            throw new DiagramRuntimeException("The csv headers are invalid!");
+            throw new DiagramBusinessException(INVALID_CSV, "The csv headers are invalid!");
         }
         List<NadVoltageLevelPositionInfos> nadVoltageLevelPositionInfos = new ArrayList<>(mapReader.getRowNumber());
         Map<String, String> row;
