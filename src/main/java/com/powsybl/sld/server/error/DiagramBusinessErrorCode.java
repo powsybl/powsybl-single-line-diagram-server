@@ -18,6 +18,7 @@ public enum DiagramBusinessErrorCode implements BusinessErrorCode {
     INVALID_CONFIG_REQUEST("diagram.invalidConfigRequest"),
     INVALID_EQUIPMENT("diagram.invalidEquipment"),
     INVALID_SUBSTATION_LAYOUT("diagram.invalidSubstationLayout"),
+    NO_CONFIGURED_POSITION("diagram.noConfiguredPosition"),
     NO_VOLTAGE_LEVEL_ID_PROVIDED("diagram.noVoltageLevelIdProvided"),;
 
     private final String code;

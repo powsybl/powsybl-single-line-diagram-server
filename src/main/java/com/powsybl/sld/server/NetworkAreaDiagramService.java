@@ -61,10 +61,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.EQUIPMENT_NOT_FOUND;
-import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.INVALID_CSV;
-import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.MAX_VOLTAGE_LEVELS_DISPLAYED;
-import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.NO_VOLTAGE_LEVEL_ID_PROVIDED;
+import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.*;
 
 /**
  * @author Etienne Homer<etienne.homer at rte-france.com>
@@ -348,7 +345,7 @@ class NetworkAreaDiagramService {
     private void initFromConfiguredPositions(NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder) {
         List<NadVoltageLevelConfiguredPositionEntity> nadVoltageLevelPositionInfos = nadVoltageLevelConfiguredPositionRepository.findAll();
         if (nadVoltageLevelPositionInfos.isEmpty()) {
-            throw new DiagramRuntimeException("No configured positions found!");
+            throw new DiagramBusinessException(NO_CONFIGURED_POSITION, "No configured positions found!");
         }
         nadGenerationContextBuilder.positions(
             nadVoltageLevelPositionInfos
@@ -553,7 +550,7 @@ class NetworkAreaDiagramService {
         try {
             positions = getPositionsFromCsv(file);
             if (positions.isEmpty()) {
-                throw new DiagramRuntimeException("No positions found!");
+                throw new DiagramBusinessException(INVALID_CSV, "No positions found!");
             }
         } catch (IOException e) {
             throw new UncheckedIOException("The csv is invalid!", e);
