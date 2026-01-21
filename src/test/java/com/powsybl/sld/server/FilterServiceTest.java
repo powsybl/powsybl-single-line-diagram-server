@@ -9,6 +9,7 @@ package com.powsybl.sld.server;
 import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
+import com.powsybl.sld.server.error.DiagramRuntimeException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,9 +21,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -88,8 +87,8 @@ class FilterServiceTest {
                 ArgumentMatchers.eq(HttpMethod.GET),
                 ArgumentMatchers.isNull(),
                 ArgumentMatchers.<ParameterizedTypeReference<List<IdentifiableAttributes>>>any())
-        ).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+        ).thenThrow(new DiagramRuntimeException("Filter not found"));
 
-        assertThrows(ResponseStatusException.class, () -> filterService.exportFilter(networkUuid, variantId, filterUuid));
+        assertThrows(DiagramRuntimeException.class, () -> filterService.exportFilter(networkUuid, variantId, filterUuid));
     }
 }

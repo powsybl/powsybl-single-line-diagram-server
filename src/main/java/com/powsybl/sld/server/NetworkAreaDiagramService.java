@@ -9,7 +9,6 @@ package com.powsybl.sld.server;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.RawValue;
-import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.config.BaseVoltageConfig;
 import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Network;
@@ -35,6 +34,8 @@ import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
+import com.powsybl.sld.server.error.DiagramBusinessException;
+import com.powsybl.sld.server.error.DiagramRuntimeException;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
 import com.powsybl.sld.server.utils.DiagramUtils;
@@ -46,15 +47,11 @@ import com.powsybl.sld.server.utils.TopologicalStyleProvider;
 import lombok.NonNull;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 import org.supercsv.io.CsvMapReader;
 
@@ -64,14 +61,14 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.*;
+
 /**
  * @author Etienne Homer<etienne.homer at rte-france.com>
  */
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class NetworkAreaDiagramService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NetworkAreaDiagramService.class);
-
     @Value("${diagram-server.nad.max-voltage-levels}")
     private int maxVoltageLevels;
 
@@ -137,13 +134,12 @@ class NetworkAreaDiagramService {
 
     @Transactional
     public UUID duplicateNetworkAreaDiagramConfig(UUID originNadConfigUuid) {
-        Optional<NadConfigEntity> nadConfigEntityOpt = nadConfigRepository.findById(originNadConfigUuid);
-        if (nadConfigEntityOpt.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
+        NadConfigEntity nadConfigEntity = nadConfigRepository.findById(originNadConfigUuid)
+            .orElseThrow(() ->
+                new DiagramRuntimeException("Failed to duplicate NAD config: no configuration found for UUID " + originNadConfigUuid)
+            );
 
-        NadConfigEntity nadConfigEntityToDuplicate = nadConfigEntityOpt.get();
-        NadConfigEntity duplicateEntity = new NadConfigEntity(nadConfigEntityToDuplicate);
+        NadConfigEntity duplicateEntity = new NadConfigEntity(nadConfigEntity);
         duplicateEntity.setId(UUID.randomUUID()); // Assign new ID for the duplicate
         return nadConfigRepository.save(duplicateEntity).getId();
     }
@@ -151,7 +147,7 @@ class NetworkAreaDiagramService {
     @Transactional
     public void updateNetworkAreaDiagramConfig(UUID nadConfigUuid, NadConfigInfos nadConfigInfos) {
         NadConfigEntity entity = nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new DiagramRuntimeException("Failed to update NAD config: no configuration found for UUID " + nadConfigUuid));
         updateNadConfig(entity, nadConfigInfos);
     }
 
@@ -177,7 +173,7 @@ class NetworkAreaDiagramService {
 
         for (NadVoltageLevelPositionInfos info : nadConfigInfos.getPositions()) {
             if ((info.getId() == null || !uuidPositionsMap.containsKey(info.getId())) && info.getVoltageLevelId() == null) {
-                throw new IllegalArgumentException("Missing id or voltageLevelId");
+                throw new DiagramBusinessException(EQUIPMENT_NOT_FOUND, "Missing id or voltageLevelId");
             }
             if (voltageLevelIdPositionsMap.containsKey(info.getVoltageLevelId())) {
                 updateVoltageLevelPositions(voltageLevelIdPositionsMap.get(info.getVoltageLevelId()), info);
@@ -202,7 +198,9 @@ class NetworkAreaDiagramService {
 
     @Transactional(readOnly = true)
     public NadConfigInfos getNetworkAreaDiagramConfig(UUID nadConfigUuid) {
-        return nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)).toDto();
+        return nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid).orElseThrow(() -> new DiagramRuntimeException(
+            "Failed to retrieve NAD configuration: no configuration found for UUID " + nadConfigUuid
+        )).toDto();
     }
 
     private Set<String> getVoltageLevelIdsFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
@@ -257,7 +255,7 @@ class NetworkAreaDiagramService {
         // Maximum number of VLs
         int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
         if (nbVoltageLevels > maxVoltageLevels) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, String.format("You need to reduce the number of voltage levels to be displayed in the network area diagram (current %s, maximum %s)", nbVoltageLevels, maxVoltageLevels));
+            throw new DiagramBusinessException(MAX_VOLTAGE_LEVELS_DISPLAYED, "You need to reduce the number of voltage levels to be displayed in the network area diagram", Map.of("nbVoltageLevels", nbVoltageLevels, "maxVoltageLevels", maxVoltageLevels));
         }
 
         // Build Powsybl parameters
@@ -301,7 +299,7 @@ class NetworkAreaDiagramService {
 
     private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, List<BaseVoltageConfig> baseVoltagesConfigInfos) {
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "no voltage level was found");
+            throw new DiagramBusinessException(NO_VOLTAGE_LEVEL_ID_PROVIDED, "No voltage level was provided to the NAD generation input");
         }
 
         SvgParameters svgParameters = new SvgParameters()
@@ -347,7 +345,7 @@ class NetworkAreaDiagramService {
     private void initFromConfiguredPositions(NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder) {
         List<NadVoltageLevelConfiguredPositionEntity> nadVoltageLevelPositionInfos = nadVoltageLevelConfiguredPositionRepository.findAll();
         if (nadVoltageLevelPositionInfos.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No configured positions found!");
+            throw new DiagramBusinessException(NO_CONFIGURED_POSITION, "No configured positions found!");
         }
         nadGenerationContextBuilder.positions(
             nadVoltageLevelPositionInfos
@@ -423,7 +421,7 @@ class NetworkAreaDiagramService {
                             .putRawValue(METADATA, new RawValue(metadata))
                             .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
         } catch (JsonProcessingException e) {
-            throw new PowsyblException("Failed to parse JSON response", e);
+            throw new UncheckedIOException("Failed to parse JSON response", e);
         }
     }
 
@@ -545,18 +543,17 @@ class NetworkAreaDiagramService {
     @Transactional
     public void createNadPositionsConfigFromCsv(MultipartFile file) {
         if (!CsvFileValidator.hasCSVFormat(file)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid CSV format!");
+            throw new DiagramBusinessException(INVALID_CSV, "Invalid CSV format!");
         }
 
         List<NadVoltageLevelPositionInfos> positions;
         try {
             positions = getPositionsFromCsv(file);
             if (positions.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No positions found!");
+                throw new DiagramBusinessException(INVALID_CSV, "No positions found!");
             }
         } catch (IOException e) {
-            LOGGER.error(e.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The csv is invalid!");
+            throw new UncheckedIOException("The csv is invalid!", e);
         }
 
         nadVoltageLevelConfiguredPositionRepository.deleteAll();
@@ -566,7 +563,7 @@ class NetworkAreaDiagramService {
     private List<NadVoltageLevelPositionInfos> parsePositions(CsvMapReader mapReader) throws IOException {
         String[] headers = CsvFileValidator.getHeaders(mapReader);
         if (headers.length == 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The csv headers are invalid!");
+            throw new DiagramBusinessException(INVALID_CSV, "The csv headers are invalid!");
         }
         List<NadVoltageLevelPositionInfos> nadVoltageLevelPositionInfos = new ArrayList<>(mapReader.getRowNumber());
         Map<String, String> row;
