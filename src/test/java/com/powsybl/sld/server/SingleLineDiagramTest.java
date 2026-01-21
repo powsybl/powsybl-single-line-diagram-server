@@ -926,7 +926,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfos)))
                 .andExpect(request().asyncStarted());
         mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
                 .andReturn();
 
     }
@@ -1223,7 +1223,7 @@ class SingleLineDiagramTest {
         mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
                         .file(file)
                         .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(result -> {
                     Throwable ex = result.getResolvedException();
                     assertNotNull(ex);
@@ -1238,7 +1238,7 @@ class SingleLineDiagramTest {
         mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
                         .file(file)
                         .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(result -> {
                     Throwable ex = result.getResolvedException();
                     assertNotNull(ex);
@@ -1253,7 +1253,7 @@ class SingleLineDiagramTest {
         mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
                         .file(file)
                         .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(result -> {
                     Throwable ex = result.getResolvedException();
                     assertNotNull(ex);

@@ -52,7 +52,7 @@ class SingleLineDiagramExceptionHandlerTest {
         DiagramBusinessException exception = new DiagramBusinessException(INVALID_CONFIG_REQUEST, "Invalid config request");
         ResponseEntity<PowsyblWsProblemDetail> response = handler.handleComputationException(exception, request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
         assertEquals("diagram.invalidConfigRequest", response.getBody().getBusinessErrorCode());
     }
