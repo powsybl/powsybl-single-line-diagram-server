@@ -19,3 +19,12 @@ powsybl-ws:
     vendor: h2:mem
     query: ;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     hostPort: ":"
+
+base-voltages-config:
+  base-voltages-config-infos:
+    - name: vl1
+      min-value: 0.0
+      max-value: 1000.0
+    - name: vl2
+      min-value: 1000.0
+      max-value: 2000.0

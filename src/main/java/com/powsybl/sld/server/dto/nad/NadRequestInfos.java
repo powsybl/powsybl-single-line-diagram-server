@@ -6,7 +6,6 @@
  */
 package com.powsybl.sld.server.dto.nad;
 
-import com.powsybl.commons.config.BaseVoltageConfig;
 import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import lombok.*;
@@ -32,5 +31,4 @@ public class NadRequestInfos {
     private NadPositionsGenerationMode nadPositionsGenerationMode;
     private UUID nadPositionsConfigUuid;
     private List<CurrentLimitViolationInfos> currentLimitViolationsInfos;
-    private List<BaseVoltageConfig> baseVoltagesConfigInfos;
 }
