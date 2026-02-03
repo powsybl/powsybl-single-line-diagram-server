@@ -33,4 +33,3 @@ max-concurrent-nad-generations: 3
 diagram-server:
   nad:
     max-voltage-levels: 1600
-
