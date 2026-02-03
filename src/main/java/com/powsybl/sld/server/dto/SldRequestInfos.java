@@ -9,7 +9,6 @@ package com.powsybl.sld.server.dto;
 import java.util.List;
 import java.util.Map;
 
-import com.powsybl.commons.config.BaseVoltageConfig;
 import com.powsybl.sld.server.GridSuiteAndConvergenceComponentLibrary;
 import com.powsybl.sld.server.utils.DiagramConstants;
 import com.powsybl.sld.server.utils.SldDisplayMode;
@@ -36,7 +35,6 @@ public class SldRequestInfos {
     private SldDisplayMode sldDisplayMode = SldDisplayMode.STATE_VARIABLE;
     private String language = "en";
     private List<CurrentLimitViolationInfos> currentLimitViolationsInfos;
-    private List<BaseVoltageConfig> baseVoltagesConfigInfos;
     Map<String, Double> busIdToIccValues;
 
     public void setComponentLibrary(String componentLibrary) {
