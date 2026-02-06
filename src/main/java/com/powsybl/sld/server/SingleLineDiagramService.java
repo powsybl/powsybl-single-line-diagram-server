@@ -6,6 +6,7 @@
  */
 package com.powsybl.sld.server;
 
+import com.powsybl.commons.config.BaseVoltageConfig;
 import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Identifiable;
 import com.powsybl.iidm.network.Network;
@@ -35,9 +36,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.powsybl.iidm.network.IdentifiableType.SUBSTATION;
@@ -67,6 +66,9 @@ class SingleLineDiagramService {
 
     @Autowired
     private NetworkStoreService networkStoreService;
+
+    @Autowired
+    private VoltagesConfig voltagesConfig;
 
     public static Network getNetwork(UUID networkUuid, String variantId, NetworkStoreService networkStoreService) {
         return DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, null);
@@ -130,9 +132,13 @@ class SingleLineDiagramService {
             Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(sldRequestInfos.getCurrentLimitViolationsInfos(), OVERLOAD_STYLE_CLASS);
 
             sldParameters.setStyleProviderFactory((net, parameters) -> {
-                sldRequestInfos.getBaseVoltagesConfigInfos().forEach(vl -> vl.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE));
+                List<BaseVoltageConfig> baseVoltagesConfigInfos = voltagesConfig.getBaseVoltagesConfigInfos();
+                if (baseVoltagesConfigInfos == null) {
+                    baseVoltagesConfigInfos = Collections.emptyList();
+                }
+                baseVoltagesConfigInfos.forEach(vl -> vl.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE));
                 BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
-                baseVoltagesConfig.setBaseVoltages(sldRequestInfos.getBaseVoltagesConfigInfos());
+                baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos);
                 baseVoltagesConfig.setDefaultProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
                 return new StyleProvidersList(

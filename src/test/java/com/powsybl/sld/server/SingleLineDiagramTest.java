@@ -132,7 +132,6 @@ class SingleLineDiagramTest {
     private static final String VARIANT_1_ID = "variant_1";
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_NOT_FOUND_ID = "variant_notFound";
-    private List<BaseVoltageConfig> baseVoltages;
     private SldRequestInfos sldRequestInfos;
     private FileSystem fileSystem;
     private List<NadVoltageLevelPositionInfos> positions;
@@ -158,21 +157,7 @@ class SingleLineDiagramTest {
             return entities;
         }).when(nadVoltageLevelConfiguredPositionRepository).saveAll(anyList());
 
-        BaseVoltageConfig baseVoltage1 = new BaseVoltageConfig();
-        baseVoltage1.setName("vl1");
-        baseVoltage1.setMinValue(0.);
-        baseVoltage1.setMaxValue(1000.);
-        baseVoltage1.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
-
-        BaseVoltageConfig baseVoltage2 = new BaseVoltageConfig();
-        baseVoltage2.setName("vl2");
-        baseVoltage2.setMinValue(1000.);
-        baseVoltage2.setMaxValue(2000.);
-        baseVoltage2.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
-
-        baseVoltages = List.of(baseVoltage1, baseVoltage2);
         sldRequestInfos = new SldRequestInfos();
-        sldRequestInfos.setBaseVoltagesConfigInfos(baseVoltages);
     }
 
     @AfterEach
@@ -471,7 +456,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -497,7 +481,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -530,7 +513,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -555,7 +537,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -592,7 +573,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -647,7 +627,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -684,7 +663,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(List.of(positionFromUser))
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -713,7 +691,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(List.of(positionFromUser))
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -759,7 +736,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -798,7 +774,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
@@ -840,7 +815,6 @@ class SingleLineDiagramTest {
                 .nadConfigUuid(null)
                 .nadPositionsGenerationMode(nadPositionsGenerationMode)
                 .voltageLevelIds(Set.of("vlFr1A"))
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         networkAreaDiagramService.generateNetworkAreaDiagramSvg(testNetworkId, VARIANT_2_ID, nadRequestInfos);
@@ -890,7 +864,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -918,7 +891,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.CONFIGURED)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -944,7 +916,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -973,7 +944,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .currentLimitViolationsInfos(List.of(
                     CurrentLimitViolationInfos.builder()
                         .equipmentId("twt1")
@@ -1008,7 +978,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .currentLimitViolationsInfos(List.of(
                     CurrentLimitViolationInfos.builder()
                         .equipmentId("twt1")
@@ -1047,8 +1016,6 @@ class SingleLineDiagramTest {
         baseVoltage2.setMaxValue(2000.);
         baseVoltage2.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
-        List<BaseVoltageConfig> baseVoltagesConfigInfos = List.of(baseVoltage1, baseVoltage2);
-
         NadRequestInfos nadRequestInfos = NadRequestInfos.builder()
                 .nadConfigUuid(null)
                 .filterUuid(null)
@@ -1057,7 +1024,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltagesConfigInfos)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1092,7 +1058,6 @@ class SingleLineDiagramTest {
         requestInfos.setDiagonalLabel(true);
         requestInfos.setTopologicalColoring(true);
         requestInfos.setCurrentLimitViolationsInfos(List.of(violation));
-        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", requestInfos);
         String svg = svgAndMetadata.getSvg();
@@ -1110,7 +1075,6 @@ class SingleLineDiagramTest {
         requestInfos.setDiagonalLabel(true);
         requestInfos.setTopologicalColoring(true);
         requestInfos.setCurrentLimitViolationsInfos(List.of());
-        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", requestInfos);
         String svg = svgAndMetadata.getSvg();
@@ -1127,7 +1091,6 @@ class SingleLineDiagramTest {
         requestInfos.setDiagonalLabel(true);
         requestInfos.setTopologicalColoring(true);
         requestInfos.setCurrentLimitViolationsInfos(List.of());
-        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "S1VL1", requestInfos);
         String svg = svgAndMetadata.getSvg();
@@ -1146,7 +1109,6 @@ class SingleLineDiagramTest {
 
         SldRequestInfos requestInfos = new SldRequestInfos();
         requestInfos.setCurrentLimitViolationsInfos(List.of(violation));
-        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", requestInfos);
         String svg = svgAndMetadata.getSvg();
@@ -1164,7 +1126,6 @@ class SingleLineDiagramTest {
 
         SldRequestInfos requestInfos = new SldRequestInfos();
         requestInfos.setCurrentLimitViolationsInfos(List.of());
-        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
         requestInfos.setBusIdToIccValues(busIdToIcc);
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
@@ -1191,7 +1152,6 @@ class SingleLineDiagramTest {
 
         SldRequestInfos requestInfos = new SldRequestInfos();
         requestInfos.setTopologicalColoring(isTopologicalColoring);
-        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr3", requestInfos);
         String svg = svgAndMetadata.getSvg();
@@ -1312,7 +1272,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1339,7 +1298,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Set.of("vlFr2A"))
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1381,7 +1339,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Set.of("vlFr2A"))
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1416,7 +1373,6 @@ class SingleLineDiagramTest {
             .voltageLevelToOmitIds(Collections.emptySet())
             .positions(Collections.emptyList())
             .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-            .baseVoltagesConfigInfos(baseVoltages)
             .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1441,7 +1397,6 @@ class SingleLineDiagramTest {
 
         SldRequestInfos requestInfos = new SldRequestInfos();
         requestInfos.setCurrentLimitViolationsInfos(List.of());
-        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "vlFr1A", requestInfos);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
@@ -1461,7 +1416,6 @@ class SingleLineDiagramTest {
 
         SldRequestInfos requestInfos = new SldRequestInfos();
         requestInfos.setCurrentLimitViolationsInfos(List.of());
-        requestInfos.setBaseVoltagesConfigInfos(baseVoltages);
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, VARIANT_2_ID, "subFr1", requestInfos);
         Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
@@ -1737,7 +1691,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -1760,7 +1713,6 @@ class SingleLineDiagramTest {
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
                 .positions(Collections.emptyList())
-                .baseVoltagesConfigInfos(baseVoltages)
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)

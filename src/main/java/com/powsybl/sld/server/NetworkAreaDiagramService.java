@@ -47,6 +47,7 @@ import com.powsybl.sld.server.utils.TopologicalStyleProvider;
 import lombok.NonNull;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Lazy;
@@ -80,6 +81,9 @@ class NetworkAreaDiagramService {
     static final String SVG_TAG = "svg";
     static final String METADATA = "metadata";
     static final String ADDITIONAL_METADATA = "additionalMetadata";
+
+    @Autowired
+    private VoltagesConfig voltagesConfig;
 
     private final NetworkStoreService networkStoreService;
     private final GeoDataService geoDataService;
@@ -259,7 +263,8 @@ class NetworkAreaDiagramService {
         }
 
         // Build Powsybl parameters
-        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos(), nadRequestInfos.getBaseVoltagesConfigInfos());
+        List<BaseVoltageConfig> baseVoltagesConfigInfos = voltagesConfig.getBaseVoltagesConfigInfos();
+        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos(), baseVoltagesConfigInfos);
 
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
