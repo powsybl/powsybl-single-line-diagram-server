@@ -15,7 +15,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.util.Map;
 
-import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.INVALID_CONFIG_REQUEST;
+import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.INVALID_DISPLAY_MODE;
 import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.MAX_VOLTAGE_LEVELS_DISPLAYED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,7 +39,7 @@ class SingleLineDiagramExceptionHandlerTest {
         DiagramBusinessException exception = new DiagramBusinessException(MAX_VOLTAGE_LEVELS_DISPLAYED, "max voltage levels displayed reached", Map.of("nbVoltageLevels", 12, "maxVoltageLevels", 10));
         ResponseEntity<PowsyblWsProblemDetail> response = handler.handleComputationException(exception, request);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
         assertEquals("diagram.maxVoltageLevelDisplayed", response.getBody().getBusinessErrorCode());
         assertEquals(12, response.getBody().getBusinessErrorValues().get("nbVoltageLevels"));
@@ -49,12 +49,12 @@ class SingleLineDiagramExceptionHandlerTest {
     @Test
     void mapsBadRequestBusinessErrorToStatus() {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/sld");
-        DiagramBusinessException exception = new DiagramBusinessException(INVALID_CONFIG_REQUEST, "Invalid config request");
+        DiagramBusinessException exception = new DiagramBusinessException(INVALID_DISPLAY_MODE, "Invalid config request");
         ResponseEntity<PowsyblWsProblemDetail> response = handler.handleComputationException(exception, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
-        assertEquals("diagram.invalidConfigRequest", response.getBody().getBusinessErrorCode());
+        assertEquals("diagram.invalidDisplayMode", response.getBody().getBusinessErrorCode());
     }
 }
 

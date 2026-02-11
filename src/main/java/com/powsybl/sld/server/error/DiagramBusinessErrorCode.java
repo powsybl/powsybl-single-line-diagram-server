@@ -12,14 +12,13 @@ import com.powsybl.ws.commons.error.BusinessErrorCode;
  * @author Hugo Marcellin <hugo.marcelin at rte-france.com>
  */
 public enum DiagramBusinessErrorCode implements BusinessErrorCode {
-    EQUIPMENT_NOT_FOUND("diagram.equipmentNotFound"),
-    MAX_VOLTAGE_LEVELS_DISPLAYED("diagram.maxVoltageLevelDisplayed"),
-    INVALID_CSV("diagram.invalidCsv"),
-    INVALID_CONFIG_REQUEST("diagram.invalidConfigRequest"),
-    INVALID_EQUIPMENT("diagram.invalidEquipment"),
+    INVALID_EQUIPMENT_TYPE("diagram.invalidEquipmentType"),
     INVALID_SUBSTATION_LAYOUT("diagram.invalidSubstationLayout"),
+    INVALID_DISPLAY_MODE("diagram.invalidDisplayMode"),
+    MAX_VOLTAGE_LEVELS_DISPLAYED("diagram.maxVoltageLevelDisplayed"),
+    EQUIPMENT_NOT_FOUND("diagram.equipmentNotFound"),
     NO_CONFIGURED_POSITION("diagram.noConfiguredPosition"),
-    NO_VOLTAGE_LEVEL_ID_PROVIDED("diagram.noVoltageLevelIdProvided"),;
+    NO_VOLTAGE_LEVEL_FOUND("diagram.noVoltageLevelFound");
 
     private final String code;
 

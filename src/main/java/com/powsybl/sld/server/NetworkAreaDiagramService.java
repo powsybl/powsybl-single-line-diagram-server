@@ -35,15 +35,9 @@ import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.error.DiagramBusinessException;
-import com.powsybl.sld.server.error.DiagramRuntimeException;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
-import com.powsybl.sld.server.utils.DiagramUtils;
-import com.powsybl.sld.server.utils.CsvFileValidator;
-import com.powsybl.sld.server.utils.DiagramConstants;
-import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
-import com.powsybl.sld.server.utils.ResourceUtils;
-import com.powsybl.sld.server.utils.TopologicalStyleProvider;
+import com.powsybl.sld.server.utils.*;
 import lombok.NonNull;
 import org.apache.commons.io.ByteOrderMark;
 import org.apache.commons.io.input.BOMInputStream;
@@ -51,9 +45,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.supercsv.io.CsvMapReader;
 
 import java.io.*;
@@ -140,7 +136,7 @@ class NetworkAreaDiagramService {
     public UUID duplicateNetworkAreaDiagramConfig(UUID originNadConfigUuid) {
         NadConfigEntity nadConfigEntity = nadConfigRepository.findById(originNadConfigUuid)
             .orElseThrow(() ->
-                new DiagramRuntimeException("Failed to duplicate NAD config: no configuration found for UUID " + originNadConfigUuid)
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Failed to duplicate NAD config: no configuration found for UUID " + originNadConfigUuid)
             );
 
         NadConfigEntity duplicateEntity = new NadConfigEntity(nadConfigEntity);
@@ -151,7 +147,7 @@ class NetworkAreaDiagramService {
     @Transactional
     public void updateNetworkAreaDiagramConfig(UUID nadConfigUuid, NadConfigInfos nadConfigInfos) {
         NadConfigEntity entity = nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid)
-                .orElseThrow(() -> new DiagramRuntimeException("Failed to update NAD config: no configuration found for UUID " + nadConfigUuid));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Failed to update NAD config: no configuration found for UUID " + nadConfigUuid));
         updateNadConfig(entity, nadConfigInfos);
     }
 
@@ -202,7 +198,7 @@ class NetworkAreaDiagramService {
 
     @Transactional(readOnly = true)
     public NadConfigInfos getNetworkAreaDiagramConfig(UUID nadConfigUuid) {
-        return nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid).orElseThrow(() -> new DiagramRuntimeException(
+        return nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "Failed to retrieve NAD configuration: no configuration found for UUID " + nadConfigUuid
         )).toDto();
     }
@@ -304,7 +300,7 @@ class NetworkAreaDiagramService {
 
     private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, List<BaseVoltageConfig> baseVoltagesConfigInfos) {
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
-            throw new DiagramBusinessException(NO_VOLTAGE_LEVEL_ID_PROVIDED, "No voltage level was provided to the NAD generation input");
+            throw new DiagramBusinessException(NO_VOLTAGE_LEVEL_FOUND, "No voltage level found for the NAD generation context");
         }
 
         SvgParameters svgParameters = new SvgParameters()
@@ -548,17 +544,17 @@ class NetworkAreaDiagramService {
     @Transactional
     public void createNadPositionsConfigFromCsv(MultipartFile file) {
         if (!CsvFileValidator.hasCSVFormat(file)) {
-            throw new DiagramBusinessException(INVALID_CSV, "Invalid CSV format!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid CSV format for NAD configured positions");
         }
 
         List<NadVoltageLevelPositionInfos> positions;
         try {
             positions = getPositionsFromCsv(file);
             if (positions.isEmpty()) {
-                throw new DiagramBusinessException(INVALID_CSV, "No positions found!");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No NAD configured positions found from the csv file");
             }
         } catch (IOException e) {
-            throw new UncheckedIOException("The csv is invalid!", e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The csv file is invalid for NAD configured positions", e);
         }
 
         nadVoltageLevelConfiguredPositionRepository.deleteAll();
@@ -568,7 +564,7 @@ class NetworkAreaDiagramService {
     private List<NadVoltageLevelPositionInfos> parsePositions(CsvMapReader mapReader) throws IOException {
         String[] headers = CsvFileValidator.getHeaders(mapReader);
         if (headers.length == 0) {
-            throw new DiagramBusinessException(INVALID_CSV, "The csv headers are invalid!");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The csv file headers are invalid for NAD configured positions");
         }
         List<NadVoltageLevelPositionInfos> nadVoltageLevelPositionInfos = new ArrayList<>(mapReader.getRowNumber());
         Map<String, String> row;

@@ -6,11 +6,11 @@
  */
 package com.powsybl.sld.server.utils;
 
+import com.powsybl.commons.PowsyblException;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
-import com.powsybl.sld.server.error.DiagramRuntimeException;
 
 import java.util.*;
 
@@ -29,10 +29,9 @@ public final class DiagramUtils {
                 network.getVariantManager().setWorkingVariant(variantId);
             }
             return network;
-        } catch (Exception e) {
-            throw new DiagramRuntimeException("Could not get network with id: " + networkUuid, e);
+        } catch (PowsyblException e) {
+            throw new RuntimeException("Could not get network with id: " + networkUuid, e);
         }
-
     }
 
     /**

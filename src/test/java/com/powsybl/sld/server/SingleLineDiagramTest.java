@@ -201,7 +201,7 @@ class SingleLineDiagramTest {
         mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", testNetworkId, "notFound")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         //network not existing
         mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A")
@@ -213,7 +213,7 @@ class SingleLineDiagramTest {
         mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -231,7 +231,7 @@ class SingleLineDiagramTest {
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "NotFound")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         //network not existing
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A")
@@ -261,7 +261,7 @@ class SingleLineDiagramTest {
         mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "NotFound")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         //network not existing
         mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A")
@@ -311,7 +311,7 @@ class SingleLineDiagramTest {
         mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}", testNetworkId, "notFound")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         // network not existing
         mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}", notFoundNetworkId, "subFr1")
@@ -341,7 +341,7 @@ class SingleLineDiagramTest {
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", testNetworkId, "NotFound")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         // network not existing
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", notFoundNetworkId, "subFr2")
@@ -383,7 +383,7 @@ class SingleLineDiagramTest {
         mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}", testNetworkId, "NotFound")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         // network not existing
         mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}", notFoundNetworkId, "subFr2")
@@ -489,7 +489,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfosNotFound)))
                 .andExpect(request().asyncStarted());
         mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
-                .andExpect(status().isInternalServerError()).andReturn();
+                .andExpect(status().isBadRequest()).andReturn();
     }
 
     @Test
@@ -782,7 +782,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
                 .andExpect(request().asyncStarted());
         mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
-                .andExpect(status().isInternalServerError()).andReturn();
+                .andExpect(status().isBadRequest()).andReturn();
     }
 
     @ParameterizedTest
@@ -1187,7 +1187,7 @@ class SingleLineDiagramTest {
                 .andExpect(result -> {
                     Throwable ex = result.getResolvedException();
                     assertNotNull(ex);
-                    assertEquals("Invalid CSV format!", ex.getMessage());
+                    assertEquals("Invalid CSV format for NAD configured positions", ((ResponseStatusException) ex).getReason());
                 });
     }
 
@@ -1202,7 +1202,7 @@ class SingleLineDiagramTest {
                 .andExpect(result -> {
                     Throwable ex = result.getResolvedException();
                     assertNotNull(ex);
-                    assertEquals("The csv headers are invalid!", ex.getMessage());
+                    assertEquals("The csv file headers are invalid for NAD configured positions", ((ResponseStatusException) ex).getReason());
                 });
     }
 
@@ -1217,7 +1217,7 @@ class SingleLineDiagramTest {
                 .andExpect(result -> {
                     Throwable ex = result.getResolvedException();
                     assertNotNull(ex);
-                    assertEquals("No positions found!", ex.getMessage());
+                    assertEquals("No NAD configured positions found from the csv file", ((ResponseStatusException) ex).getReason());
                 });
     }
 
@@ -1381,7 +1381,7 @@ class SingleLineDiagramTest {
                 .andExpect(request().asyncStarted());
         mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
 
-            .andExpect(status().isInternalServerError())
+            .andExpect(status().isBadRequest())
             .andExpect(result -> {
                 Throwable ex = result.getResolvedException();
                 assertNotNull(ex);
@@ -1721,7 +1721,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfosVlNotFound)))
                 .andExpect(request().asyncStarted());
         mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
-                .andExpect(status().isInternalServerError()).andReturn();
+                .andExpect(status().isBadRequest()).andReturn();
     }
 
     @Test
