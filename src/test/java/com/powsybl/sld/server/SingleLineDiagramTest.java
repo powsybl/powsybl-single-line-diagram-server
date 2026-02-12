@@ -207,7 +207,7 @@ class SingleLineDiagramTest {
         mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         //variant not existing
         mvc.perform(post("/v1/svg/{networkUuid}/{voltageLevelId}variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A")
@@ -237,13 +237,13 @@ class SingleLineDiagramTest {
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         //variant not existing
         mvc.perform(get("/v1/metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", testNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -267,13 +267,13 @@ class SingleLineDiagramTest {
         mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}", notFoundNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         //variant not existing
         mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "vlFr1A")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         sldRequestInfos.setSldDisplayMode(SldDisplayMode.FEEDER_POSITION);
         mvc.perform(post("/v1/svg-and-metadata/{networkUuid}/{voltageLevelId}?variantId=" + VARIANT_2_ID, testNetworkId, "vlFr1A")
@@ -317,13 +317,13 @@ class SingleLineDiagramTest {
         mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}", notFoundNetworkId, "subFr1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         // variant not existing
         mvc.perform(post("/v1/substation-svg/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", testNetworkId, "subFr1")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -347,13 +347,13 @@ class SingleLineDiagramTest {
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}", notFoundNetworkId, "subFr2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         // variant not existing
         mvc.perform(get("/v1/substation-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?substationLayout=horizontal", testNetworkId, "subFr2")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -389,13 +389,13 @@ class SingleLineDiagramTest {
         mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}", notFoundNetworkId, "subFr2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
 
         // variant not existing
         mvc.perform(post("/v1/substation-svg-and-metadata/{networkUuid}/{substationId}?variantId=" + VARIANT_NOT_FOUND_ID, testNetworkId, "subFr2")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sldRequestInfos)))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isNotFound());
     }
 
     @Test

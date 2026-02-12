@@ -11,6 +11,8 @@ import com.powsybl.iidm.network.Network;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.CurrentLimitViolationInfos;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -30,7 +32,7 @@ public final class DiagramUtils {
             }
             return network;
         } catch (PowsyblException e) {
-            throw new RuntimeException("Could not get network with id: " + networkUuid, e);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not get network with id: " + networkUuid, e);
         }
     }
 

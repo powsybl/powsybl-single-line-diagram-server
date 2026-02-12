@@ -20,6 +20,8 @@ import com.powsybl.sld.svg.LabelProviderFactory;
 import com.powsybl.sld.svg.SvgParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
 import java.util.List;
@@ -101,7 +103,7 @@ public class PositionDiagramLabelProvider extends CommonLabelProvider {
         } else {
             LOGGER.error("Given voltageLevel {} not found in terminal 1 and terminal 2 of branch", voltageLevel.getId());
             if (throwException) {
-                throw new RuntimeException(String.format("Given voltageLevel %s not found in terminal 1 and terminal 2 of branch", voltageLevel.getId()));
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Given voltageLevel %s not found in terminal 1 and terminal 2 of branch", voltageLevel.getId()));
             }
         }
         return feeder.flatMap(ConnectablePosition.Feeder::getOrder).orElse(null);
@@ -118,7 +120,7 @@ public class PositionDiagramLabelProvider extends CommonLabelProvider {
         } else {
             LOGGER.error("Given voltageLevel {} not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId());
             if (throwException) {
-                throw new RuntimeException(String.format("Given voltageLevel %s not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId()));
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format("Given voltageLevel %s not found in leg 1, leg 2 and leg 3 of ThreeWindingsTransformer", voltageLevel.getId()));
             }
         }
         return feeder.flatMap(ConnectablePosition.Feeder::getOrder).orElse(null);
@@ -134,7 +136,7 @@ public class PositionDiagramLabelProvider extends CommonLabelProvider {
         } else {
             LOGGER.error("Given connectable not supported: {}", identifiable.getClass().getName());
             if (throwException) {
-                throw new RuntimeException(String.format("Given connectable %s not supported: ", identifiable.getClass().getName()));
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, String.format("Given connectable %s not supported: ", identifiable.getClass().getName()));
             }
         }
         return null;
