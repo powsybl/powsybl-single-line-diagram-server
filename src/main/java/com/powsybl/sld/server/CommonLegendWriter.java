@@ -64,8 +64,8 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
                 new BusLegendInfo(b.getId(), List.of(
                     new BusLegendInfo.Caption(valueFormatter.formatVoltage(b.getV(), UNIT_KV), KEY_VOLTAGE),
                     new BusLegendInfo.Caption(valueFormatter.formatAngleInDegrees(b.getAngle()), KEY_ANGLE),
-                    new BusLegendInfo.Caption(formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_CONSUMPTION),
-                    new BusLegendInfo.Caption(formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_PRODUCTION),
+                    new BusLegendInfo.Caption(formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_PRODUCTION),
+                    new BusLegendInfo.Caption(formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_CONSUMPTION),
                     new BusLegendInfo.Caption(getFormattedBusIcc(b.getId()), KEY_ICC)
                 ))
             ).toList();
