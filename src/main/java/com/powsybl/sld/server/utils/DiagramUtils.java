@@ -21,7 +21,7 @@ import java.util.*;
  */
 public final class DiagramUtils {
     private DiagramUtils() {
-        throw new AssertionError("Utility class should not be instantiated");
+        // Utility class should not be instantiated
     }
 
     public static Network getNetwork(UUID networkUuid, String variantId, NetworkStoreService networkStoreService, PreloadingStrategy preloadingStrategy) {
@@ -32,7 +32,7 @@ public final class DiagramUtils {
             }
             return network;
         } catch (PowsyblException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not get network with id: " + networkUuid, e);
         }
     }
 
@@ -40,7 +40,7 @@ public final class DiagramUtils {
      * Creates a map of equipment ID to CSS style class for limit violations.
      *
      * @param limitViolationInfos Set of limit violation information
-     * @param baseStyleClass Base CSS class for violations (e.g., "sld-overload" or "nad-overloaded")
+     * @param baseStyleClass      Base CSS class for violations (e.g., "sld-overload" or "nad-overloaded")
      * @return Map from equipment ID to CSS style class, or empty map if no violations
      */
     public static Map<String, String> createLimitViolationStyles(List<CurrentLimitViolationInfos> limitViolationInfos, String baseStyleClass) {

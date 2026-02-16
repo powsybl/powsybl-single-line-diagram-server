@@ -9,6 +9,7 @@ package com.powsybl.sld.server;
 import com.powsybl.sld.server.dto.nad.NadConfigInfos;
 import com.powsybl.sld.server.dto.nad.NadVoltageLevelPositionInfos;
 import com.powsybl.sld.server.entities.nad.NadConfigEntity;
+import com.powsybl.sld.server.error.DiagramBusinessException;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 
 import jakarta.transaction.Transactional;
@@ -19,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -77,7 +77,7 @@ class NetworkAreaDiagramServiceTest {
 
     @Test
     void testReadNadConfigNotFound() {
-        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(NONEXISTANT_UUID), HttpStatus.NOT_FOUND.toString());
+        assertThrows(RuntimeException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(NONEXISTANT_UUID), HttpStatus.NOT_FOUND.toString());
     }
 
     @Test
@@ -103,7 +103,7 @@ class NetworkAreaDiagramServiceTest {
     @Test
     void testUpdateNadConfigNotFound() {
         NadConfigInfos configInfos = new NadConfigInfos();
-        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(NONEXISTANT_UUID, configInfos), HttpStatus.NOT_FOUND.toString());
+        assertThrows(RuntimeException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(NONEXISTANT_UUID, configInfos), HttpStatus.NOT_FOUND.toString());
     }
 
     @Test
@@ -125,7 +125,7 @@ class NetworkAreaDiagramServiceTest {
 
     @Test
     void testDuplicateNadConfigNotFound() {
-        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.duplicateNetworkAreaDiagramConfig(UUID.randomUUID()), HttpStatus.NOT_FOUND.toString());
+        assertThrows(RuntimeException.class, () -> networkAreaDiagramService.duplicateNetworkAreaDiagramConfig(UUID.randomUUID()), HttpStatus.NOT_FOUND.toString());
         assertEquals(0, nadConfigRepository.count());
     }
 
@@ -207,14 +207,14 @@ class NetworkAreaDiagramServiceTest {
         NadVoltageLevelPositionInfos newPositionNoIdNoVoltageLevelId = new NadVoltageLevelPositionInfos();
         newPositionNoIdNoVoltageLevelId.setXPosition(14.6);
         nadConfigUpdate.setPositions(List.of(newPositionNoIdNoVoltageLevelId));
-        assertThrows(IllegalArgumentException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate), "Missing id or voltageLevelId");
+        assertThrows(DiagramBusinessException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate), "Missing id or voltageLevelId");
 
         // Test that the update fails if we send a position with an ID that do not exist for this nad config
         NadVoltageLevelPositionInfos newPositionUnknownId = new NadVoltageLevelPositionInfos();
         newPositionUnknownId.setId(NONEXISTANT_UUID);
         newPositionUnknownId.setXPosition(25.2);
         nadConfigUpdate.setPositions(List.of(newPositionUnknownId));
-        assertThrows(IllegalArgumentException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate), "Missing id or voltageLevelId");
+        assertThrows(DiagramBusinessException.class, () -> networkAreaDiagramService.updateNetworkAreaDiagramConfig(nadConfigId, nadConfigUpdate), "Missing id or voltageLevelId");
     }
 
     @Test
@@ -294,7 +294,7 @@ class NetworkAreaDiagramServiceTest {
         networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId);
         networkAreaDiagramService.deleteNetworkAreaDiagramConfig(nadConfigId);
 
-        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId), HttpStatus.NOT_FOUND.toString());
+        assertThrows(RuntimeException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(nadConfigId), HttpStatus.NOT_FOUND.toString());
     }
 
     @Test
@@ -377,9 +377,9 @@ class NetworkAreaDiagramServiceTest {
 
         // Verify only config2 remains
         assertEquals(1, nadConfigRepository.count());
-        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config1Id));
+        assertThrows(RuntimeException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config1Id));
         assertDoesNotThrow(() -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config2Id));
-        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config3Id));
+        assertThrows(RuntimeException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(config3Id));
     }
 
     @Test
@@ -414,6 +414,6 @@ class NetworkAreaDiagramServiceTest {
 
         // Verify the existing config was deleted
         assertEquals(0, nadConfigRepository.count());
-        assertThrows(ResponseStatusException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(existingConfigId));
+        assertThrows(RuntimeException.class, () -> networkAreaDiagramService.getNetworkAreaDiagramConfig(existingConfigId));
     }
 }

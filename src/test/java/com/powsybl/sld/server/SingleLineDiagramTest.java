@@ -48,6 +48,7 @@ import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
+import com.powsybl.ws.commons.error.BaseExceptionHandler;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,6 +59,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -97,6 +99,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(BaseExceptionHandler.class)
 class SingleLineDiagramTest {
 
     @Autowired
@@ -427,8 +430,10 @@ class SingleLineDiagramTest {
 
         String faultSubstationGeoDataJson = "[{\"id\":\"subFr1\",\"coordinate\":{\"lat\":48.8588443,\"long\":2.2943506}}]";
         given(geoDataService.getSubstationsGraphics(testNetworkId, VARIANT_1_ID, List.of("subFr1"))).willReturn(faultSubstationGeoDataJson);
-        PowsyblException exception = assertThrows(PowsyblException.class, () ->
-            networkAreaDiagramService.assignGeoDataCoordinates(context, List.of(network.getSubstation("subFr1"))));
+
+        List<Substation> substations = List.of(network.getSubstation("subFr1"));
+        RuntimeException exception = assertThrows(RuntimeException.class, () ->
+            networkAreaDiagramService.assignGeoDataCoordinates(context, substations));
 
         // Assert the exception message
         assertEquals("Failed to parse JSON response", exception.getMessage());
@@ -484,7 +489,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfosNotFound)))
                 .andExpect(request().asyncStarted());
         mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
-                .andExpect(status().isNotFound()).andReturn();
+                .andExpect(status().isBadRequest()).andReturn();
     }
 
     @Test
@@ -777,7 +782,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(requestWithValidConfig)))
                 .andExpect(request().asyncStarted());
         mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
-                .andExpect(status().isNotFound()).andReturn();
+                .andExpect(status().isBadRequest()).andReturn();
     }
 
     @ParameterizedTest
@@ -1179,7 +1184,11 @@ class SingleLineDiagramTest {
                         .file(file)
                         .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andExpect(status().isBadRequest())
-                .andExpect(status().reason("Invalid CSV format!"));
+                .andExpect(result -> {
+                    Throwable ex = result.getResolvedException();
+                    assertNotNull(ex);
+                    assertEquals("Invalid CSV format for NAD configured positions", ((ResponseStatusException) ex).getReason());
+                });
     }
 
     @Test
@@ -1190,7 +1199,11 @@ class SingleLineDiagramTest {
                         .file(file)
                         .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andExpect(status().isBadRequest())
-                .andExpect(status().reason("The csv headers are invalid!"));
+                .andExpect(result -> {
+                    Throwable ex = result.getResolvedException();
+                    assertNotNull(ex);
+                    assertEquals("The csv file headers are invalid for NAD configured positions", ((ResponseStatusException) ex).getReason());
+                });
     }
 
     @Test
@@ -1201,7 +1214,11 @@ class SingleLineDiagramTest {
                         .file(file)
                         .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
                 .andExpect(status().isBadRequest())
-                .andExpect(status().reason("No positions found!"));
+                .andExpect(result -> {
+                    Throwable ex = result.getResolvedException();
+                    assertNotNull(ex);
+                    assertEquals("No NAD configured positions found from the csv file", ((ResponseStatusException) ex).getReason());
+                });
     }
 
     @Test
@@ -1362,11 +1379,14 @@ class SingleLineDiagramTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(nadRequestInfos)))
                 .andExpect(request().asyncStarted());
-        MvcResult mvcResult = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
-            .andExpect(status().isForbidden())
-            .andReturn();
-        String errorMessage = mvcResult.getResponse().getErrorMessage();
-        assertEquals(String.format("You need to reduce the number of voltage levels to be displayed in the network area diagram (current %s, maximum %s)", vlIds.size(), maxVls), errorMessage);
+        mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
+
+            .andExpect(status().isBadRequest())
+            .andExpect(result -> {
+                Throwable ex = result.getResolvedException();
+                assertNotNull(ex);
+                assertEquals("You need to reduce the number of voltage levels to be displayed in the network area diagram", ex.getMessage());
+            });
     }
 
     @Test
@@ -1701,7 +1721,7 @@ class SingleLineDiagramTest {
                         .content(objectMapper.writeValueAsString(nadRequestInfosVlNotFound)))
                 .andExpect(request().asyncStarted());
         mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
-                .andExpect(status().isNotFound()).andReturn();
+                .andExpect(status().isBadRequest()).andReturn();
     }
 
     @Test

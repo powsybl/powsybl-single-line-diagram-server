@@ -20,7 +20,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -88,7 +87,7 @@ class FilterServiceTest {
                 ArgumentMatchers.eq(HttpMethod.GET),
                 ArgumentMatchers.isNull(),
                 ArgumentMatchers.<ParameterizedTypeReference<List<IdentifiableAttributes>>>any())
-        ).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+        ).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Filter not found"));
 
         assertThrows(ResponseStatusException.class, () -> filterService.exportFilter(networkUuid, variantId, filterUuid));
     }
