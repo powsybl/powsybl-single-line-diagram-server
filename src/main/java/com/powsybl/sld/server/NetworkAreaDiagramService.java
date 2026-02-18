@@ -306,6 +306,8 @@ class NetworkAreaDiagramService {
         SvgParameters svgParameters = new SvgParameters()
                 .setUndefinedValueSymbol("\u2014")
                 .setSvgWidthAndHeightAdded(true)
+                .setVoltageLevelLegendsIncluded(false)
+                .setEdgeInfosIncluded(false)
                 .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
         LayoutParameters layoutParameters = new LayoutParameters();
