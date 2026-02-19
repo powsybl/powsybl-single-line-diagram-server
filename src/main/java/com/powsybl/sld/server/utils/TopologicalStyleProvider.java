@@ -59,6 +59,7 @@ public class TopologicalStyleProvider extends AbstractVoltageStyleProvider {
         // Check custom violations first
         if (!limitViolationStyles.isEmpty()) {
             String customStyle = limitViolationStyles.get(branchEdge.getEquipmentId());
+            branchEdge.getSvgEdgeInfo(BranchEdge.Side.ONE);
             if (customStyle != null && !customStyle.isBlank()) {
                 return List.of(customStyle);
             }
