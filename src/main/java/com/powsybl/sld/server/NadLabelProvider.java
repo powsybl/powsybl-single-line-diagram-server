@@ -14,12 +14,13 @@ import com.powsybl.nad.svg.iidm.DefaultLabelProvider;
 import com.powsybl.nad.svg.EdgeInfo;
 import com.powsybl.diagram.util.PermanentLimitPercentageMax;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 public class NadLabelProvider extends DefaultLabelProvider {
-
- public NadLabelProvider(Network network, SvgParameters svgParameters) {
+    private final SvgParameters svgParameters;
+    public NadLabelProvider(Network network, SvgParameters svgParameters) {
         super(
             network,
             new DefaultLabelProvider.EdgeInfoParameters(
@@ -31,8 +32,8 @@ public class NadLabelProvider extends DefaultLabelProvider {
             svgParameters.createValueFormatter(),
             new LabelProviderParameters()
         );
+        this.svgParameters = svgParameters;
     }
-
 
     @Override
     public Optional<EdgeInfo> getBranchEdgeInfo(String branchId, String branchType) {
@@ -47,7 +48,7 @@ public class NadLabelProvider extends DefaultLabelProvider {
         );
 
         // IST max
-        double istMax = PermanentLimitPercentageMax.getPermanentLimitPercentageMax(branch);
+        double istMax = getPermanentLimitPercentageMax(branch);
         return Optional.of(new EdgeInfo(
             EdgeInfo.ACTIVE_POWER,
             EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
@@ -55,6 +56,13 @@ public class NadLabelProvider extends DefaultLabelProvider {
             getValueFormatter().formatPower(pMax, "MW"),
             getValueFormatter().formatPercentage(istMax)
             ));
+    }
+
+    private String getFormattedPermanentLimit(double percentage) {
+        return Double.isNaN(percentage)
+            ?            svgParameters.getUndefinedValueSymbol()
+
+            : String.format(Locale.US, "%.0f%%", percentage);
     }
 
     @Override
@@ -69,15 +77,33 @@ public class NadLabelProvider extends DefaultLabelProvider {
             .max()
             .orElse(Double.NaN);
 
-        double istMax = PermanentLimitPercentageMax.getPermanentLimitPercentageMax(twt);
+        double istMax = getPermanentLimitPercentageMax(twt);
 
 
         return Optional.of(new EdgeInfo(
             EdgeInfo.ACTIVE_POWER,
             EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
             maxActivePower,
-            getValueFormatter().formatPercentage(istMax),
-            getValueFormatter().formatPower(maxActivePower, "MW")
+
+            getValueFormatter().formatPower(maxActivePower, "MW"),
+            getValueFormatter().formatPercentage(istMax)
+
         ));
+    }
+
+    private double getPermanentLimitPercentageMax(Branch<?> branch) {
+        return Stream.of(TwoSides.ONE, TwoSides.TWO)
+            .map(side -> getPermanentLimitPercentageMax(branch.getTerminal(side), branch.getCurrentLimits(side).orElse(null)))
+            .mapToDouble(Double::doubleValue).max().getAsDouble();
+    }
+
+    private double getPermanentLimitPercentageMax(ThreeWindingsTransformer transformer) {
+        return Stream.of(ThreeSides.ONE, ThreeSides.TWO, ThreeSides.THREE)
+            .map(side -> getPermanentLimitPercentageMax(transformer.getTerminal(side), transformer.getLeg(side).getCurrentLimits().orElse(null)))
+            .mapToDouble(Double::doubleValue).max().getAsDouble();
+    }
+
+    private double getPermanentLimitPercentageMax(Terminal terminal, CurrentLimits currentLimits) {
+        return currentLimits != null ? (Math.abs(terminal.getI() * 100) / currentLimits.getPermanentLimit()) : 0;
     }
 }
