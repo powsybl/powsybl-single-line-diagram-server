@@ -4,7 +4,7 @@ on: workflow_dispatch
 
 jobs:
   run-deploy:
-    uses: powsybl/github-ci/.github/workflows/manual-dockerdeploy-backend-app-generic.yml@1a1ce5c10be37ecd5e9a0566b653670bcd47a6bb
+    uses: powsybl/github-ci/.github/workflows/manual-dockerdeploy-backend-app-generic.yml@3ed0caeb3395e55868884f466d726ddaee877850
     with:
       dockerImage: docker.io/powsybl/single-line-diagram-server
       dockerUsername: powsyblci
