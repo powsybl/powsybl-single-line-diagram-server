@@ -12,27 +12,23 @@ import com.powsybl.nad.svg.LabelProviderParameters;
 import com.powsybl.nad.svg.SvgParameters;
 import com.powsybl.nad.svg.iidm.DefaultLabelProvider;
 import com.powsybl.nad.svg.EdgeInfo;
-import com.powsybl.diagram.util.PermanentLimitPercentageMax;
 
-import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 public class NadLabelProvider extends DefaultLabelProvider {
-    private final SvgParameters svgParameters;
     public NadLabelProvider(Network network, SvgParameters svgParameters) {
         super(
-            network,
-            new DefaultLabelProvider.EdgeInfoParameters(
-                DefaultLabelProvider.EdgeInfoEnum.REACTIVE_POWER,
-                DefaultLabelProvider.EdgeInfoEnum.EMPTY,
-                DefaultLabelProvider.EdgeInfoEnum.EMPTY,
-                DefaultLabelProvider.EdgeInfoEnum.EMPTY
-            ),
-            svgParameters.createValueFormatter(),
-            new LabelProviderParameters()
+                network,
+                new DefaultLabelProvider.EdgeInfoParameters(
+                        DefaultLabelProvider.EdgeInfoEnum.REACTIVE_POWER,
+                        DefaultLabelProvider.EdgeInfoEnum.EMPTY,
+                        DefaultLabelProvider.EdgeInfoEnum.EMPTY,
+                        DefaultLabelProvider.EdgeInfoEnum.EMPTY
+                ),
+                svgParameters.createValueFormatter(),
+                new LabelProviderParameters()
         );
-        this.svgParameters = svgParameters;
     }
 
     @Override
@@ -42,28 +38,27 @@ public class NadLabelProvider extends DefaultLabelProvider {
             return Optional.empty();
         }
 
-         double pMax = Math.max(
-            Math.abs(branch.getTerminal(TwoSides.ONE).getP()),
-            Math.abs(branch.getTerminal(TwoSides.TWO).getP())
+        double pMax = Math.max(
+                Math.abs(branch.getTerminal(TwoSides.ONE).getP()),
+                Math.abs(branch.getTerminal(TwoSides.TWO).getP())
         );
 
         // IST max
         double istMax = getPermanentLimitPercentageMax(branch);
         return Optional.of(new EdgeInfo(
-            EdgeInfo.ACTIVE_POWER,
-            EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
-            pMax,
-            getValueFormatter().formatPower(pMax, "MW"),
-            getValueFormatter().formatPercentage(istMax)
-            ));
+                EdgeInfo.ACTIVE_POWER,
+                EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
+                pMax,
+                getValueFormatter().formatPower(pMax, "MW"),
+                getValueFormatter().formatPercentage(istMax)
+        ));
     }
-
+    /*
     private String getFormattedPermanentLimit(double percentage) {
         return Double.isNaN(percentage)
             ?            svgParameters.getUndefinedValueSymbol()
-
             : String.format(Locale.US, "%.0f%%", percentage);
-    }
+    }*/
 
     @Override
     public Optional<EdgeInfo> getThreeWindingTransformerEdgeInfo(String threeWindingTransformerId, ThreeWtEdge.Side side) {
@@ -73,34 +68,32 @@ public class NadLabelProvider extends DefaultLabelProvider {
         }
 
         double maxActivePower = Stream.of(ThreeSides.ONE, ThreeSides.TWO, ThreeSides.THREE)
-            .mapToDouble(s -> Math.abs(twt.getTerminal(s).getP()))
-            .max()
-            .orElse(Double.NaN);
+                .mapToDouble(s -> Math.abs(twt.getTerminal(s).getP()))
+                .max()
+                .orElse(Double.NaN);
 
         double istMax = getPermanentLimitPercentageMax(twt);
-
-
         return Optional.of(new EdgeInfo(
-            EdgeInfo.ACTIVE_POWER,
-            EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
-            maxActivePower,
+                EdgeInfo.ACTIVE_POWER,
+                EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
+                maxActivePower,
 
-            getValueFormatter().formatPower(maxActivePower, "MW"),
-            getValueFormatter().formatPercentage(istMax)
+                getValueFormatter().formatPower(maxActivePower, "MW"),
+                getValueFormatter().formatPercentage(istMax)
 
         ));
     }
 
     private double getPermanentLimitPercentageMax(Branch<?> branch) {
         return Stream.of(TwoSides.ONE, TwoSides.TWO)
-            .map(side -> getPermanentLimitPercentageMax(branch.getTerminal(side), branch.getCurrentLimits(side).orElse(null)))
-            .mapToDouble(Double::doubleValue).max().getAsDouble();
+                .map(side -> getPermanentLimitPercentageMax(branch.getTerminal(side), branch.getCurrentLimits(side).orElse(null)))
+                .mapToDouble(Double::doubleValue).max().getAsDouble();
     }
 
     private double getPermanentLimitPercentageMax(ThreeWindingsTransformer transformer) {
         return Stream.of(ThreeSides.ONE, ThreeSides.TWO, ThreeSides.THREE)
-            .map(side -> getPermanentLimitPercentageMax(transformer.getTerminal(side), transformer.getLeg(side).getCurrentLimits().orElse(null)))
-            .mapToDouble(Double::doubleValue).max().getAsDouble();
+                .map(side -> getPermanentLimitPercentageMax(transformer.getTerminal(side), transformer.getLeg(side).getCurrentLimits().orElse(null)))
+                .mapToDouble(Double::doubleValue).max().getAsDouble();
     }
 
     private double getPermanentLimitPercentageMax(Terminal terminal, CurrentLimits currentLimits) {

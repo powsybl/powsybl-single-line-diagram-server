@@ -52,7 +52,6 @@ public final class DiagramUtils {
         for (CurrentLimitViolationInfos li : limitViolationInfos) {
             String limitName = li.getLimitName();
             String styleClass;
-
             if (limitName == null || limitName.isBlank()) {
                 styleClass = baseStyleClass;
             } else {

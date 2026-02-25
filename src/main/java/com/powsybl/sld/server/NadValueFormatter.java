@@ -7,20 +7,13 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.diagram.util.ValueFormatter;
-import com.powsybl.iidm.network.*;
-import com.powsybl.nad.model.ThreeWtEdge;
-import com.powsybl.nad.svg.EdgeInfo;
-import com.powsybl.nad.svg.LabelProviderParameters;
-import com.powsybl.nad.svg.SvgParameters;
-import com.powsybl.nad.svg.iidm.DefaultLabelProvider;
 
 import java.util.Locale;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 public class NadValueFormatter extends ValueFormatter {
 
     public NadValueFormatter(int powerValuePrecision, int voltageValuePrecision, int currentValuePrecision, int angleValuePrecision, int percentageValuePrecision, Locale locale, String undefinedValueSymbol) {
-        super(powerValuePrecision, voltageValuePrecision, currentValuePrecision, angleValuePrecision, percentageValuePrecision, Locale.getDefault(), undefinedValueSymbol);
+        super(powerValuePrecision, voltageValuePrecision, currentValuePrecision, angleValuePrecision, percentageValuePrecision, Locale.US, undefinedValueSymbol);
     }
+
 }

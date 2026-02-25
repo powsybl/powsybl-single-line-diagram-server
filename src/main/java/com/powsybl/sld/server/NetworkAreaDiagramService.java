@@ -327,9 +327,6 @@ class NetworkAreaDiagramService {
                 baseVoltagesConfig,
                 limitViolationStyles
         ));
-
-
-
         nadParameters.setLabelProviderFactory(
             (net, svg) -> new NadLabelProvider(net, svg).setDisplayAngle(true)
         );
