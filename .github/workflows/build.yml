@@ -16,5 +16,5 @@ jobs:
       eventType: single_line_diagram_server_updated
     secrets:
       sonar-token: ${{ secrets.SONAR_TOKEN }}
-      docker-token: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       repo-token: ${{ secrets.REPO_ACCESS_TOKEN }}
