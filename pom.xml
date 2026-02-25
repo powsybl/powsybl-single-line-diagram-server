@@ -52,6 +52,8 @@
         <liquibase-hibernate-package>com.powsybl.sld.server</liquibase-hibernate-package>
         <powsybl-ws-dependencies.version>2.30.0</powsybl-ws-dependencies.version>
         <supercsv.version>2.4.0</supercsv.version>
+        <sonar.organization>powsybl-ci-github</sonar.organization>
+        <sonar.projectKey>com.powsybl:powsybl-single-line-diagram-server</sonar.projectKey>
     </properties>
 
     <build>
