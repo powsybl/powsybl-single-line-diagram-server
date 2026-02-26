@@ -17,11 +17,7 @@ import lombok.NonNull;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.DoubleSummaryStatistics;
-import java.util.List;
-import java.util.OptionalDouble;
 import java.util.*;
-import java.util.Optional;
 import java.util.stream.DoubleStream;
 
 import static com.powsybl.diagram.util.CssUtil.writeStyleClasses;
@@ -36,6 +32,7 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
     public static final String KEY_ANGLE = "angle";
     public static final String KEY_CONSUMPTION = "consumption-sum";
     public static final String KEY_PRODUCTION = "production-sum";
+    public static final String KEY_BALANCE = "balance";
     public static final String KEY_ICC = "icc";
     public static final String KEY_UMIN = "Umin";
     public static final String KEY_UMAX = "Umax";
@@ -60,15 +57,22 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
     protected List<BusLegendInfo> getBusLegendInfos(VoltageLevelGraph graph) {
         VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
         return vl.getBusView().getBusStream()
-            .map(b ->
-                new BusLegendInfo(b.getId(), List.of(
+            .map(b -> {
+                OptionalDouble productionAbs = absSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP()));
+                OptionalDouble consumptionAbs = absSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP()));
+                OptionalDouble balanceSum = (productionAbs.isPresent() || consumptionAbs.isPresent())
+                    ? OptionalDouble.of(productionAbs.orElse(0.0) - consumptionAbs.orElse(0.0))
+                    : OptionalDouble.empty();
+
+                return new BusLegendInfo(b.getId(), List.of(
                     new BusLegendInfo.Caption(valueFormatter.formatVoltage(b.getV(), UNIT_KV), KEY_VOLTAGE),
                     new BusLegendInfo.Caption(valueFormatter.formatAngleInDegrees(b.getAngle()), KEY_ANGLE),
-                    new BusLegendInfo.Caption(formatPowerSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP())), KEY_PRODUCTION),
-                    new BusLegendInfo.Caption(formatPowerSum(b.getLoadStream().mapToDouble(l -> l.getTerminal().getP())), KEY_CONSUMPTION),
+                    new BusLegendInfo.Caption(formatPower(productionAbs), KEY_PRODUCTION),
+                    new BusLegendInfo.Caption(formatPower(consumptionAbs), KEY_CONSUMPTION),
+                    new BusLegendInfo.Caption(formatPower(balanceSum), KEY_BALANCE),
                     new BusLegendInfo.Caption(getFormattedBusIcc(b.getId()), KEY_ICC)
-                ))
-            ).toList();
+                ));
+            }).toList();
     }
 
     private String getFormattedBusIcc(String busId) {
@@ -130,19 +134,18 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         return value + " " + UNIT_KA;
     }
 
-    private String formatPowerSum(DoubleStream stream) {
-        OptionalDouble sum = sumDoubleStream(stream);
+    private String formatPower(OptionalDouble sum) {
         String value = sum.isPresent()
-            ? String.valueOf(Math.round(Math.abs(sum.getAsDouble())))
+            ? String.valueOf(Math.round(sum.getAsDouble()))
             : svgParameters.getUndefinedValueSymbol();
         return value + " " + UNIT_MW;
     }
 
-    private static OptionalDouble sumDoubleStream(DoubleStream stream) {
+    private static OptionalDouble absSum(DoubleStream stream) {
         DoubleSummaryStatistics stats = stream.summaryStatistics();
         return stats.getCount() == 0
             ? OptionalDouble.empty()
-            : OptionalDouble.of(stats.getSum());
+            : OptionalDouble.of(Math.abs(stats.getSum()));
     }
 
     private String getCaptionTypeColumnLabel(BusLegendInfo.Caption caption) {
@@ -151,6 +154,7 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
             case KEY_ANGLE -> "θ";
             case KEY_PRODUCTION -> "P";
             case KEY_CONSUMPTION -> "C";
+            case KEY_BALANCE -> "P-C";
             case KEY_ICC -> "ICC";
             default -> "";
         };
