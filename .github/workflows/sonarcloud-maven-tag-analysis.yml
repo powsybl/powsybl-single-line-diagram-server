@@ -1,0 +1,12 @@
+name: SonarCloud Analysis on Tag Push
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    uses: powsybl/github-ci/.github/workflows/sonarcloud-maven-tag-analysis.yml@5e7bee4d67fe4e15e15be7ee6b4ef14aff2ed701
+    secrets:
+      sonar-token: ${{ secrets.SONAR_TOKEN }}
