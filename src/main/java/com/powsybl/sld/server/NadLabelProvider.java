@@ -43,22 +43,15 @@ public class NadLabelProvider extends DefaultLabelProvider {
                 Math.abs(branch.getTerminal(TwoSides.TWO).getP())
         );
 
-        // IST max
         double istMax = getPermanentLimitPercentageMax(branch);
         return Optional.of(new EdgeInfo(
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
                 pMax,
-                getValueFormatter().formatPower(pMax, "MW"),
+                getValueFormatter().formatPower(pMax, ""),
                 getValueFormatter().formatPercentage(istMax)
         ));
     }
-    /*
-    private String getFormattedPermanentLimit(double percentage) {
-        return Double.isNaN(percentage)
-            ?            svgParameters.getUndefinedValueSymbol()
-            : String.format(Locale.US, "%.0f%%", percentage);
-    }*/
 
     @Override
     public Optional<EdgeInfo> getThreeWindingTransformerEdgeInfo(String threeWindingTransformerId, ThreeWtEdge.Side side) {
@@ -77,8 +70,7 @@ public class NadLabelProvider extends DefaultLabelProvider {
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
                 maxActivePower,
-
-                getValueFormatter().formatPower(maxActivePower, "MW"),
+                getValueFormatter().formatPower(maxActivePower, ""),
                 getValueFormatter().formatPercentage(istMax)
 
         ));
