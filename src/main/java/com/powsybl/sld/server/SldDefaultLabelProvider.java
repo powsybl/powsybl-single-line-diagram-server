@@ -28,7 +28,7 @@ import java.util.Objects;
 
 import static com.powsybl.sld.library.SldComponentTypeName.*;
 import static com.powsybl.sld.model.coordinate.Direction.BOTTOM;
-
+// TODO: Remove once the necessary changes are implemented in powsybl-diagram
 /**
  * @author Giovanni Ferrari {@literal <giovanni.ferrari at techrain.eu>}
  * @author Franck Lecuyer {@literal <franck.lecuyer at franck.lecuyer@rte-france.com>}

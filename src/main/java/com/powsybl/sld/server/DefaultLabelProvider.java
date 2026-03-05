@@ -20,6 +20,7 @@ import com.powsybl.nad.svg.VoltageLevelLegend;
 import com.powsybl.nad.utils.iidm.IidmUtils;
 
 import java.util.*;
+// TODO: Remove once the necessary changes are implemented in powsybl-diagram
 
 /**
  * @author Florian Dupuy {@literal <florian.dupuy at rte-france.com>}

@@ -47,7 +47,7 @@ class NadLabelProviderTest {
         assertTrue(edgeInfoOpt.isPresent());
         EdgeInfo edgeInfo = edgeInfoOpt.get();
 
-        assertEquals("50 MW", edgeInfo.getLabelA().orElse(""));
+        assertEquals("50", edgeInfo.getLabelA().orElse(""));
         assertEquals("50 %", edgeInfo.getLabelB().orElse(""));
     }
 
@@ -98,7 +98,7 @@ class NadLabelProviderTest {
         assertTrue(edgeInfoOpt.isPresent());
         EdgeInfo edgeInfo = edgeInfoOpt.get();
 
-        assertEquals("40 MW", edgeInfo.getLabelA().orElse(""));
+        assertEquals("40", edgeInfo.getLabelA().orElse(""));
         assertEquals("50 %", edgeInfo.getLabelB().orElse(""));
     }
 
