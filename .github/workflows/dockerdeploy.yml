@@ -9,4 +9,4 @@ jobs:
       dockerImage: docker.io/powsybl/single-line-diagram-server
       dockerUsername: powsyblci
     secrets:
-      DOCKER_RELEASE: ${{ secrets.DOCKER_RELEASE }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
