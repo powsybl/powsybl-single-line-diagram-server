@@ -307,7 +307,7 @@ class NetworkAreaDiagramService {
                 .setUndefinedValueSymbol("\u2014")
                 .setSvgWidthAndHeightAdded(true)
                 .setVoltageLevelLegendsIncluded(false)
-                .setEdgeInfosIncluded(false)
+                .setEdgeInfosIncluded(true)
                 .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
         LayoutParameters layoutParameters = new LayoutParameters();
@@ -327,6 +327,9 @@ class NetworkAreaDiagramService {
                 baseVoltagesConfig,
                 limitViolationStyles
         ));
+        nadParameters.setLabelProviderFactory(
+            (net, svg) -> new NadLabelProvider(net, svg).setDisplayAngle(true)
+        );
 
         // Set style provider factory either with geographical data or with the provided positions (if any)
         if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES) {
