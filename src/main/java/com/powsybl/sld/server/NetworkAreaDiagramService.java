@@ -364,7 +364,7 @@ class NetworkAreaDiagramService {
         List<VoltageLevel> extendedVoltageLevelFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(
                 nadGenerationContext.getNetwork(),
                 new ArrayList<>(nadGenerationContext.getVoltageLevelIds()),
-                1).getVoltageLevels().stream().toList();
+                1).voltageLevels().stream().toList();
 
         List<Substation> extendedSubstations = extendedVoltageLevelFilter.stream()
                 .map(VoltageLevel::getNullableSubstation)
@@ -376,7 +376,7 @@ class NetworkAreaDiagramService {
 
         if (nadGenerationContext.getScalingFactor() == null || nadGenerationContext.getScalingFactor() <= 0) {
             // Let's calculate the scaling factor
-            List<String> substations = nadGenerationContext.getVoltageLevelFilter().getVoltageLevels().stream()
+            List<String> substations = nadGenerationContext.getVoltageLevelFilter().voltageLevels().stream()
                             .map(VoltageLevel::getNullableSubstation)
                             .filter(Objects::nonNull)
                             .map(Substation::getId)
@@ -476,7 +476,7 @@ class NetworkAreaDiagramService {
             return voltageLevelIds;
         }
         return VoltageLevelFilter.createVoltageLevelsDepthFilter(network, new ArrayList<>(voltageLevelIds), 1)
-                        .getVoltageLevels().stream()
+                        .voltageLevels().stream()
                         .map(VoltageLevel::getId)
                         .collect(Collectors.toSet());
     }
@@ -531,7 +531,7 @@ class NetworkAreaDiagramService {
     }
 
     private Map<String, Object> computeAdditionalMetadata(NadGenerationContext nadGenerationContext) {
-        List<VoltageLevelInfos> voltageLevelsInfos = nadGenerationContext.getVoltageLevelFilter().getVoltageLevels().stream()
+        List<VoltageLevelInfos> voltageLevelsInfos = nadGenerationContext.getVoltageLevelFilter().voltageLevels().stream()
                 .map(VoltageLevelInfos::new)
                 .toList();
 

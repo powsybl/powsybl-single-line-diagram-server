@@ -1473,8 +1473,8 @@ class SingleLineDiagramTest {
         vl2.getBusBreakerView().newBus()
             .setId("busId2")
             .add();
-        vl2.newDanglingLine()
-            .setId("dl1")
+        vl2.newBoundaryLine()
+            .setId("bl1")
             .setConnectableBus("busId2")
             .setBus("busId2")
             .setR(0.7)

@@ -55,7 +55,7 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
 
     @Override
     protected List<BusLegendInfo> getBusLegendInfos(VoltageLevelGraph graph) {
-        VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
+        VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().id());
         return vl.getBusView().getBusStream()
             .map(b -> {
                 OptionalDouble productionAbs = absSum(b.getGeneratorStream().mapToDouble(g -> g.getTerminal().getP()));
@@ -94,7 +94,7 @@ public class CommonLegendWriter extends DefaultSVGLegendWriter {
         double x,
         double y
     ) {
-        VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
+        VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().id());
         Document doc = legendRootElement.getOwnerDocument();
 
         // create foreign block that will contain the whole HTML legend
