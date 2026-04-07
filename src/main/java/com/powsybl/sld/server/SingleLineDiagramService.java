@@ -147,7 +147,7 @@ class SingleLineDiagramService {
                         ? new TopologicalStyleProvider(baseVoltagesConfig, network, parameters)
                         : new NominalVoltageStyleProvider(baseVoltagesConfig),
                     new HighlightLineStateStyleProvider(network),
-                    new LimitHighlightStyleProvider(network, limitViolationStyles),
+                    new SldSLimitStyleProvider(network, limitViolationStyles),
                     new BusLegendStyleProvider()
                 );
             });

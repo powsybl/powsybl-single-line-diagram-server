@@ -11,6 +11,7 @@ import com.powsybl.sld.model.graphs.Graph;
 import com.powsybl.sld.model.nodes.Edge;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.model.nodes.Node;
+import com.powsybl.sld.svg.styles.iidm.LimitHighlightStyleProvider;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
@@ -21,11 +22,11 @@ import java.util.Optional;
 /**
  * @author Slimane Amar <slimane.amar at rte-france.com>
  */
-public class LimitHighlightStyleProvider extends com.powsybl.sld.svg.styles.iidm.LimitHighlightStyleProvider {
+public class SldSLimitStyleProvider extends LimitHighlightStyleProvider {
 
     private final Map<String, String> limitViolationStylesByBranchId;
 
-    public LimitHighlightStyleProvider(Network network, Map<String, String> limitViolationStyles) {
+    public SldSLimitStyleProvider(Network network, Map<String, String> limitViolationStyles) {
         super(network);
         this.limitViolationStylesByBranchId = limitViolationStyles;
     }

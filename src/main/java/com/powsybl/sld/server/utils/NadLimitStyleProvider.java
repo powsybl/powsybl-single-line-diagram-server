@@ -9,6 +9,7 @@ package com.powsybl.sld.server.utils;
 import com.powsybl.commons.config.BaseVoltagesConfig;
 import com.powsybl.iidm.network.Network;
 import com.powsybl.nad.model.BranchEdge;
+import com.powsybl.nad.svg.iidm.TopologicalStyleProvider;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -17,11 +18,11 @@ import java.util.Map;
 /**
  * @author Slimane Amar <slimane.amar at rte-france.com>
  */
-public class TopologicalStyleProvider extends com.powsybl.nad.svg.iidm.TopologicalStyleProvider {
+public class NadLimitStyleProvider extends TopologicalStyleProvider {
 
     private final Map<String, String> limitViolationStylesByBranchId;
 
-    public TopologicalStyleProvider(Network network, BaseVoltagesConfig baseVoltageStyle, Map<String, String> limitViolationStyles) {
+    public NadLimitStyleProvider(Network network, BaseVoltagesConfig baseVoltageStyle, Map<String, String> limitViolationStyles) {
         super(network, baseVoltageStyle);
         this.limitViolationStylesByBranchId = limitViolationStyles;
     }
