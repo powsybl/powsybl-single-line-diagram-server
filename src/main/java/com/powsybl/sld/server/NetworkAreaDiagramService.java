@@ -322,7 +322,7 @@ class NetworkAreaDiagramService {
         baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos);
         baseVoltagesConfig.setDefaultProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
-        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(
+        nadParameters.setStyleProviderFactory(n -> new NadLimitStyleProvider(
                 nadGenerationContext.getNetwork(),
                 baseVoltagesConfig,
                 limitViolationStyles
