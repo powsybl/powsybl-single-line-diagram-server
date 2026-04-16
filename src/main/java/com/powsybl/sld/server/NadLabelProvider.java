@@ -10,6 +10,7 @@ import com.powsybl.iidm.network.*;
 import com.powsybl.nad.model.ThreeWtEdge;
 import com.powsybl.nad.svg.LabelProviderParameters;
 import com.powsybl.nad.svg.SvgParameters;
+import com.powsybl.nad.svg.iidm.DefaultLabelProvider;
 import com.powsybl.nad.svg.EdgeInfo;
 
 import java.util.Optional;
