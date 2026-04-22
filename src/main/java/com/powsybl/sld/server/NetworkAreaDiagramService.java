@@ -23,7 +23,6 @@ import com.powsybl.nad.layout.*;
 import com.powsybl.nad.model.Point;
 import com.powsybl.nad.svg.StyleProvider;
 import com.powsybl.nad.svg.SvgParameters;
-import com.powsybl.nad.svg.iidm.DefaultLabelProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.*;
@@ -315,7 +314,7 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
         Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
-        nadParameters.setLabelProviderFactory((net, svgParams) -> new DefaultLabelProvider(net, svgParams).setDisplayAngle(false));
+        nadParameters.setLabelProviderFactory((net, svgParams) -> new NadLabelProvider(net, svgParams).setDisplayAngle(false));
 
         baseVoltagesConfigInfos.forEach(vl -> vl.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE));
         BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
@@ -327,9 +326,6 @@ class NetworkAreaDiagramService {
                 baseVoltagesConfig,
                 limitViolationStyles
         ));
-        nadParameters.setLabelProviderFactory(
-            (net, svg) -> new NadLabelProvider(net, svg).setDisplayAngle(false)
-        );
 
         // Set style provider factory either with geographical data or with the provided positions (if any)
         if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES) {
