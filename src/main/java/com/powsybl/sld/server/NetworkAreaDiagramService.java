@@ -328,7 +328,7 @@ class NetworkAreaDiagramService {
                 limitViolationStyles
         ));
         nadParameters.setLabelProviderFactory(
-            (net, svg) -> new NadLabelProvider(net, svg).setDisplayAngle(true)
+            (net, svg) -> new NadLabelProvider(net, svg).setDisplayAngle(false)
         );
 
         // Set style provider factory either with geographical data or with the provided positions (if any)
