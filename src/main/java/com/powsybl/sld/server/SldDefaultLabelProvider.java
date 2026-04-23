@@ -92,7 +92,7 @@ public class SldDefaultLabelProvider extends AbstractLabelProvider {
         ThreeWindingsTransformer transformer = network.getThreeWindingsTransformer(node.getEquipmentId());
         if (transformer != null) {
             ThreeSides side = ThreeSides.valueOf(feeder.getSide().name());
-            boolean insideVoltageLevel = feeder.getOwnVoltageLevelInfos().getId().equals(feeder.getVoltageLevelInfos().getId());
+            boolean insideVoltageLevel = feeder.getOwnVoltageLevelInfos().id().equals(feeder.getVoltageLevelInfos().id());
             feederInfos = get3WTFeederInfos(transformer, side, insideVoltageLevel);
         }
         return feederInfos;
