@@ -32,7 +32,7 @@ public class CustomVoltageLevelLayoutFactory implements VoltageLevelLayoutFactor
 
     @Override
     public Layout create(VoltageLevelGraph graph) {
-        VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().getId());
+        VoltageLevel vl = network.getVoltageLevel(graph.getVoltageLevelInfos().id());
         return selectVoltageLevelLayoutFactory(vl).create(graph);
     }
 
