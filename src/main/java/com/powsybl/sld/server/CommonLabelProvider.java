@@ -58,12 +58,9 @@ public class CommonLabelProvider extends DefaultLabelProvider {
 
     private void addDecoratorForFeederNode(List<NodeDecorator> nodeDecorators, Node node, FeederNode feederNode, Direction direction) {
         switch (feederNode.getFeeder().getFeederType()) {
-            case BRANCH, TWO_WINDINGS_TRANSFORMER_LEG ->
-                    addDecoratorForBranch(nodeDecorators, feederNode, direction);
-            case THREE_WINDINGS_TRANSFORMER_LEG ->
-                    addDecoratorForThreeWindingsTransformer(nodeDecorators, node, feederNode, direction);
-            case HVDC ->
-                    addDecoratorForHvdc(nodeDecorators, feederNode, direction);
+            case BRANCH, TWO_WINDINGS_TRANSFORMER_LEG -> addDecoratorForBranch(nodeDecorators, feederNode, direction);
+            case THREE_WINDINGS_TRANSFORMER_LEG -> addDecoratorForThreeWindingsTransformer(nodeDecorators, node, feederNode, direction);
+            case HVDC -> addDecoratorForHvdc(nodeDecorators, feederNode, direction);
             default -> { /* No decorator for other feeder types */ }
         }
     }
