@@ -1,0 +1,7 @@
+.sld-feeder-info.sld-measurement-valid text {
+    fill: #008000;
+}
+
+.sld-feeder-info.sld-measurement-invalid text {
+    fill: #e00000;
+}

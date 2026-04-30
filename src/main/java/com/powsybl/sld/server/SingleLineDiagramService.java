@@ -24,11 +24,13 @@ import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.error.DiagramBusinessException;
 import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
+import com.powsybl.sld.svg.styles.EmptyStyleProvider;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
 import com.powsybl.sld.svg.styles.iidm.TopologicalStyleProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -63,13 +65,16 @@ class SingleLineDiagramService {
             .setDiagrammPadding(DEFAULT_LAYOUT_PADDING, DEFAULT_LAYOUT_PADDING, DEFAULT_LAYOUT_PADDING, LAYOUT_BOTTOM_PADDING);
 
     private static final SvgParameters SVG_PARAMETERS = new SvgParameters()
-            .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
+            .setCssLocation(SvgParameters.CssLocation.INSERTED_IN_SVG);
 
     @Autowired
     private NetworkStoreService networkStoreService;
 
     @Autowired
     private VoltagesConfig voltagesConfig;
+
+    @Value("${diagram-server.sld.display-measurements:true}")
+    private boolean displayMeasurementsWithSld;
 
     public static Network getNetwork(UUID networkUuid, String variantId, NetworkStoreService networkStoreService) {
         return DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, null);
@@ -115,7 +120,7 @@ class SingleLineDiagramService {
                     break;
                 case SldDisplayMode.STATE_VARIABLE:
                     svgParameters.setBusesLegendAdded(true);
-                    sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
+                    sldParameters.setLabelProviderFactory(displayMeasurementsWithSld ? MeasurementValidityLabelProvider::new : CommonLabelProvider::new);
                     sldParameters.setLegendWriterFactory(CommonLegendWriter.createFactory(sldRequestInfos.getBusIdToIccValues()));
                     break;
                 default:
@@ -148,7 +153,8 @@ class SingleLineDiagramService {
                         : new NominalVoltageStyleProvider(baseVoltagesConfig),
                     new HighlightLineStateStyleProvider(network),
                     new SldSLimitStyleProvider(network, limitViolationStyles),
-                    new BusLegendStyleProvider()
+                    new BusLegendStyleProvider(),
+                    displayMeasurementsWithSld ? new MeasurementValidityStyleProvider() : new EmptyStyleProvider()
                 );
             });
 
