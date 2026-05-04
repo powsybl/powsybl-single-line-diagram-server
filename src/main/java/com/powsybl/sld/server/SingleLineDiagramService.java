@@ -154,7 +154,7 @@ class SingleLineDiagramService {
                     new HighlightLineStateStyleProvider(network),
                     new SldSLimitStyleProvider(network, limitViolationStyles),
                     new BusLegendStyleProvider(),
-                    displayMeasurementsWithSld ? new MeasurementValidityStyleProvider() : new EmptyStyleProvider()
+                    displayMeasurementsWithSld ? new MeasurementValidityStyleProvider(network) : new EmptyStyleProvider()
                 );
             });
 

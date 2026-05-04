@@ -5,3 +5,14 @@
 .sld-feeder-info.sld-measurement-invalid text {
     fill: #e00000;
 }
+
+.sld-high-ptm-line path,
+.sld-high-ptm-line polyline {
+    stroke: #FFD700;
+}
+
+.sld-high-ptm-bus rect,
+.sld-high-ptm-bus line {
+    stroke: #FF69B4;
+    fill: #FF69B4;
+}
