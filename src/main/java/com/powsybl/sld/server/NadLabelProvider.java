@@ -8,9 +8,8 @@ package com.powsybl.sld.server;
 
 import com.powsybl.iidm.network.*;
 import com.powsybl.nad.model.ThreeWtEdge;
-import com.powsybl.nad.svg.LabelProviderParameters;
-import com.powsybl.nad.svg.SvgParameters;
-import com.powsybl.nad.svg.EdgeInfo;
+import com.powsybl.nad.svg.*;
+import com.powsybl.nad.svg.iidm.DefaultLabelProvider;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -19,15 +18,20 @@ public class NadLabelProvider extends DefaultLabelProvider {
     public NadLabelProvider(Network network, SvgParameters svgParameters) {
         super(
                 network,
-                new DefaultLabelProvider.EdgeInfoParameters(
-                        DefaultLabelProvider.EdgeInfoEnum.REACTIVE_POWER,
-                        DefaultLabelProvider.EdgeInfoEnum.EMPTY,
-                        DefaultLabelProvider.EdgeInfoEnum.EMPTY,
-                        DefaultLabelProvider.EdgeInfoEnum.EMPTY
-                ),
                 svgParameters.createValueFormatter(),
                 new LabelProviderParameters()
+                        .setEdgeInfoParameters(
+                                new EdgeInfoParameters(
+                                        EdgeInfoEnum.REACTIVE_POWER,
+                                        EdgeInfoEnum.EMPTY,
+                                        EdgeInfoEnum.EMPTY,
+                                        EdgeInfoEnum.EMPTY
+                                )
+                        )
+
         );
+        this.setDisplayWithAbs(true);
+        this.setDisplayAngle(false);
     }
 
     @Override
