@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    uses: powsybl/github-ci/.github/workflows/build-backend-app-generic.yml@c81718897ef649fcdc685955a094bf724bf7fa9e
+    uses: powsybl/github-ci/.github/workflows/build-backend-app-generic.yml@27de863e5794d59dad7cecf85157f3d55511a5aa
     with:
       dockerImage: docker.io/powsybl/single-line-diagram-server
       dockerUsername: powsyblci
