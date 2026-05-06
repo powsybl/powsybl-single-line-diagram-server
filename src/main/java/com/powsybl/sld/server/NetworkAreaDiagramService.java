@@ -314,7 +314,7 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
         Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
-        nadParameters.setLabelProviderFactory((net, svgParams) -> new NadLabelProvider(net, svgParams).setDisplayAngle(false));
+        nadParameters.setLabelProviderFactory(NadLabelProvider::new);
 
         baseVoltagesConfigInfos.forEach(vl -> vl.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE));
         BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
