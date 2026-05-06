@@ -70,7 +70,7 @@ class CommonLabelProviderTest {
         when(leg3.getTerminal().isConnected()).thenReturn(false);
         provider = new CommonLabelProvider(mockNetwork, mockLibrary, layoutParameters, svgParameters);
         decorators = provider.getNodeDecorators(middle3WTNode, Direction.TOP);
-        assertTrue(decorators.stream().anyMatch(d -> d.getType().equals("FLASH")));
+        assertTrue(decorators.stream().anyMatch(d -> d.type().equals("FLASH")));
     }
 
     @Test
@@ -109,7 +109,7 @@ class CommonLabelProviderTest {
         when(terminal2.isConnected()).thenReturn(false);
         provider = new CommonLabelProvider(mockNetwork, mockLibrary, layoutParameters, svgParameters);
         decorators = provider.getNodeDecorators(feederNode, Direction.TOP);
-        assertTrue(decorators.stream().anyMatch(d -> d.getType().equals("FLASH")));
+        assertTrue(decorators.stream().anyMatch(d -> d.type().equals("FLASH")));
     }
 
     @Test
@@ -137,7 +137,7 @@ class CommonLabelProviderTest {
 
         CommonLabelProvider provider = new CommonLabelProvider(mockNetwork, mockLibrary, layoutParameters, svgParameters);
         List<LabelProvider.NodeDecorator> decorators = provider.getNodeDecorators(busNode, Direction.TOP);
-        assertTrue(decorators.stream().anyMatch(d -> d.getType().equals("LOCK")));
+        assertTrue(decorators.stream().anyMatch(d -> d.type().equals("LOCK")));
     }
 
     @Test
@@ -179,6 +179,6 @@ class CommonLabelProviderTest {
         when(terminal2.isConnected()).thenReturn(false);
         provider = new CommonLabelProvider(mockNetwork, mockLibrary, layoutParameters, svgParameters);
         decorators = provider.getNodeDecorators(feederNode, Direction.TOP);
-        assertTrue(decorators.stream().anyMatch(d -> d.getType().equals("FLASH")));
+        assertTrue(decorators.stream().anyMatch(d -> d.type().equals("FLASH")));
     }
 }

@@ -12,14 +12,13 @@ import com.powsybl.sld.layout.LayoutParameters;
 import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.model.coordinate.Direction;
 import com.powsybl.sld.model.nodes.*;
-import com.powsybl.sld.svg.DefaultLabelProvider;
 import com.powsybl.sld.svg.SvgParameters;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class CommonLabelProvider extends DefaultLabelProvider {
+public class CommonLabelProvider extends SldDefaultLabelProvider {
     private static final String PLANNED_OUTAGE_BRANCH_NODE_DECORATOR = "LOCK";
     private static final String FORCED_OUTAGE_BRANCH_NODE_DECORATOR = "FLASH";
 
@@ -57,12 +56,9 @@ public class CommonLabelProvider extends DefaultLabelProvider {
 
     private void addDecoratorForFeederNode(List<NodeDecorator> nodeDecorators, Node node, FeederNode feederNode, Direction direction) {
         switch (feederNode.getFeeder().getFeederType()) {
-            case BRANCH, TWO_WINDINGS_TRANSFORMER_LEG ->
-                    addDecoratorForBranch(nodeDecorators, feederNode, direction);
-            case THREE_WINDINGS_TRANSFORMER_LEG ->
-                    addDecoratorForThreeWindingsTransformer(nodeDecorators, node, feederNode, direction);
-            case HVDC ->
-                    addDecoratorForHvdc(nodeDecorators, feederNode, direction);
+            case BRANCH, TWO_WINDINGS_TRANSFORMER_LEG -> addDecoratorForBranch(nodeDecorators, feederNode, direction);
+            case THREE_WINDINGS_TRANSFORMER_LEG -> addDecoratorForThreeWindingsTransformer(nodeDecorators, node, feederNode, direction);
+            case HVDC -> addDecoratorForHvdc(nodeDecorators, feederNode, direction);
             default -> { /* No decorator for other feeder types */ }
         }
     }

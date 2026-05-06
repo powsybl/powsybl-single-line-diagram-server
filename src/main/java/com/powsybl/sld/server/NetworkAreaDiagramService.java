@@ -23,7 +23,6 @@ import com.powsybl.nad.layout.*;
 import com.powsybl.nad.model.Point;
 import com.powsybl.nad.svg.StyleProvider;
 import com.powsybl.nad.svg.SvgParameters;
-import com.powsybl.nad.svg.iidm.DefaultLabelProvider;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.network.store.client.PreloadingStrategy;
 import com.powsybl.sld.server.dto.*;
@@ -307,7 +306,7 @@ class NetworkAreaDiagramService {
                 .setUndefinedValueSymbol("\u2014")
                 .setSvgWidthAndHeightAdded(true)
                 .setVoltageLevelLegendsIncluded(false)
-                .setEdgeInfosIncluded(false)
+                .setEdgeInfosIncluded(true)
                 .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
         LayoutParameters layoutParameters = new LayoutParameters();
@@ -315,14 +314,14 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
         Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
-        nadParameters.setLabelProviderFactory((net, svgParams) -> new DefaultLabelProvider(net, svgParams).setDisplayAngle(false));
+        nadParameters.setLabelProviderFactory((net, svgParams) -> new NadLabelProvider(net, svgParams).setDisplayAngle(false));
 
         baseVoltagesConfigInfos.forEach(vl -> vl.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE));
         BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
         baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos);
         baseVoltagesConfig.setDefaultProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
-        nadParameters.setStyleProviderFactory(n -> new TopologicalStyleProvider(
+        nadParameters.setStyleProviderFactory(n -> new NadLimitStyleProvider(
                 nadGenerationContext.getNetwork(),
                 baseVoltagesConfig,
                 limitViolationStyles
@@ -364,7 +363,7 @@ class NetworkAreaDiagramService {
         List<VoltageLevel> extendedVoltageLevelFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(
                 nadGenerationContext.getNetwork(),
                 new ArrayList<>(nadGenerationContext.getVoltageLevelIds()),
-                1).getVoltageLevels().stream().toList();
+                1).voltageLevels().stream().toList();
 
         List<Substation> extendedSubstations = extendedVoltageLevelFilter.stream()
                 .map(VoltageLevel::getNullableSubstation)
@@ -376,7 +375,7 @@ class NetworkAreaDiagramService {
 
         if (nadGenerationContext.getScalingFactor() == null || nadGenerationContext.getScalingFactor() <= 0) {
             // Let's calculate the scaling factor
-            List<String> substations = nadGenerationContext.getVoltageLevelFilter().getVoltageLevels().stream()
+            List<String> substations = nadGenerationContext.getVoltageLevelFilter().voltageLevels().stream()
                             .map(VoltageLevel::getNullableSubstation)
                             .filter(Objects::nonNull)
                             .map(Substation::getId)
@@ -476,7 +475,7 @@ class NetworkAreaDiagramService {
             return voltageLevelIds;
         }
         return VoltageLevelFilter.createVoltageLevelsDepthFilter(network, new ArrayList<>(voltageLevelIds), 1)
-                        .getVoltageLevels().stream()
+                        .voltageLevels().stream()
                         .map(VoltageLevel::getId)
                         .collect(Collectors.toSet());
     }
@@ -531,7 +530,7 @@ class NetworkAreaDiagramService {
     }
 
     private Map<String, Object> computeAdditionalMetadata(NadGenerationContext nadGenerationContext) {
-        List<VoltageLevelInfos> voltageLevelsInfos = nadGenerationContext.getVoltageLevelFilter().getVoltageLevels().stream()
+        List<VoltageLevelInfos> voltageLevelsInfos = nadGenerationContext.getVoltageLevelFilter().voltageLevels().stream()
                 .map(VoltageLevelInfos::new)
                 .toList();
 
