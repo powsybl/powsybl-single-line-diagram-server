@@ -7,6 +7,7 @@
 package com.powsybl.sld.server;
 
 import com.powsybl.iidm.network.*;
+import com.powsybl.iidm.network.extensions.OperatingStatus;
 import com.powsybl.nad.model.ThreeWtEdge;
 import com.powsybl.nad.svg.*;
 import com.powsybl.nad.svg.iidm.DefaultLabelProvider;
@@ -15,6 +16,9 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public class NadLabelProvider extends DefaultLabelProvider {
+    private static final String PLANNED_OUTAGE_BRANCH_NODE_DECORATOR = "LOCK";
+    private static final String FORCED_OUTAGE_BRANCH_NODE_DECORATOR = "FLASH";
+
     public NadLabelProvider(Network network, SvgParameters svgParameters) {
         super(
                 network,
@@ -47,12 +51,16 @@ public class NadLabelProvider extends DefaultLabelProvider {
         );
 
         double istMax = getPermanentLimitPercentageMax(branch);
+        String componentType = (!branch.getTerminal1().isConnected() && !branch.getTerminal2().isConnected())
+                ? getOperatingStatusDecorator(branch)
+                : null;
+
         return Optional.of(new EdgeInfo(
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
                 pMax,
                 getValueFormatter().formatPower(pMax, ""),
-                getValueFormatter().formatPercentage(istMax)
+                getValueFormatter().formatPercentage(istMax), componentType
         ));
     }
 
@@ -69,13 +77,17 @@ public class NadLabelProvider extends DefaultLabelProvider {
                 .orElse(Double.NaN);
 
         double istMax = getPermanentLimitPercentageMax(twt);
+
+        String componentType = (!twt.getLeg1().getTerminal().isConnected() && !twt.getLeg2().getTerminal().isConnected() && !twt.getLeg3().getTerminal().isConnected())
+                ? getOperatingStatusDecorator(twt)
+                : null;
+
         return Optional.of(new EdgeInfo(
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
                 maxActivePower,
                 getValueFormatter().formatPower(maxActivePower, ""),
-                getValueFormatter().formatPercentage(istMax)
-
+                getValueFormatter().formatPercentage(istMax), componentType
         ));
     }
 
@@ -93,5 +105,19 @@ public class NadLabelProvider extends DefaultLabelProvider {
 
     private double getPermanentLimitPercentageMax(Terminal terminal, CurrentLimits currentLimits) {
         return currentLimits != null ? (Math.abs(terminal.getI() * 100) / currentLimits.getPermanentLimit()) : 0;
+    }
+
+    private <T extends Identifiable<T>> String getOperatingStatusDecorator(Identifiable<T> identifiable) {
+        if (identifiable != null) {
+            OperatingStatus<T> operatingStatus = identifiable.getExtension(OperatingStatus.class);
+            if (operatingStatus != null) {
+                return switch (operatingStatus.getStatus()) {
+                    case PLANNED_OUTAGE -> PLANNED_OUTAGE_BRANCH_NODE_DECORATOR;
+                    case FORCED_OUTAGE -> FORCED_OUTAGE_BRANCH_NODE_DECORATOR;
+                    case IN_OPERATION -> null;
+                };
+            }
+        }
+        return null;
     }
 }

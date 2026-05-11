@@ -34,11 +34,15 @@ class NadLabelProviderTest {
         when(mockNetwork.getBranch("LINE1")).thenReturn(mockLine);
         when(mockLine.getTerminal(TwoSides.ONE)).thenReturn(terminal1);
         when(mockLine.getTerminal(TwoSides.TWO)).thenReturn(terminal2);
+        when(mockLine.getTerminal1()).thenReturn(terminal1);
+        when(mockLine.getTerminal2()).thenReturn(terminal2);
 
         when(terminal1.getP()).thenReturn(50.0);
         when(terminal2.getP()).thenReturn(-30.0);
         when(terminal1.getI()).thenReturn(1.0);
         when(terminal2.getI()).thenReturn(2.0);
+        when(terminal1.isConnected()).thenReturn(true);
+        when(terminal2.isConnected()).thenReturn(true);
         when(mockLine.getCurrentLimits(TwoSides.ONE)).thenReturn(Optional.of(limits1));
         when(mockLine.getCurrentLimits(TwoSides.TWO)).thenReturn(Optional.of(limits2));
         when(limits1.getPermanentLimit()).thenReturn(2.0);
@@ -70,14 +74,25 @@ class NadLabelProviderTest {
         CurrentLimits limits2 = mock(CurrentLimits.class);
         CurrentLimits limits3 = mock(CurrentLimits.class);
 
+        ThreeWindingsTransformer.Leg leg1 = mock(ThreeWindingsTransformer.Leg.class);
+        ThreeWindingsTransformer.Leg leg2 = mock(ThreeWindingsTransformer.Leg.class);
+        ThreeWindingsTransformer.Leg leg3 = mock(ThreeWindingsTransformer.Leg.class);
+
         when(mockNetwork.getThreeWindingsTransformer("TWT1")).thenReturn(twt);
         when(twt.getTerminal(ThreeSides.ONE)).thenReturn(term1);
         when(twt.getTerminal(ThreeSides.TWO)).thenReturn(term2);
         when(twt.getTerminal(ThreeSides.THREE)).thenReturn(term3);
 
-        when(twt.getLeg(ThreeSides.ONE)).thenReturn(mock(ThreeWindingsTransformer.Leg.class));
-        when(twt.getLeg(ThreeSides.TWO)).thenReturn(mock(ThreeWindingsTransformer.Leg.class));
-        when(twt.getLeg(ThreeSides.THREE)).thenReturn(mock(ThreeWindingsTransformer.Leg.class));
+        when(twt.getLeg(ThreeSides.ONE)).thenReturn(leg1);
+        when(twt.getLeg(ThreeSides.TWO)).thenReturn(leg2);
+        when(twt.getLeg(ThreeSides.THREE)).thenReturn(leg3);
+        when(twt.getLeg1()).thenReturn(leg1);
+        when(twt.getLeg2()).thenReturn(leg2);
+        when(twt.getLeg3()).thenReturn(leg3);
+
+        when(leg1.getTerminal()).thenReturn(term1);
+        when(leg2.getTerminal()).thenReturn(term2);
+        when(leg3.getTerminal()).thenReturn(term3);
 
         when(term1.getP()).thenReturn(20.0);
         when(term2.getP()).thenReturn(-40.0);
@@ -87,9 +102,13 @@ class NadLabelProviderTest {
         when(term2.getI()).thenReturn(2.0);
         when(term3.getI()).thenReturn(3.0);
 
-        when(twt.getLeg(ThreeSides.ONE).getCurrentLimits()).thenReturn(Optional.of(limits1));
-        when(twt.getLeg(ThreeSides.TWO).getCurrentLimits()).thenReturn(Optional.of(limits2));
-        when(twt.getLeg(ThreeSides.THREE).getCurrentLimits()).thenReturn(Optional.of(limits3));
+        when(term1.isConnected()).thenReturn(true);
+        when(term2.isConnected()).thenReturn(true);
+        when(term3.isConnected()).thenReturn(true);
+
+        when(leg1.getCurrentLimits()).thenReturn(Optional.of(limits1));
+        when(leg2.getCurrentLimits()).thenReturn(Optional.of(limits2));
+        when(leg3.getCurrentLimits()).thenReturn(Optional.of(limits3));
 
         when(limits1.getPermanentLimit()).thenReturn(2.0);
         when(limits2.getPermanentLimit()).thenReturn(4.0);
