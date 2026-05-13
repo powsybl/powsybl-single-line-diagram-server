@@ -52,7 +52,7 @@ public class NadLabelProvider extends DefaultLabelProvider {
 
         double istMax = getPermanentLimitPercentageMax(branch);
         String operatingStatusDecorator = (!branch.getTerminal1().isConnected() && !branch.getTerminal2().isConnected())
-                ? getOperatingStatus(branch)
+                ? getOperatingStatusDecorator(branch)
                 : null;
 
         return Optional.of(new EdgeInfo(
@@ -79,7 +79,7 @@ public class NadLabelProvider extends DefaultLabelProvider {
         double istMax = getPermanentLimitPercentageMax(twt);
 
         String operatingStatusDecorator = (!twt.getLeg1().getTerminal().isConnected() && !twt.getLeg2().getTerminal().isConnected() && !twt.getLeg3().getTerminal().isConnected())
-                ? getOperatingStatus(twt)
+                ? getOperatingStatusDecorator(twt)
                 : null;
 
         return Optional.of(new EdgeInfo(
@@ -107,7 +107,7 @@ public class NadLabelProvider extends DefaultLabelProvider {
         return currentLimits != null ? (Math.abs(terminal.getI() * 100) / currentLimits.getPermanentLimit()) : 0;
     }
 
-    private <T extends Identifiable<T>> String getOperatingStatus(Identifiable<T> identifiable) {
+    private <T extends Identifiable<T>> String getOperatingStatusDecorator(Identifiable<T> identifiable) {
         if (identifiable != null) {
             OperatingStatus<T> operatingStatus = identifiable.getExtension(OperatingStatus.class);
             if (operatingStatus != null) {
