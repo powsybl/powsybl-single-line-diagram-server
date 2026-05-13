@@ -108,15 +108,13 @@ public class NadLabelProvider extends DefaultLabelProvider {
     }
 
     private <T extends Identifiable<T>> String getOperatingStatusDecorator(Identifiable<T> identifiable) {
-        if (identifiable != null) {
-            OperatingStatus<T> operatingStatus = identifiable.getExtension(OperatingStatus.class);
-            if (operatingStatus != null) {
-                return switch (operatingStatus.getStatus()) {
-                    case PLANNED_OUTAGE -> PLANNED_OUTAGE_BRANCH_NODE_DECORATOR;
-                    case FORCED_OUTAGE -> FORCED_OUTAGE_BRANCH_NODE_DECORATOR;
-                    case IN_OPERATION -> null;
-                };
-            }
+        OperatingStatus<T> operatingStatus = identifiable.getExtension(OperatingStatus.class);
+        if (operatingStatus != null) {
+            return switch (operatingStatus.getStatus()) {
+                case PLANNED_OUTAGE -> PLANNED_OUTAGE_BRANCH_NODE_DECORATOR;
+                case FORCED_OUTAGE -> FORCED_OUTAGE_BRANCH_NODE_DECORATOR;
+                case IN_OPERATION -> null;
+            };
         }
         return null;
     }
