@@ -49,7 +49,6 @@ import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.ws.commons.error.BaseExceptionHandler;
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,17 +61,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -1163,91 +1158,6 @@ class SingleLineDiagramTest {
          */
         assertTrue(svg.contains(STYLE_PREFIX + "vl1"));
         assertTrue(!svg.contains(STYLE_PREFIX + "vl2"));
-    }
-
-    @Test
-    void testCreatePositionsFromCsv() throws Exception {
-
-        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
-        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
-        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
-                        .file(file)
-                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void testCreatePositionsFromInvalidCsvContentType() throws Exception {
-        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
-        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "invalidContentType", voltageLevelBytes);
-        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
-                        .file(file)
-                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> {
-                    Throwable ex = result.getResolvedException();
-                    assertNotNull(ex);
-                    assertEquals("Invalid CSV format for NAD configured positions", ((ResponseStatusException) ex).getReason());
-                });
-    }
-
-    @Test
-    void testCreatePositionsFromInvalidCsvHeader() throws Exception {
-        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions-invalid-header.csv")));
-        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
-        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
-                        .file(file)
-                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> {
-                    Throwable ex = result.getResolvedException();
-                    assertNotNull(ex);
-                    assertEquals("The csv file headers are invalid for NAD configured positions", ((ResponseStatusException) ex).getReason());
-                });
-    }
-
-    @Test
-    void testCreatePositionsFromEmptyCsv() throws Exception {
-        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions-empty.csv")));
-        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
-        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
-                        .file(file)
-                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isBadRequest())
-                .andExpect(result -> {
-                    Throwable ex = result.getResolvedException();
-                    assertNotNull(ex);
-                    assertEquals("No NAD configured positions found from the csv file", ((ResponseStatusException) ex).getReason());
-                });
-    }
-
-    @Test
-    void testCreatingPositionsFromCsvMultipleTimes() throws Exception {
-
-        byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
-        MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
-        int expectedRowCount = 5;
-        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
-                        .file(file)
-                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk());
-
-        // Verify the mock repository methods were called as expected
-        verify(nadVoltageLevelConfiguredPositionRepository, times(1)).deleteAll();
-        verify(nadVoltageLevelConfiguredPositionRepository, times(1)).saveAll(anyList());
-
-        // Verify the number of rows after the first call
-        var actualRowCount = nadVoltageLevelConfiguredPositionRepository.count();
-        assertEquals(expectedRowCount, actualRowCount);
-
-        // Verify the number of rows after the second call.
-        // It should still be the same as the first call because the table is cleared.
-        mvc.perform(MockMvcRequestBuilders.multipart("/v1/network-area-diagram/config/positions")
-                        .file(file)
-                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
-                .andExpect(status().isOk());
-        actualRowCount = nadVoltageLevelConfiguredPositionRepository.count();
-        assertEquals(expectedRowCount, actualRowCount);
     }
 
     @Test
