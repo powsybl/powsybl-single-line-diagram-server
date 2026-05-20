@@ -1,5 +1,4 @@
 /**
- * Copyright (c) 2019, RTE (http://www.rte-france.com)
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -11,7 +10,6 @@ import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEnti
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
 import com.powsybl.ws.commons.error.BaseExceptionHandler;
 import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -49,25 +47,6 @@ class SupervisionControllerTest {
     @MockitoBean
     private NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository;
     private List<NadVoltageLevelPositionInfos> positions;
-
-    @BeforeEach
-    void setUp() {
-
-        positions = new ArrayList<>();
-        when(nadVoltageLevelConfiguredPositionRepository.count()).thenAnswer(invocation -> (long) positions.size());
-        doAnswer(invocation -> {
-            positions.clear();
-            return null;
-        }).when(nadVoltageLevelConfiguredPositionRepository).deleteAll();
-
-        doAnswer(invocation -> {
-            List<NadVoltageLevelConfiguredPositionEntity> entities = invocation.getArgument(0);
-            positions.addAll(entities.stream()
-                    .map(NadVoltageLevelConfiguredPositionEntity::toDto)
-                    .toList());
-            return entities;
-        }).when(nadVoltageLevelConfiguredPositionRepository).saveAll(anyList());
-    }
 
     @Test
     void testCreatePositionsFromCsv() throws Exception {
@@ -127,6 +106,21 @@ class SupervisionControllerTest {
 
     @Test
     void testCreatingPositionsFromCsvMultipleTimes() throws Exception {
+
+        positions = new ArrayList<>();
+        when(nadVoltageLevelConfiguredPositionRepository.count()).thenAnswer(invocation -> (long) positions.size());
+        doAnswer(invocation -> {
+            positions.clear();
+            return null;
+        }).when(nadVoltageLevelConfiguredPositionRepository).deleteAll();
+
+        doAnswer(invocation -> {
+            List<NadVoltageLevelConfiguredPositionEntity> entities = invocation.getArgument(0);
+            positions.addAll(entities.stream()
+                    .map(NadVoltageLevelConfiguredPositionEntity::toDto)
+                    .toList());
+            return entities;
+        }).when(nadVoltageLevelConfiguredPositionRepository).saveAll(anyList());
 
         byte[] voltageLevelBytes = IOUtils.toByteArray(new FileInputStream(ResourceUtils.getFile("classpath:voltage-level-positions.csv")));
         MockMultipartFile file = new MockMultipartFile("file", "vl-positions.csv", "text/csv", voltageLevelBytes);
