@@ -128,36 +128,10 @@ class SingleLineDiagramTest {
     private static final String VARIANT_2_ID = "variant_2";
     private static final String VARIANT_NOT_FOUND_ID = "variant_notFound";
     private SldRequestInfos sldRequestInfos;
-    private FileSystem fileSystem;
-    private List<NadVoltageLevelPositionInfos> positions;
 
     @BeforeEach
-    void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
-        fileSystem = Jimfs.newFileSystem(Configuration.unix());
-        Files.createDirectory(fileSystem.getPath("tmp"));
-
-        positions = new ArrayList<>();
-        when(nadVoltageLevelConfiguredPositionRepository.count()).thenAnswer(invocation -> (long) positions.size());
-        doAnswer(invocation -> {
-            positions.clear();
-            return null;
-        }).when(nadVoltageLevelConfiguredPositionRepository).deleteAll();
-
-        doAnswer(invocation -> {
-            List<NadVoltageLevelConfiguredPositionEntity> entities = invocation.getArgument(0);
-            positions.addAll(entities.stream()
-                    .map(NadVoltageLevelConfiguredPositionEntity::toDto)
-                    .toList());
-            return entities;
-        }).when(nadVoltageLevelConfiguredPositionRepository).saveAll(anyList());
-
+    void setUp() {
         sldRequestInfos = new SldRequestInfos();
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        fileSystem.close();
     }
 
     @Test
