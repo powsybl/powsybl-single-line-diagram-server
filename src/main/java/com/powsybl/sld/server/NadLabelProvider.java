@@ -58,7 +58,10 @@ public class NadLabelProvider extends DefaultLabelProvider {
         return Optional.of(new EdgeInfo(
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
-                pMax,
+                Math.max(
+                        branch.getTerminal(TwoSides.ONE).getP(),
+                        branch.getTerminal(TwoSides.TWO).getP()
+                ),
                 getValueFormatter().formatPower(pMax, ""),
                 getValueFormatter().formatPercentage(istMax), operatingStatusDecorator
         ));
