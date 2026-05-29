@@ -49,6 +49,10 @@ public class NadLabelProvider extends DefaultLabelProvider {
                 Math.abs(branch.getTerminal(TwoSides.ONE).getP()),
                 Math.abs(branch.getTerminal(TwoSides.TWO).getP())
         );
+        double pMaxRef = Math.max(
+                branch.getTerminal(TwoSides.ONE).getP(),
+                branch.getTerminal(TwoSides.TWO).getP()
+        );
 
         double istMax = getPermanentLimitPercentageMax(branch);
         String operatingStatusDecorator = (!branch.getTerminal1().isConnected() && !branch.getTerminal2().isConnected())
@@ -58,10 +62,7 @@ public class NadLabelProvider extends DefaultLabelProvider {
         return Optional.of(new EdgeInfo(
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
-                Math.max(
-                        branch.getTerminal(TwoSides.ONE).getP(),
-                        branch.getTerminal(TwoSides.TWO).getP()
-                ),
+                pMaxRef,
                 getValueFormatter().formatPower(pMax, ""),
                 getValueFormatter().formatPercentage(istMax), operatingStatusDecorator
         ));
@@ -74,8 +75,13 @@ public class NadLabelProvider extends DefaultLabelProvider {
             return Optional.empty();
         }
 
-        double maxActivePower = Stream.of(ThreeSides.ONE, ThreeSides.TWO, ThreeSides.THREE)
+        double pMax = Stream.of(ThreeSides.ONE, ThreeSides.TWO, ThreeSides.THREE)
                 .mapToDouble(s -> Math.abs(twt.getTerminal(s).getP()))
+                .max()
+                .orElse(Double.NaN);
+
+        double pMaxRef = Stream.of(ThreeSides.ONE, ThreeSides.TWO, ThreeSides.THREE)
+                .mapToDouble(s -> twt.getTerminal(s).getP())
                 .max()
                 .orElse(Double.NaN);
 
@@ -88,8 +94,8 @@ public class NadLabelProvider extends DefaultLabelProvider {
         return Optional.of(new EdgeInfo(
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
-                maxActivePower,
-                getValueFormatter().formatPower(maxActivePower, ""),
+                pMaxRef,
+                getValueFormatter().formatPower(pMax, ""),
                 getValueFormatter().formatPercentage(istMax), operatingStatusDecorator
         ));
     }
