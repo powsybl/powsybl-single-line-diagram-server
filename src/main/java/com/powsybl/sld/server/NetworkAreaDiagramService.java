@@ -91,7 +91,7 @@ class NetworkAreaDiagramService {
 
     private final ObjectMapper objectMapper;
 
-    public NetworkAreaDiagramService(NetworkStoreService networkStoreService,
+    NetworkAreaDiagramService(NetworkStoreService networkStoreService,
                                      GeoDataService geoDataService,
                                      FilterService filterService,
                                      NetworkAreaExecutionService diagramExecutionService,
@@ -254,7 +254,8 @@ class NetworkAreaDiagramService {
         // Maximum number of VLs
         int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
         if (nbVoltageLevels > maxVoltageLevels) {
-            throw new DiagramBusinessException(MAX_VOLTAGE_LEVELS_DISPLAYED, "You need to reduce the number of voltage levels to be displayed in the network area diagram", Map.of("nbVoltageLevels", nbVoltageLevels, "maxVoltageLevels", maxVoltageLevels));
+            throw new DiagramBusinessException(MAX_VOLTAGE_LEVELS_DISPLAYED, "You need to reduce the number of voltage levels to be displayed in the network area diagram", Map.of("nbVoltageLevels",
+                    nbVoltageLevels, "maxVoltageLevels", maxVoltageLevels));
         }
 
         // Build Powsybl parameters
@@ -303,7 +304,7 @@ class NetworkAreaDiagramService {
         }
 
         SvgParameters svgParameters = new SvgParameters()
-                .setUndefinedValueSymbol("\u2014")
+                .setUndefinedValueSymbol("—")
                 .setSvgWidthAndHeightAdded(true)
                 .setVoltageLevelLegendsIncluded(false)
                 .setEdgeInfosIncluded(true)
