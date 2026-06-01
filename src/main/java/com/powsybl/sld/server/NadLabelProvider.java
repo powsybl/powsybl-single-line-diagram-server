@@ -37,17 +37,16 @@ public class NadLabelProvider extends DefaultLabelProvider {
             return Optional.empty();
         }
 
-        double pMax = Math.max(
-                Math.abs(branch.getTerminal(TwoSides.ONE).getP()),
-                Math.abs(branch.getTerminal(TwoSides.TWO).getP())
-        );
+        double pMax = Stream.of(branch.getTerminal(TwoSides.ONE).getP(), branch.getTerminal(TwoSides.TWO).getP())
+            .reduce((a, b) -> Double.compare(Math.abs(a), Math.abs(b)) > 0 ? a : b)
+            .orElse(Double.NaN);
 
         double istMax = getPermanentLimitPercentageMax(branch);
         return Optional.of(new EdgeInfo(
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
-                pMax,
-                getValueFormatter().formatPower(pMax, ""),
+                branch.getTerminal(TwoSides.ONE).getP(),
+                getValueFormatter().formatPower(Math.abs(pMax), ""),
                 getValueFormatter().formatPercentage(istMax)
         ));
     }
@@ -59,17 +58,16 @@ public class NadLabelProvider extends DefaultLabelProvider {
             return Optional.empty();
         }
 
-        double maxActivePower = Stream.of(ThreeSides.ONE, ThreeSides.TWO, ThreeSides.THREE)
-                .mapToDouble(s -> Math.abs(twt.getTerminal(s).getP()))
-                .max()
-                .orElse(Double.NaN);
+        double pMax = Stream.of(twt.getTerminal(ThreeSides.ONE).getP(), twt.getTerminal(ThreeSides.TWO).getP(), twt.getTerminal(ThreeSides.THREE).getP())
+            .reduce((a, b) -> Double.compare(Math.abs(a), Math.abs(b)) > 0 ? a : b)
+            .orElse(Double.NaN);
 
         double istMax = getPermanentLimitPercentageMax(twt);
         return Optional.of(new EdgeInfo(
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
-                maxActivePower,
-                getValueFormatter().formatPower(maxActivePower, ""),
+                twt.getTerminal(ThreeSides.ONE).getP(),
+                getValueFormatter().formatPower(Math.abs(pMax), ""),
                 getValueFormatter().formatPercentage(istMax)
 
         ));
