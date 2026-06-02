@@ -57,7 +57,7 @@ public class NadLabelProvider extends DefaultLabelProvider {
         return Optional.of(new EdgeInfo(
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
-                pMax,
+                branch.getTerminal(TwoSides.ONE).getP(),
                 getValueFormatter().formatPower(Math.abs(pMax), ""),
                 getValueFormatter().formatPercentage(istMax), operatingStatusDecorator
         ));
@@ -83,7 +83,7 @@ public class NadLabelProvider extends DefaultLabelProvider {
         return Optional.of(new EdgeInfo(
                 EdgeInfo.ACTIVE_POWER,
                 EdgeInfo.VALUE_PERMANENT_LIMIT_PERCENTAGE,
-                pMax,
+                twt.getTerminal(ThreeSides.ONE).getP(),
                 getValueFormatter().formatPower(Math.abs(pMax), ""),
                 getValueFormatter().formatPercentage(istMax), operatingStatusDecorator
         ));
