@@ -51,6 +51,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <liquibase-hibernate-package>com.powsybl.sld.server</liquibase-hibernate-package>
         <powsybl-ws-dependencies.version>2.32.0</powsybl-ws-dependencies.version>
+        <!-- FIXME to remove at next upgrade of powsybl-ws-dependencies -->
+        <powsybl-diagram.version>5.4.0</powsybl-diagram.version>
         <supercsv.version>2.4.0</supercsv.version>
         <sonar.organization>powsybl-ci-github</sonar.organization>
         <sonar.projectKey>com.powsybl:powsybl-single-line-diagram-server</sonar.projectKey>
@@ -125,10 +127,20 @@
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-network-area-diagram</artifactId>
+            <!-- FIXME to remove at next upgrade of powsybl-ws-dependencies -->
+            <version>${powsybl-diagram.version}</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-single-line-diagram-core</artifactId>
+            <!-- FIXME to remove at next upgrade of powsybl-ws-dependencies -->
+            <version>${powsybl-diagram.version}</version>
+        </dependency>
+        <!-- FIXME to remove at next upgrade of powsybl-ws-dependencies -->
+        <dependency>
+            <groupId>com.powsybl</groupId>
+            <artifactId>powsybl-diagram-util</artifactId>
+            <version>${powsybl-diagram.version}</version>
         </dependency>
         <dependency>
             <groupId>com.powsybl</groupId>
