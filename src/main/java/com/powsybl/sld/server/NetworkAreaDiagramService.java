@@ -306,7 +306,7 @@ class NetworkAreaDiagramService {
                 .setUndefinedValueSymbol("\u2014")
                 .setSvgWidthAndHeightAdded(true)
                 .setVoltageLevelLegendsIncluded(false)
-                .setEdgeInfosIncluded(true)
+                .setEdgeInfosIncluded(false)
                 .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT)
                 .setLanguageTag(language);
 
