@@ -30,6 +30,7 @@ public class SldRequestInfos {
     private boolean centerLabel = false;
     private boolean diagonalLabel = false;
     private boolean topologicalColoring = false;
+    private boolean useStateEstimationVisualisation = false;
     private String componentLibrary = GridSuiteAndConvergenceComponentLibrary.NAME;
     private String substationLayout = DiagramConstants.SUBSTATION_LAYOUT_HORIZONTAL;
     private SldDisplayMode sldDisplayMode = SldDisplayMode.STATE_VARIABLE;

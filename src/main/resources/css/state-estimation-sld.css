@@ -1,0 +1,11 @@
+.sld-feeder-info.sld-measurement-valid text {
+    fill: black;
+}
+
+.sld-feeder-info.sld-measurement-invalid text {
+    fill: red;
+}
+
+.sld-feeder-info.sld-measurement-critical text {
+    font-weight: bold;
+}

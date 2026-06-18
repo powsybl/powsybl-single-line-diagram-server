@@ -22,8 +22,11 @@ import com.powsybl.sld.layout.VerticalSubstationLayoutFactory;
 import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.error.DiagramBusinessException;
+import com.powsybl.sld.server.estim.StateEstimationLabelProvider;
+import com.powsybl.sld.server.estim.StateEstimationStyleProvider;
 import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
+import com.powsybl.sld.svg.styles.EmptyStyleProvider;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
@@ -63,7 +66,7 @@ class SingleLineDiagramService {
             .setDiagrammPadding(DEFAULT_LAYOUT_PADDING, DEFAULT_LAYOUT_PADDING, DEFAULT_LAYOUT_PADDING, LAYOUT_BOTTOM_PADDING);
 
     private static final SvgParameters SVG_PARAMETERS = new SvgParameters()
-            .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
+            .setCssLocation(SvgParameters.CssLocation.INSERTED_IN_SVG);
 
     @Autowired
     private NetworkStoreService networkStoreService;
@@ -103,7 +106,7 @@ class SingleLineDiagramService {
             svgParameters.setLanguageTag(sldRequestInfos.getLanguage());
             svgParameters.setUnifyVoltageLevelColors(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
-            layoutParameters.setSpaceForFeederInfos(80);
+            layoutParameters.setSpaceForFeederInfos(120);
 
             SldParameters sldParameters = new SldParameters();
 
@@ -115,8 +118,10 @@ class SingleLineDiagramService {
                     break;
                 case SldDisplayMode.STATE_VARIABLE:
                     svgParameters.setBusesLegendAdded(true);
-                    sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
                     sldParameters.setLegendWriterFactory(CommonLegendWriter.createFactory(sldRequestInfos.getBusIdToIccValues()));
+                    sldParameters.setLabelProviderFactory(sldRequestInfos.isUseStateEstimationVisualisation()
+                            ? StateEstimationLabelProvider::new
+                            : CommonLabelProvider::new);
                     break;
                 default:
                     throw new DiagramBusinessException(INVALID_DISPLAY_MODE, String.format("Given sld display mode %s doesn't exist", sldRequestInfos.getSldDisplayMode()), Map.of("sldDisplayMode", sldRequestInfos.getSldDisplayMode()));
@@ -148,7 +153,8 @@ class SingleLineDiagramService {
                         : new NominalVoltageStyleProvider(baseVoltagesConfig),
                     new HighlightLineStateStyleProvider(network),
                     new SldSLimitStyleProvider(network, limitViolationStyles),
-                    new BusLegendStyleProvider()
+                    new BusLegendStyleProvider(),
+                    sldRequestInfos.isUseStateEstimationVisualisation() ? new StateEstimationStyleProvider() : new EmptyStyleProvider()
                 );
             });
 
