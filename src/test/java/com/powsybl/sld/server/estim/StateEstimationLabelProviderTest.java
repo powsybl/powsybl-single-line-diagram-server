@@ -21,6 +21,7 @@ import com.powsybl.sld.model.nodes.NodeSide;
 import com.powsybl.sld.model.nodes.feeders.FeederWithSides;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
+import com.powsybl.sld.svg.ValueFeederInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -314,6 +315,239 @@ class StateEstimationLabelProviderTest {
         assertThat(actualFeederInfos.get(3).getRightLabel()).isEqualTo(Optional.of(TERMINAL_I + " " + CURRENT_UNIT));
         assertThat(actualFeederInfos.get(4).getRightLabel()).isEqualTo(Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT));
         assertThat(actualFeederInfos.get(5).getRightLabel()).isEqualTo(Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT));
+    }
+
+    @Test
+    void testGetFeederInfosResultRespectsOrderWhenDirectionIsBottomAndNoMeasurements() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        Feeder feederMock = Mockito.mock(Feeder.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.INJECTION);
+        Mockito.when(feederNodeMock.getDirection()).thenReturn(Direction.BOTTOM);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn(GENERATOR_WITHOUT_MEASUREMENTS);
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).hasSize(3)
+                .extracting("rightLabel")
+                .containsExactly(
+                        Optional.of(TERMINAL_I + " " + CURRENT_UNIT),
+                        Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT),
+                        Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT)
+        );
+    }
+
+    @Test
+    void testGetFeederInfosForBranchWithCurrentMeasurement() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        FeederWithSides feederMock = Mockito.mock(FeederWithSides.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.BRANCH);
+        Mockito.when(feederMock.getSide()).thenReturn(NodeSide.ONE);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("BRANCH_WITH_CURRENT");
+
+        Branch branchMock = Mockito.mock(Branch.class);
+        Terminal terminalMock = Mockito.mock(Terminal.class);
+        Mockito.lenient().when(branchMock.getTerminal(TwoSides.ONE)).thenReturn(terminalMock);
+        Mockito.when(networkMock.getBranch("BRANCH_WITH_CURRENT")).thenReturn(branchMock);
+
+        Measurement measurementMock = Mockito.mock(Measurement.class);
+        Mockito.when(measurementMock.getType()).thenReturn(Measurement.Type.CURRENT);
+        Mockito.when(measurementMock.getSide()).thenReturn(ThreeSides.ONE);
+        Mockito.when(measurementMock.getValue()).thenReturn(100.0);
+        Mockito.when(measurementMock.isValid()).thenReturn(true);
+
+        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(measurementMock));
+        Mockito.when(branchMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
+
+        BranchObservability observabilityMock = Mockito.mock(BranchObservability.class);
+        Mockito.when(branchMock.getExtension(BranchObservability.class)).thenReturn(observabilityMock);
+
+        Mockito.when(svgParametersMock.getUndefinedValueSymbol()).thenReturn("?");
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).filteredOn(ValueFeederInfo.class::isInstance)
+                .extracting("rightLabel")
+                .contains(Optional.of("100.0 ?"));
+    }
+
+    @Test
+    void testGetFeederInfosForInjectionWithCurrentMeasurement() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        Feeder feederMock = Mockito.mock(Feeder.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.INJECTION);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("GEN_WITH_CURRENT");
+
+        Injection injectionMock = Mockito.mock(Injection.class);
+        Terminal terminalMock = Mockito.mock(Terminal.class);
+        Mockito.when(injectionMock.getTerminal()).thenReturn(terminalMock);
+        Mockito.when(networkMock.getIdentifiable("GEN_WITH_CURRENT")).thenReturn(injectionMock);
+
+        Measurement measurementMock = Mockito.mock(Measurement.class);
+        Mockito.when(measurementMock.getType()).thenReturn(Measurement.Type.CURRENT);
+        Mockito.when(measurementMock.getValue()).thenReturn(100.0);
+        Mockito.when(measurementMock.isValid()).thenReturn(true);
+
+        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(measurementMock));
+        Mockito.when(injectionMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
+
+        InjectionObservability observabilityMock = Mockito.mock(InjectionObservability.class);
+        Mockito.when(injectionMock.getExtension(InjectionObservability.class)).thenReturn(observabilityMock);
+
+        Mockito.when(svgParametersMock.getUndefinedValueSymbol()).thenReturn("?");
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).filteredOn(ValueFeederInfo.class::isInstance)
+                .extracting("rightLabel")
+                .contains(Optional.of("100.0 ?"));
+    }
+
+    @Test
+    void testGetFeederInfosMeasurementsSorting() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        Feeder feederMock = Mockito.mock(Feeder.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.INJECTION);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("GEN_SORT");
+
+        Injection injectionMock = Mockito.mock(Injection.class);
+        Terminal terminalMock = Mockito.mock(Terminal.class);
+        Mockito.when(injectionMock.getTerminal()).thenReturn(terminalMock);
+        Mockito.when(networkMock.getIdentifiable("GEN_SORT")).thenReturn(injectionMock);
+
+        Measurement m1 = Mockito.mock(Measurement.class);
+        Mockito.when(m1.getType()).thenReturn(Measurement.Type.VOLTAGE);
+        Mockito.when(m1.getValue()).thenReturn(15.0);
+        Mockito.when(m1.isValid()).thenReturn(true);
+
+        Measurement m2 = Mockito.mock(Measurement.class);
+        Mockito.when(m2.getType()).thenReturn(Measurement.Type.ACTIVE_POWER);
+        Mockito.when(m2.getValue()).thenReturn(13.0);
+        Mockito.when(m2.isValid()).thenReturn(true);
+
+        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        // Provide them in reverse order: VOLTAGE, then ACTIVE_POWER. They should be sorted to ACTIVE_POWER, then VOLTAGE.
+        Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(m1, m2));
+        Mockito.when(injectionMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).filteredOn(fi -> fi instanceof ValueFeederInfo && fi.getUserDefinedId() != null)
+                .extracting("rightLabel")
+                .containsExactly(Optional.of("13.0 MW"), Optional.of("15.0 kV"));
+    }
+
+    @Test
+    void testGetFeederInfosForBranchWithVoltageMeasurement() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        FeederWithSides feederMock = Mockito.mock(FeederWithSides.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.BRANCH);
+        Mockito.when(feederMock.getSide()).thenReturn(NodeSide.ONE);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("BRANCH_WITH_VOLTAGE");
+
+        Branch branchMock = Mockito.mock(Branch.class);
+        Terminal terminalMock = Mockito.mock(Terminal.class);
+        Mockito.lenient().when(branchMock.getTerminal(TwoSides.ONE)).thenReturn(terminalMock);
+        Mockito.when(networkMock.getBranch("BRANCH_WITH_VOLTAGE")).thenReturn(branchMock);
+
+        Measurement measurementMock = Mockito.mock(Measurement.class);
+        Mockito.when(measurementMock.getType()).thenReturn(Measurement.Type.VOLTAGE);
+        Mockito.when(measurementMock.getSide()).thenReturn(ThreeSides.ONE);
+        Mockito.when(measurementMock.getValue()).thenReturn(400.0);
+        Mockito.when(measurementMock.isValid()).thenReturn(true);
+
+        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(measurementMock));
+        Mockito.when(branchMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
+
+        BranchObservability observabilityMock = Mockito.mock(BranchObservability.class);
+        Mockito.when(branchMock.getExtension(BranchObservability.class)).thenReturn(observabilityMock);
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).filteredOn(fi -> fi instanceof ValueFeederInfo && fi.getUserDefinedId() != null)
+                .extracting("rightLabel")
+                .contains(Optional.of("400.0 kV"));
+    }
+
+    @Test
+    void testGetFeederInfosWhenDirectionIsNull() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        Feeder feederMock = Mockito.mock(Feeder.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.INJECTION);
+        Mockito.when(feederNodeMock.getDirection()).thenReturn(null);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn(GENERATOR_WITHOUT_MEASUREMENTS);
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).hasSize(3);
+        assertThat(actualFeederInfos.getFirst().getRightLabel()).isEqualTo(Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT));
+    }
+
+    @Test
+    void testGetFeederInfosForHvdcWithNodeSideTwoNoMeasurements() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        FeederWithSides feederMock = Mockito.mock(FeederWithSides.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.HVDC);
+        Mockito.when(feederMock.getSide()).thenReturn(NodeSide.TWO);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn(HVDC_WITHOUT_MEASUREMENTS);
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).hasSize(3);
+    }
+
+    @Test
+    void testGetFeederInfosBranchMeasurementsSorting() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        FeederWithSides feederMock = Mockito.mock(FeederWithSides.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.BRANCH);
+        Mockito.when(feederMock.getSide()).thenReturn(NodeSide.ONE);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("BRANCH_SORT");
+
+        Branch branchMock = Mockito.mock(Branch.class);
+        Terminal terminalMock = Mockito.mock(Terminal.class);
+        Mockito.lenient().when(branchMock.getTerminal(TwoSides.ONE)).thenReturn(terminalMock);
+        Mockito.when(networkMock.getBranch("BRANCH_SORT")).thenReturn(branchMock);
+
+        Measurement m1 = Mockito.mock(Measurement.class);
+        Mockito.when(m1.getType()).thenReturn(Measurement.Type.REACTIVE_POWER);
+        Mockito.when(m1.getSide()).thenReturn(ThreeSides.ONE);
+        Mockito.when(m1.getValue()).thenReturn(11.0);
+        Mockito.when(m1.isValid()).thenReturn(true);
+
+        Measurement m2 = Mockito.mock(Measurement.class);
+        Mockito.when(m2.getType()).thenReturn(Measurement.Type.ACTIVE_POWER);
+        Mockito.when(m2.getSide()).thenReturn(ThreeSides.ONE);
+        Mockito.when(m2.getValue()).thenReturn(10.0);
+        Mockito.when(m2.isValid()).thenReturn(true);
+
+        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(m1, m2));
+        Mockito.when(branchMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
+
+        BranchObservability observabilityMock = Mockito.mock(BranchObservability.class);
+        Mockito.when(branchMock.getExtension(BranchObservability.class)).thenReturn(observabilityMock);
+
+        ObservabilityQuality qualityMock = Mockito.mock(ObservabilityQuality.class);
+        Mockito.when(qualityMock.isRedundant()).thenReturn(Optional.of(true));
+        Mockito.when(observabilityMock.getQualityP1()).thenReturn(qualityMock);
+        Mockito.when(observabilityMock.getQualityQ1()).thenReturn(qualityMock);
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).filteredOn(fi -> fi instanceof ValueFeederInfo && fi.getUserDefinedId() != null)
+                .extracting("rightLabel")
+                .containsExactly(Optional.of("10.0 MW"), Optional.of("11.0 Mvar"));
     }
 
     private void prepareMocks() {
