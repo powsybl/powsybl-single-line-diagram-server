@@ -477,6 +477,40 @@ class StateEstimationLabelProviderTest {
     }
 
     @Test
+    void testGetFeederInfosForBranchWithVoltageMeasurementButNoBranchObservabilityQuality() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        FeederWithSides feederMock = Mockito.mock(FeederWithSides.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.BRANCH);
+        Mockito.when(feederMock.getSide()).thenReturn(NodeSide.ONE);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("BRANCH_WITH_P_MEASUREMENT");
+
+        Branch branchMock = Mockito.mock(Branch.class);
+        Terminal terminalMock = Mockito.mock(Terminal.class);
+        Mockito.lenient().when(branchMock.getTerminal(TwoSides.ONE)).thenReturn(terminalMock);
+        Mockito.when(networkMock.getBranch("BRANCH_WITH_P_MEASUREMENT")).thenReturn(branchMock);
+
+        Measurement measurementMock = Mockito.mock(Measurement.class);
+        Mockito.when(measurementMock.getType()).thenReturn(Measurement.Type.ACTIVE_POWER);
+        Mockito.when(measurementMock.getSide()).thenReturn(ThreeSides.ONE);
+        Mockito.when(measurementMock.getValue()).thenReturn(400.0);
+        Mockito.when(measurementMock.isValid()).thenReturn(true);
+
+        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(measurementMock));
+        Mockito.when(branchMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
+
+        BranchObservability observabilityMock = Mockito.mock(BranchObservability.class);
+        Mockito.when(branchMock.getExtension(BranchObservability.class)).thenReturn(observabilityMock);
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).filteredOn(fi -> fi instanceof ValueFeederInfo && fi.getUserDefinedId() != null)
+                .extracting("rightLabel")
+                .contains(Optional.of("400.0 MW"));
+    }
+
+    @Test
     void testGetFeederInfosWhenDirectionIsNull() {
         FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
         Feeder feederMock = Mockito.mock(Feeder.class);

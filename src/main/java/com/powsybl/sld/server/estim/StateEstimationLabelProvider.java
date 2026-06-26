@@ -137,9 +137,9 @@ public class StateEstimationLabelProvider extends CommonLabelProvider {
 
     private Optional<Boolean> getInjectionMeasurementRedundancy(InjectionObservability<?> injectionObservability, Measurement.Type measurementType) {
         return switch (measurementType) {
-            case VOLTAGE -> injectionObservability.getQualityV().isRedundant();
-            case ACTIVE_POWER -> injectionObservability.getQualityP().isRedundant();
-            case REACTIVE_POWER -> injectionObservability.getQualityQ().isRedundant();
+            case VOLTAGE -> isMeasurementRedundant(injectionObservability.getQualityV());
+            case ACTIVE_POWER -> isMeasurementRedundant(injectionObservability.getQualityP());
+            case REACTIVE_POWER -> isMeasurementRedundant(injectionObservability.getQualityQ());
             default -> Optional.empty();
         };
     }
@@ -148,10 +148,14 @@ public class StateEstimationLabelProvider extends CommonLabelProvider {
         ThreeSides measurementSide = measurement.getSide();
 
         return switch (measurementType) {
-            case ACTIVE_POWER -> ThreeSides.ONE.equals(measurementSide) ? branchObservability.getQualityP1().isRedundant() : branchObservability.getQualityP2().isRedundant();
-            case REACTIVE_POWER -> ThreeSides.ONE.equals(measurementSide) ? branchObservability.getQualityQ1().isRedundant() : branchObservability.getQualityQ2().isRedundant();
+            case ACTIVE_POWER -> ThreeSides.ONE.equals(measurementSide) ? isMeasurementRedundant(branchObservability.getQualityP1()) : isMeasurementRedundant(branchObservability.getQualityP2());
+            case REACTIVE_POWER -> ThreeSides.ONE.equals(measurementSide) ? isMeasurementRedundant(branchObservability.getQualityQ1()) : isMeasurementRedundant(branchObservability.getQualityQ2());
             default -> Optional.empty();
         };
+    }
+
+    private Optional<Boolean> isMeasurementRedundant(ObservabilityQuality<?> observabilityQuality) {
+        return observabilityQuality != null ? observabilityQuality.isRedundant() : Optional.empty();
     }
 
     private String getMeasurementPowerUnit(Measurement.Type measurementType) {
