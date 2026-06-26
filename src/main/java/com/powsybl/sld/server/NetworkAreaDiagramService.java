@@ -298,7 +298,8 @@ class NetworkAreaDiagramService {
         return nadGenerationContextBuilder.build();
     }
 
-    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, List<BaseVoltageConfig> baseVoltagesConfigInfos, String language) {
+    private void buildGraphicalParameters(
+            NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, List<BaseVoltageConfig> baseVoltagesConfigInfos, String language) {
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
             throw new DiagramBusinessException(NO_VOLTAGE_LEVEL_FOUND, "No voltage level found for the NAD generation context");
         }
