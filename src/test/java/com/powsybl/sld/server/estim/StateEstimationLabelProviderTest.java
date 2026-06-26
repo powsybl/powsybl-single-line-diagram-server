@@ -18,6 +18,7 @@ import com.powsybl.sld.model.nodes.Feeder;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.model.nodes.FeederType;
 import com.powsybl.sld.model.nodes.NodeSide;
+import com.powsybl.sld.model.nodes.feeders.FeederTwLeg;
 import com.powsybl.sld.model.nodes.feeders.FeederWithSides;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
@@ -56,6 +57,8 @@ class StateEstimationLabelProviderTest {
     private static final String GENERATOR_WITH_MEASUREMENTS_NO_OBSERVABILITY = "GEN_WITH_MEASUREMENTS_NO_OBSERVABILITY";
     private static final String BRANCH_WITHOUT_MEASUREMENTS = "BRANCH_NO_MEASUREMENTS";
     private static final String BRANCH_WITH_MEASUREMENTS = "BRANCH_WITH_MEASUREMENTS";
+    private static final String TWO_WINDINGS_TRANSFORMER_LEG_WITHOUT_MEASUREMENTS = "TWO_WINDINGS_TRANSFORMER_LEG_NO_MEASUREMENTS";
+    private static final String TWO_WINDINGS_TRANSFORMER_LEG_WITH_MEASUREMENTS = "TWO_WINDINGS_TRANSFORMER_LEG_WITH_MEASUREMENTS";
     private static final String HVDC_WITHOUT_MEASUREMENTS = "HVDC_NO_MEASUREMENTS";
     private static final String HVDC_WITH_MEASUREMENTS = "HVDC_WITH_MEASUREMENTS";
     private static final double TERMINAL_P = 10D;
@@ -244,12 +247,71 @@ class StateEstimationLabelProviderTest {
         );
     }
 
+    @Test
+    void testGetFeederInfosReturnsBaseClassResultForTwoWindingTransformerLegWithNoMeasurements() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        FeederTwLeg feederMock = Mockito.mock(FeederTwLeg.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.TWO_WINDINGS_TRANSFORMER_LEG);
+        Mockito.when(feederMock.getSide()).thenReturn(NodeSide.ONE);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn(TWO_WINDINGS_TRANSFORMER_LEG_WITHOUT_MEASUREMENTS);
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).hasSize(4)
+                .extracting("componentType", "rightLabel", "userDefinedId")
+                .contains(
+                        tuple("ARROW_ACTIVE", Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT), null),
+                        tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
+                        tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null),
+                        tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of("0.0 %"), null)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideSidedMeasurements")
+    void testGetFeederInfosReturnsBaseClassResultAndSidedMeasurementsForTwoWindingTransformerLegWithMeasurements(NodeSide nodeSide, double measurementP, double measurementQ, String userDefinedId) {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        FeederTwLeg feederMock = Mockito.mock(FeederTwLeg.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.TWO_WINDINGS_TRANSFORMER_LEG);
+        Mockito.when(feederMock.getSide()).thenReturn(nodeSide);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn(TWO_WINDINGS_TRANSFORMER_LEG_WITH_MEASUREMENTS);
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).hasSize(6)
+                .extracting("componentType", "rightLabel", "userDefinedId")
+                .contains(
+                        tuple("ARROW_ACTIVE", Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT), null),
+                        tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
+                        tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null),
+                        tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of("0.0 %"), null),
+                        tuple("VALUE_CURRENT", Optional.of(measurementP + " " + ACTIVE_POWER_UNIT), userDefinedId),
+                        tuple("VALUE_CURRENT", Optional.of(measurementQ + " " + REACTIVE_POWER_UNIT), userDefinedId)
+        );
+    }
+
     @ParameterizedTest
     @EnumSource(value = FeederType.class, names = {"INJECTION", "HVDC", "BRANCH"})
     void testGetFeederInfosReturnsEmptyListWhenNonExistingIdentifiable(FeederType feederType) {
         FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
         FeederWithSides feederMock = Mockito.mock(FeederWithSides.class);
         Mockito.when(feederMock.getFeederType()).thenReturn(feederType);
+        Mockito.lenient().when(feederMock.getSide()).thenReturn(NodeSide.ONE);
+        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
+        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("I DO NOT EXIST");
+
+        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
+
+        assertThat(actualFeederInfos).isEmpty();
+    }
+
+    @Test
+    void testGetFeederInfosReturnsEmptyListWhenNonExistingTwoWindingTransformer() {
+        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
+        FeederTwLeg feederMock = Mockito.mock(FeederTwLeg.class);
+        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.TWO_WINDINGS_TRANSFORMER_LEG);
         Mockito.lenient().when(feederMock.getSide()).thenReturn(NodeSide.ONE);
         Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
         Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("I DO NOT EXIST");
@@ -391,11 +453,11 @@ class StateEstimationLabelProviderTest {
         Mockito.when(measurementMock.getValue()).thenReturn(100.0);
         Mockito.when(measurementMock.isValid()).thenReturn(true);
 
-        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        Measurements<?> measurementsMock = Mockito.mock(Measurements.class);
         Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(measurementMock));
         Mockito.when(injectionMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
 
-        InjectionObservability observabilityMock = Mockito.mock(InjectionObservability.class);
+        InjectionObservability<?> observabilityMock = Mockito.mock(InjectionObservability.class);
         Mockito.when(injectionMock.getExtension(InjectionObservability.class)).thenReturn(observabilityMock);
 
         Mockito.when(svgParametersMock.getUndefinedValueSymbol()).thenReturn("?");
@@ -430,7 +492,7 @@ class StateEstimationLabelProviderTest {
         Mockito.when(m2.getValue()).thenReturn(13.0);
         Mockito.when(m2.isValid()).thenReturn(true);
 
-        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        Measurements<?> measurementsMock = Mockito.mock(Measurements.class);
         // Provide them in reverse order: VOLTAGE, then ACTIVE_POWER. They should be sorted to ACTIVE_POWER, then VOLTAGE.
         Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(m1, m2));
         Mockito.when(injectionMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
@@ -451,7 +513,7 @@ class StateEstimationLabelProviderTest {
         Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
         Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("BRANCH_WITH_VOLTAGE");
 
-        Branch branchMock = Mockito.mock(Branch.class);
+        Branch<?> branchMock = Mockito.mock(Branch.class);
         Terminal terminalMock = Mockito.mock(Terminal.class);
         Mockito.lenient().when(branchMock.getTerminal(TwoSides.ONE)).thenReturn(terminalMock);
         Mockito.when(networkMock.getBranch("BRANCH_WITH_VOLTAGE")).thenReturn(branchMock);
@@ -462,11 +524,11 @@ class StateEstimationLabelProviderTest {
         Mockito.when(measurementMock.getValue()).thenReturn(400.0);
         Mockito.when(measurementMock.isValid()).thenReturn(true);
 
-        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        Measurements<?> measurementsMock = Mockito.mock(Measurements.class);
         Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(measurementMock));
         Mockito.when(branchMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
 
-        BranchObservability observabilityMock = Mockito.mock(BranchObservability.class);
+        BranchObservability<?> observabilityMock = Mockito.mock(BranchObservability.class);
         Mockito.when(branchMock.getExtension(BranchObservability.class)).thenReturn(observabilityMock);
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
@@ -485,7 +547,7 @@ class StateEstimationLabelProviderTest {
         Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
         Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("BRANCH_WITH_P_MEASUREMENT");
 
-        Branch branchMock = Mockito.mock(Branch.class);
+        Branch<?> branchMock = Mockito.mock(Branch.class);
         Terminal terminalMock = Mockito.mock(Terminal.class);
         Mockito.lenient().when(branchMock.getTerminal(TwoSides.ONE)).thenReturn(terminalMock);
         Mockito.when(networkMock.getBranch("BRANCH_WITH_P_MEASUREMENT")).thenReturn(branchMock);
@@ -496,11 +558,11 @@ class StateEstimationLabelProviderTest {
         Mockito.when(measurementMock.getValue()).thenReturn(400.0);
         Mockito.when(measurementMock.isValid()).thenReturn(true);
 
-        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        Measurements<?> measurementsMock = Mockito.mock(Measurements.class);
         Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(measurementMock));
         Mockito.when(branchMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
 
-        BranchObservability observabilityMock = Mockito.mock(BranchObservability.class);
+        BranchObservability<?> observabilityMock = Mockito.mock(BranchObservability.class);
         Mockito.when(branchMock.getExtension(BranchObservability.class)).thenReturn(observabilityMock);
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
@@ -565,14 +627,14 @@ class StateEstimationLabelProviderTest {
         Mockito.when(m2.getValue()).thenReturn(10.0);
         Mockito.when(m2.isValid()).thenReturn(true);
 
-        Measurements measurementsMock = Mockito.mock(Measurements.class);
+        Measurements<?> measurementsMock = Mockito.mock(Measurements.class);
         Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(m1, m2));
         Mockito.when(branchMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
 
         BranchObservability observabilityMock = Mockito.mock(BranchObservability.class);
         Mockito.when(branchMock.getExtension(BranchObservability.class)).thenReturn(observabilityMock);
 
-        ObservabilityQuality qualityMock = Mockito.mock(ObservabilityQuality.class);
+        ObservabilityQuality<?> qualityMock = Mockito.mock(ObservabilityQuality.class);
         Mockito.when(qualityMock.isRedundant()).thenReturn(Optional.of(true));
         Mockito.when(observabilityMock.getQualityP1()).thenReturn(qualityMock);
         Mockito.when(observabilityMock.getQualityQ1()).thenReturn(qualityMock);
@@ -596,6 +658,8 @@ class StateEstimationLabelProviderTest {
         Injection<?> injectionWithMeasurementsNoObservabilityMock = Mockito.mock(Injection.class);
         Branch<?> branchNoMeasurementsMock = Mockito.mock(Branch.class);
         Branch<?> branchWithMeasurementsMock = Mockito.mock(Branch.class);
+        TwoWindingsTransformer twoWindingsTransformerNoMeasurementsMock = Mockito.mock(TwoWindingsTransformer.class);
+        TwoWindingsTransformer twoWindingsTransformerWithMeasurementsMock = Mockito.mock(TwoWindingsTransformer.class);
         HvdcLine hvdcNoMeasurementsMock = Mockito.mock(HvdcLine.class);
         HvdcLine hvdcWithMeasurementsMock = Mockito.mock(HvdcLine.class);
 
@@ -608,6 +672,8 @@ class StateEstimationLabelProviderTest {
 
         prepareBranchMocks(branchNoMeasurementsMock, branchWithMeasurementsMock, terminalMock);
 
+        prepareBranchMocks(twoWindingsTransformerNoMeasurementsMock, twoWindingsTransformerWithMeasurementsMock, terminalMock);
+
         prepareHvdcMocks(hvdcNoMeasurementsMock, hvdcWithMeasurementsMock, terminalMock);
 
         Mockito.lenient().when(networkMock.getIdentifiable(GENERATOR_WITHOUT_MEASUREMENTS)).thenReturn((Identifiable) injectionNoMeasurementsMock);
@@ -615,6 +681,8 @@ class StateEstimationLabelProviderTest {
         Mockito.lenient().when(networkMock.getIdentifiable(GENERATOR_WITH_MEASUREMENTS_NO_OBSERVABILITY)).thenReturn((Identifiable) injectionWithMeasurementsNoObservabilityMock);
         Mockito.lenient().when(networkMock.getBranch(BRANCH_WITHOUT_MEASUREMENTS)).thenReturn(branchNoMeasurementsMock);
         Mockito.lenient().when(networkMock.getBranch(BRANCH_WITH_MEASUREMENTS)).thenReturn(branchWithMeasurementsMock);
+        Mockito.lenient().when(networkMock.getBranch(TWO_WINDINGS_TRANSFORMER_LEG_WITHOUT_MEASUREMENTS)).thenReturn(twoWindingsTransformerNoMeasurementsMock);
+        Mockito.lenient().when(networkMock.getBranch(TWO_WINDINGS_TRANSFORMER_LEG_WITH_MEASUREMENTS)).thenReturn(twoWindingsTransformerWithMeasurementsMock);
         Mockito.lenient().when(networkMock.getHvdcLine(HVDC_WITHOUT_MEASUREMENTS)).thenReturn(hvdcNoMeasurementsMock);
         Mockito.lenient().when(networkMock.getHvdcLine(HVDC_WITH_MEASUREMENTS)).thenReturn(hvdcWithMeasurementsMock);
     }

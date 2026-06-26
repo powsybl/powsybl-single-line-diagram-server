@@ -17,6 +17,7 @@ import com.powsybl.sld.model.coordinate.Direction;
 import com.powsybl.sld.model.nodes.Feeder;
 import com.powsybl.sld.model.nodes.FeederNode;
 import com.powsybl.sld.model.nodes.NodeSide;
+import com.powsybl.sld.model.nodes.feeders.FeederTwLeg;
 import com.powsybl.sld.model.nodes.feeders.FeederWithSides;
 import com.powsybl.sld.server.CommonLabelProvider;
 import com.powsybl.sld.svg.FeederInfo;
@@ -46,7 +47,8 @@ public class StateEstimationLabelProvider extends CommonLabelProvider {
         Feeder feeder = node.getFeeder();
         List<FeederInfo> measurementsFeederInfos = new ArrayList<>(switch (feeder.getFeederType()) {
                 case INJECTION -> getInjectionMeasurementsFeederInfos(node);
-                case BRANCH -> buildBranchMeasurementsFeederInfo(node, ((FeederWithSides) feeder).getSide());
+                case BRANCH -> getBranchMeasurementsFeederInfo(node, ((FeederWithSides) feeder).getSide());
+                case TWO_WINDINGS_TRANSFORMER_LEG -> getBranchMeasurementsFeederInfo(node, ((FeederTwLeg) feeder).getSide());
                 case HVDC -> getHvdcMeasurementsFeederInfos(node, ((FeederWithSides) feeder).getSide());
                 default -> Collections.<FeederInfo>emptyList();
             });
@@ -67,7 +69,7 @@ public class StateEstimationLabelProvider extends CommonLabelProvider {
         return buildMeasurementsFeederInfos(measurements, injectionObservability);
     }
 
-    private List<FeederInfo> buildBranchMeasurementsFeederInfo(FeederNode node, NodeSide nodeSide) {
+    private List<FeederInfo> getBranchMeasurementsFeederInfo(FeederNode node, NodeSide nodeSide) {
         Branch<?> branch = (Branch<?>) network.getBranch(node.getEquipmentId());
         if (branch == null) {
             return Collections.emptyList();
