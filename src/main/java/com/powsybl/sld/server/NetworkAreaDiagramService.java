@@ -363,12 +363,13 @@ class NetworkAreaDiagramService {
 
         // In order to draw half the lines that connect to the out of bound voltage levels, we have to know their coordinates.
         // To do so, we create a filter with a depth=1 that will include these out of bound voltage levels.
-        List<VoltageLevel> extendedVoltageLevelFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(
+        VoltageLevelFilter voltageLevelFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(
                 nadGenerationContext.getNetwork(),
                 new ArrayList<>(nadGenerationContext.getVoltageLevelIds()),
-                1).voltageLevels().stream().toList();
+                1);
+        List<VoltageLevel> extendedVoltageLevels = voltageLevelFilter.voltageLevels().stream().toList();
 
-        List<Substation> extendedSubstations = extendedVoltageLevelFilter.stream()
+        List<Substation> extendedSubstations = extendedVoltageLevels.stream()
                 .map(VoltageLevel::getNullableSubstation)
                 .filter(Objects::nonNull)
                 .toList();
@@ -391,7 +392,7 @@ class NetworkAreaDiagramService {
 
             nadGenerationContext.setScalingFactor(this.calculateScalingFactor(coordinatesForScaling));
         }
-        return new GeographicalLayoutFactory(nadGenerationContext.getNetwork(), nadGenerationContext.getScalingFactor(), RADIUS_FACTOR, BasicForceLayout::new);
+        return new GeographicalLayoutFactory(nadGenerationContext.getNetwork(), nadGenerationContext.getScalingFactor(), RADIUS_FACTOR, voltageLevelFilter, BasicForceLayout::new);
     }
 
     private LayoutFactory prepareFixedLayoutFactory(NadGenerationContext nadGenerationContext) {
