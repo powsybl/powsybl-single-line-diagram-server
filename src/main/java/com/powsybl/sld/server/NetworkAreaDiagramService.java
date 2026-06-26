@@ -260,7 +260,7 @@ class NetworkAreaDiagramService {
 
         // Build Powsybl parameters
         List<BaseVoltageConfig> baseVoltagesConfigInfos = voltagesConfig.getBaseVoltagesConfigInfos();
-        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos(), baseVoltagesConfigInfos);
+        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos(), baseVoltagesConfigInfos, nadRequestInfos.getLanguage());
 
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
@@ -298,7 +298,7 @@ class NetworkAreaDiagramService {
         return nadGenerationContextBuilder.build();
     }
 
-    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, List<BaseVoltageConfig> baseVoltagesConfigInfos) {
+    private void buildGraphicalParameters(NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, List<BaseVoltageConfig> baseVoltagesConfigInfos, String language) {
         if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
             throw new DiagramBusinessException(NO_VOLTAGE_LEVEL_FOUND, "No voltage level found for the NAD generation context");
         }
@@ -307,8 +307,9 @@ class NetworkAreaDiagramService {
                 .setUndefinedValueSymbol("—")
                 .setSvgWidthAndHeightAdded(true)
                 .setVoltageLevelLegendsIncluded(false)
-                .setEdgeInfosIncluded(true)
-                .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
+                .setEdgeInfosIncluded(false)
+                .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT)
+                .setLanguageTag(language);
 
         LayoutParameters layoutParameters = new LayoutParameters();
         NadParameters nadParameters = new NadParameters();
