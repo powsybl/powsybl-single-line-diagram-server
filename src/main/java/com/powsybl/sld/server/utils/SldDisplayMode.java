@@ -11,5 +11,5 @@ package com.powsybl.sld.server.utils;
  */
 public enum SldDisplayMode {
     FEEDER_POSITION,
-    STATE_VARIABLE;
+    STATE_VARIABLE
 }

@@ -79,7 +79,8 @@ class SingleLineDiagramService {
         return switch (substationLayout) {
             case DiagramConstants.SUBSTATION_LAYOUT_HORIZONTAL -> new HorizontalSubstationLayoutFactory();
             case DiagramConstants.SUBSTATION_LAYOUT_VERTICAL -> new VerticalSubstationLayoutFactory();
-            default -> throw new DiagramBusinessException(INVALID_SUBSTATION_LAYOUT, String.format("Given substation layout %s doesn't exist", substationLayout), Map.of("substationLayout", substationLayout));
+            default -> throw new DiagramBusinessException(INVALID_SUBSTATION_LAYOUT, String.format("Given substation layout %s doesn't exist", substationLayout), Map.of("substationLayout",
+                    substationLayout));
         };
     }
 
@@ -99,7 +100,7 @@ class SingleLineDiagramService {
             svgParameters.setLabelCentered(sldRequestInfos.isCenterLabel());
             svgParameters.setLabelDiagonal(sldRequestInfos.isDiagonalLabel());
             svgParameters.setUseName(sldRequestInfos.isUseName());
-            svgParameters.setUndefinedValueSymbol("\u2014");
+            svgParameters.setUndefinedValueSymbol("—");
             svgParameters.setLanguageTag(sldRequestInfos.getLanguage());
             svgParameters.setUnifyVoltageLevelColors(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
@@ -119,7 +120,8 @@ class SingleLineDiagramService {
                     sldParameters.setLegendWriterFactory(CommonLegendWriter.createFactory(sldRequestInfos.getBusIdToIccValues()));
                     break;
                 default:
-                    throw new DiagramBusinessException(INVALID_DISPLAY_MODE, String.format("Given sld display mode %s doesn't exist", sldRequestInfos.getSldDisplayMode()), Map.of("sldDisplayMode", sldRequestInfos.getSldDisplayMode()));
+                    throw new DiagramBusinessException(INVALID_DISPLAY_MODE, String.format("Given sld display mode %s doesn't exist", sldRequestInfos.getSldDisplayMode()), Map.of("sldDisplayMode",
+                            sldRequestInfos.getSldDisplayMode()));
             }
 
             var voltageLevelLayoutFactory = CustomVoltageLevelLayoutFactoryCreator.newCustomVoltageLevelLayoutFactoryCreator();
@@ -177,7 +179,8 @@ class SingleLineDiagramService {
             Substation substation = network.getSubstation(id);
             return new SubstationInfos(substation);
         } else {
-            throw new DiagramBusinessException(INVALID_EQUIPMENT_TYPE, String.format("The equipment %s of type %s is not a substation or voltage level in given network", id, identifiable.getType()), Map.of("id", id, "equipmentType", identifiable.getType()));
+            throw new DiagramBusinessException(INVALID_EQUIPMENT_TYPE, String.format("The equipment %s of type %s is not a substation or voltage level in given network", id, identifiable.getType()),
+                    Map.of("id", id, "equipmentType", identifiable.getType()));
         }
     }
 
