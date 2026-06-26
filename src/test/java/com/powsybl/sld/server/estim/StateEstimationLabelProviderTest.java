@@ -789,7 +789,8 @@ class StateEstimationLabelProviderTest {
         Mockito.lenient().when(branchWithMeasurements.getExtension(BranchObservability.class)).thenReturn(branchObservabilityMock);
     }
 
-    private void prepareInjectionMocks(Injection<?> injectionNoMeasurementsMock, Injection<?> injectionWithMeasurementsMock, Injection<?> injectionWithMeasurementsNoObservabilityMock, Terminal terminalMock) {
+    private void prepareInjectionMocks(Injection<?> injectionNoMeasurementsMock, Injection<?> injectionWithMeasurementsMock,
+                                       Injection<?> injectionWithMeasurementsNoObservabilityMock, Terminal terminalMock) {
         Measurement measurementPMock = Mockito.mock(Measurement.class);
         Mockito.lenient().when(measurementPMock.getType()).thenReturn(Measurement.Type.ACTIVE_POWER);
         Mockito.lenient().when(measurementPMock.getValue()).thenReturn(MEASUREMENT_P);

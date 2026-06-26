@@ -120,7 +120,8 @@ public class StateEstimationLabelProvider extends CommonLabelProvider {
         String measurementPowerUnit = getMeasurementPowerUnit(measurementType);
         String measurementCssClass = getMeasurementCssClass(measurement, measurementRedundancy);
 
-        return new ValueFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, measurementPower, measurementPowerUnit, (value, unit) -> valueFormatter.formatPower(measurementPower, measurementPowerUnit), measurementCssClass);
+        return new ValueFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, measurementPower, measurementPowerUnit,
+                (value, unit) -> valueFormatter.formatPower(measurementPower, measurementPowerUnit), measurementCssClass);
     }
 
     private Optional<Boolean> getMeasurementRedundancy(Measurement measurement, Observability<?> observability) {
