@@ -8,15 +8,13 @@ package com.powsybl.sld.server;
 
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
 import lombok.NonNull;
+import lombok.Setter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Value;
-
 import java.util.List;
 import java.util.UUID;
 

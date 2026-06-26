@@ -6,17 +6,15 @@
  */
 package com.powsybl.sld.server.dto;
 
-import java.util.List;
-import java.util.Map;
-
 import com.powsybl.sld.server.GridSuiteAndConvergenceComponentLibrary;
 import com.powsybl.sld.server.utils.DiagramConstants;
 import com.powsybl.sld.server.utils.SldDisplayMode;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Caroline Jeandat <caroline.jeandat at rte-france.com>

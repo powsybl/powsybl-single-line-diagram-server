@@ -25,7 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * @author REHILI Ghazwa <ghazwa.rehili@rte-france.com>
+ * @author REHILI Ghazwa <ghazwa.rehili at rte-france.com>
  */
 @SpringBootTest
 class CommonLabelProviderTest {
