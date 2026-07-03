@@ -51,7 +51,6 @@ class StateEstimationLabelProviderTest {
     private static final String REACTIVE_POWER_UNIT = "Mvar";
     private static final String ACTIVE_POWER_UNIT = "MW";
     private static final String CURRENT_UNIT = "A";
-    private static final String VOLTAGE_UNIT = "kV";
     private static final String GENERATOR_WITHOUT_MEASUREMENTS = "GEN_NO_MEASUREMENTS";
     private static final String GENERATOR_WITH_MEASUREMENTS = "GEN_WITH_MEASUREMENTS";
     private static final String GENERATOR_WITH_MEASUREMENTS_NO_OBSERVABILITY = "GEN_WITH_MEASUREMENTS_NO_OBSERVABILITY";
@@ -66,7 +65,6 @@ class StateEstimationLabelProviderTest {
     private static final double TERMINAL_I = 12D;
     private static final double MEASUREMENT_P = 13D;
     private static final double MEASUREMENT_Q = 14D;
-    private static final double MEASUREMENT_V = 15D;
     private static final double MEASUREMENT_P1 = 16D;
     private static final double MEASUREMENT_Q1 = 17D;
     private static final double MEASUREMENT_P2 = 18D;
@@ -125,15 +123,14 @@ class StateEstimationLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(6)
+        assertThat(actualFeederInfos).hasSize(5)
                 .extracting("componentType", "rightLabel", "userDefinedId")
                 .contains(
             tuple("ARROW_ACTIVE", Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT), null),
             tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
             tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null),
             tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT), "sld-measurement-valid"),
-            tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT), "sld-measurement-invalid sld-measurement-critical"),
-            tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_V + " " + VOLTAGE_UNIT), "sld-measurement-invalid")
+            tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT), "sld-measurement-invalid sld-measurement-critical")
         );
     }
 
@@ -147,15 +144,14 @@ class StateEstimationLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(6)
+        assertThat(actualFeederInfos).hasSize(5)
                 .extracting("componentType", "rightLabel", "userDefinedId")
                 .contains(
                         tuple("ARROW_ACTIVE", Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT), null),
                         tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
                         tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null),
                         tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT), "sld-measurement-valid"),
-                        tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT), "sld-measurement-invalid"),
-                        tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_V + " " + VOLTAGE_UNIT), "sld-measurement-invalid")
+                        tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT), "sld-measurement-invalid")
         );
     }
 
@@ -337,7 +333,6 @@ class StateEstimationLabelProviderTest {
         assertThat(actualFeederInfos.get(2).getRightLabel()).isEqualTo(Optional.of(TERMINAL_I + " " + CURRENT_UNIT));
         assertThat(actualFeederInfos.get(3).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT));
         assertThat(actualFeederInfos.get(4).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT));
-        assertThat(actualFeederInfos.get(5).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_V + " " + VOLTAGE_UNIT));
     }
 
     @Test
@@ -357,7 +352,6 @@ class StateEstimationLabelProviderTest {
         assertThat(actualFeederInfos.get(2).getRightLabel()).isEqualTo(Optional.of(TERMINAL_I + " " + CURRENT_UNIT));
         assertThat(actualFeederInfos.get(3).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT));
         assertThat(actualFeederInfos.get(4).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT));
-        assertThat(actualFeederInfos.get(5).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_V + " " + VOLTAGE_UNIT));
     }
 
     @Test
@@ -371,12 +365,11 @@ class StateEstimationLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos.get(0).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_V + " " + VOLTAGE_UNIT));
-        assertThat(actualFeederInfos.get(1).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT));
-        assertThat(actualFeederInfos.get(2).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT));
-        assertThat(actualFeederInfos.get(3).getRightLabel()).isEqualTo(Optional.of(TERMINAL_I + " " + CURRENT_UNIT));
-        assertThat(actualFeederInfos.get(4).getRightLabel()).isEqualTo(Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT));
-        assertThat(actualFeederInfos.get(5).getRightLabel()).isEqualTo(Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT));
+        assertThat(actualFeederInfos.get(0).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT));
+        assertThat(actualFeederInfos.get(1).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT));
+        assertThat(actualFeederInfos.get(2).getRightLabel()).isEqualTo(Optional.of(TERMINAL_I + " " + CURRENT_UNIT));
+        assertThat(actualFeederInfos.get(3).getRightLabel()).isEqualTo(Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT));
+        assertThat(actualFeederInfos.get(4).getRightLabel()).isEqualTo(Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT));
     }
 
     @Test
@@ -483,7 +476,7 @@ class StateEstimationLabelProviderTest {
         Mockito.when(networkMock.getIdentifiable("GEN_SORT")).thenReturn(injectionMock);
 
         Measurement m1 = Mockito.mock(Measurement.class);
-        Mockito.when(m1.getType()).thenReturn(Measurement.Type.VOLTAGE);
+        Mockito.when(m1.getType()).thenReturn(Measurement.Type.REACTIVE_POWER);
         Mockito.when(m1.getValue()).thenReturn(15.0);
         Mockito.when(m1.isValid()).thenReturn(true);
 
@@ -493,7 +486,7 @@ class StateEstimationLabelProviderTest {
         Mockito.when(m2.isValid()).thenReturn(true);
 
         Measurements<?> measurementsMock = Mockito.mock(Measurements.class);
-        // Provide them in reverse order: VOLTAGE, then ACTIVE_POWER. They should be sorted to ACTIVE_POWER, then VOLTAGE.
+        // Provide them in reverse order: REACTIVE_POWER, then ACTIVE_POWER. They should be sorted to ACTIVE_POWER, then REACTIVE_POWER.
         Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(m1, m2));
         Mockito.when(injectionMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
 
@@ -501,41 +494,7 @@ class StateEstimationLabelProviderTest {
 
         assertThat(actualFeederInfos).filteredOn(fi -> fi instanceof ValueFeederInfo && fi.getUserDefinedId() != null)
                 .extracting("rightLabel")
-                .containsExactly(Optional.of("13.0 MW"), Optional.of("15.0 kV"));
-    }
-
-    @Test
-    void testGetFeederInfosForBranchWithVoltageMeasurement() {
-        FeederNode feederNodeMock = Mockito.mock(FeederNode.class);
-        FeederWithSides feederMock = Mockito.mock(FeederWithSides.class);
-        Mockito.when(feederMock.getFeederType()).thenReturn(FeederType.BRANCH);
-        Mockito.when(feederMock.getSide()).thenReturn(NodeSide.ONE);
-        Mockito.when(feederNodeMock.getFeeder()).thenReturn(feederMock);
-        Mockito.when(feederNodeMock.getEquipmentId()).thenReturn("BRANCH_WITH_VOLTAGE");
-
-        Branch<?> branchMock = Mockito.mock(Branch.class);
-        Terminal terminalMock = Mockito.mock(Terminal.class);
-        Mockito.lenient().when(branchMock.getTerminal(TwoSides.ONE)).thenReturn(terminalMock);
-        Mockito.when(networkMock.getBranch("BRANCH_WITH_VOLTAGE")).thenReturn(branchMock);
-
-        Measurement measurementMock = Mockito.mock(Measurement.class);
-        Mockito.when(measurementMock.getType()).thenReturn(Measurement.Type.VOLTAGE);
-        Mockito.when(measurementMock.getSide()).thenReturn(ThreeSides.ONE);
-        Mockito.when(measurementMock.getValue()).thenReturn(400.0);
-        Mockito.when(measurementMock.isValid()).thenReturn(true);
-
-        Measurements<?> measurementsMock = Mockito.mock(Measurements.class);
-        Mockito.when(measurementsMock.getMeasurements()).thenReturn(List.of(measurementMock));
-        Mockito.when(branchMock.getExtension(Measurements.class)).thenReturn(measurementsMock);
-
-        BranchObservability<?> observabilityMock = Mockito.mock(BranchObservability.class);
-        Mockito.when(branchMock.getExtension(BranchObservability.class)).thenReturn(observabilityMock);
-
-        List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
-
-        assertThat(actualFeederInfos).filteredOn(fi -> fi instanceof ValueFeederInfo && fi.getUserDefinedId() != null)
-                .extracting("rightLabel")
-                .contains(Optional.of("400.0 kV"));
+                .containsExactly(Optional.of("13.0 MW"), Optional.of("15.0 Mvar"));
     }
 
     @Test
@@ -799,12 +758,8 @@ class StateEstimationLabelProviderTest {
         Mockito.lenient().when(measurementQMock.getType()).thenReturn(Measurement.Type.REACTIVE_POWER);
         Mockito.lenient().when(measurementQMock.getValue()).thenReturn(MEASUREMENT_Q);
         Mockito.lenient().when(measurementQMock.isValid()).thenReturn(false);
-        Measurement measurementVMock = Mockito.mock(Measurement.class);
-        Mockito.lenient().when(measurementVMock.getType()).thenReturn(Measurement.Type.VOLTAGE);
-        Mockito.lenient().when(measurementVMock.getValue()).thenReturn(MEASUREMENT_V);
-        Mockito.lenient().when(measurementVMock.isValid()).thenReturn(false);
         Measurements<?> measurementsMock = Mockito.mock(Measurements.class);
-        Mockito.lenient().when(measurementsMock.getMeasurements()).thenReturn(List.of(measurementPMock, measurementQMock, measurementVMock));
+        Mockito.lenient().when(measurementsMock.getMeasurements()).thenReturn(List.of(measurementPMock, measurementQMock));
 
         ObservabilityQuality<?> redundantObservabilityQuality = Mockito.mock(ObservabilityQuality.class);
         Mockito.lenient().when(redundantObservabilityQuality.isRedundant()).thenReturn(Optional.of(true));

@@ -140,7 +140,6 @@ public class StateEstimationLabelProvider extends CommonLabelProvider {
 
     private Optional<Boolean> getInjectionMeasurementRedundancy(InjectionObservability<?> injectionObservability, Measurement.Type measurementType) {
         return switch (measurementType) {
-            case VOLTAGE -> isMeasurementRedundant(injectionObservability.getQualityV());
             case ACTIVE_POWER -> isMeasurementRedundant(injectionObservability.getQualityP());
             case REACTIVE_POWER -> isMeasurementRedundant(injectionObservability.getQualityQ());
             default -> Optional.empty();
@@ -163,7 +162,6 @@ public class StateEstimationLabelProvider extends CommonLabelProvider {
 
     private String getMeasurementPowerUnit(Measurement.Type measurementType) {
         return switch (measurementType) {
-            case VOLTAGE -> "kV";
             case ACTIVE_POWER -> "MW";
             case REACTIVE_POWER -> "Mvar";
             default -> svgParameters.getUndefinedValueSymbol();
