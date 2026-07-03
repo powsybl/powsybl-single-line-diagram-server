@@ -66,7 +66,7 @@ class SingleLineDiagramService {
             .setDiagrammPadding(DEFAULT_LAYOUT_PADDING, DEFAULT_LAYOUT_PADDING, DEFAULT_LAYOUT_PADDING, LAYOUT_BOTTOM_PADDING);
 
     private static final SvgParameters SVG_PARAMETERS = new SvgParameters()
-            .setCssLocation(SvgParameters.CssLocation.INSERTED_IN_SVG);
+            .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT);
 
     @Autowired
     private NetworkStoreService networkStoreService;

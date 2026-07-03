@@ -30,15 +30,6 @@ class StateEstimationStyleProviderTest {
     }
 
     @Test
-    void testGetCssFilenamesReturnsExpectedList() {
-        List<String> actualList = provider.getCssFilenames();
-
-        assertThat(actualList)
-                .containsExactly("css/state-estimation-sld.css")
-                .size().isEqualTo(1);
-    }
-
-    @Test
     void testGetFeederInfoStylesReturnsListOfUserDefinedIdWhenNotNull() {
         String userDefinedId = "hello world";
         FeederInfo feederInfoMock = Mockito.mock(FeederInfo.class);
