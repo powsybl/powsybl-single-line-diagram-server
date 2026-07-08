@@ -107,7 +107,7 @@ class SingleLineDiagramService {
             svgParameters.setLanguageTag(sldRequestInfos.getLanguage());
             svgParameters.setUnifyVoltageLevelColors(true);
             LayoutParameters layoutParameters = new LayoutParameters(LAYOUT_PARAMETERS);
-            layoutParameters.setSpaceForFeederInfos(120);
+            layoutParameters.setSpaceForFeederInfos(80);
 
             SldParameters sldParameters = new SldParameters();
 
@@ -120,9 +120,13 @@ class SingleLineDiagramService {
                 case SldDisplayMode.STATE_VARIABLE:
                     svgParameters.setBusesLegendAdded(true);
                     sldParameters.setLegendWriterFactory(CommonLegendWriter.createFactory(sldRequestInfos.getBusIdToIccValues()));
-                    sldParameters.setLabelProviderFactory(sldRequestInfos.isUseStateEstimationVisualisation()
-                            ? StateEstimationLabelProvider::new
-                            : CommonLabelProvider::new);
+                    if (sldRequestInfos.isUseStateEstimationVisualisation()) {
+                        sldParameters.setLabelProviderFactory(StateEstimationLabelProvider::new);
+                        layoutParameters.setSpaceForFeederInfos(120);
+                        layoutParameters.setCellWidth(70);
+                    } else {
+                        sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
+                    }
                     break;
                 default:
                     throw new DiagramBusinessException(INVALID_DISPLAY_MODE, String.format("Given sld display mode %s doesn't exist", sldRequestInfos.getSldDisplayMode()), Map.of("sldDisplayMode",
