@@ -13,10 +13,7 @@ import com.powsybl.commons.PowsyblException;
 import com.powsybl.commons.config.BaseVoltageConfig;
 import com.powsybl.commons.extensions.Extendable;
 import com.powsybl.iidm.network.*;
-import com.powsybl.iidm.network.extensions.BusbarSectionPositionAdder;
-import com.powsybl.iidm.network.extensions.ConnectablePosition;
-import com.powsybl.iidm.network.extensions.ConnectablePositionAdder;
-import com.powsybl.iidm.network.extensions.SubstationPosition;
+import com.powsybl.iidm.network.extensions.*;
 import com.powsybl.iidm.network.test.FourSubstationsNodeBreakerFactory;
 import com.powsybl.iidm.network.test.FourSubstationsNodeBreakerWithExtensionsFactory;
 import com.powsybl.nad.svg.StyleProvider;
@@ -1096,6 +1093,34 @@ class SingleLineDiagramTest {
         // divided by 1000 then rounded with 1 decimal
         assertTrue(svg.contains(">12.3 kA<"));
         assertTrue(svg.contains(">ICC<"));
+    }
+
+    @Test
+    void testSingleLineDiagramWithEstimData() {
+        UUID testNetworkId = UUID.randomUUID();
+        Network network = createTwoVoltageLevels();
+        Generator generator = network.getGenerator("g11");
+        generator.newExtension(MeasurementsAdder.class).add();
+        Measurements<Generator> measurements = generator.getExtension(Measurements.class);
+        measurements.newMeasurement()
+                .setId("active-power-measurement")
+                .setType(Measurement.Type.ACTIVE_POWER)
+                .setValue(15D)
+                .setValid(true)
+                .add();
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(network);
+
+        Map<String, Double> busIdToIcc = Map.of("vl1_1", 12345.6);
+
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setBusIdToIccValues(busIdToIcc);
+        requestInfos.setUseStateEstimationVisualisation(true);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+        assertTrue(svg.contains("sld-measurement-valid"));
     }
 
     @Test

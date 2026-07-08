@@ -22,8 +22,11 @@ import com.powsybl.sld.layout.VerticalSubstationLayoutFactory;
 import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.error.DiagramBusinessException;
+import com.powsybl.sld.server.estim.StateEstimationLabelProvider;
+import com.powsybl.sld.server.estim.StateEstimationStyleProvider;
 import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
+import com.powsybl.sld.svg.styles.EmptyStyleProvider;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.sld.svg.styles.StyleProvidersList;
 import com.powsybl.sld.svg.styles.iidm.HighlightLineStateStyleProvider;
@@ -116,8 +119,14 @@ class SingleLineDiagramService {
                     break;
                 case SldDisplayMode.STATE_VARIABLE:
                     svgParameters.setBusesLegendAdded(true);
-                    sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
                     sldParameters.setLegendWriterFactory(CommonLegendWriter.createFactory(sldRequestInfos.getBusIdToIccValues()));
+                    if (sldRequestInfos.isUseStateEstimationVisualisation()) {
+                        sldParameters.setLabelProviderFactory(StateEstimationLabelProvider::new);
+                        layoutParameters.setSpaceForFeederInfos(120);
+                        layoutParameters.setCellWidth(70);
+                    } else {
+                        sldParameters.setLabelProviderFactory(CommonLabelProvider::new);
+                    }
                     break;
                 default:
                     throw new DiagramBusinessException(INVALID_DISPLAY_MODE, String.format("Given sld display mode %s doesn't exist", sldRequestInfos.getSldDisplayMode()), Map.of("sldDisplayMode",
@@ -150,7 +159,8 @@ class SingleLineDiagramService {
                         : new NominalVoltageStyleProvider(baseVoltagesConfig),
                     new HighlightLineStateStyleProvider(network),
                     new SldSLimitStyleProvider(network, limitViolationStyles),
-                    new BusLegendStyleProvider()
+                    new BusLegendStyleProvider(),
+                    sldRequestInfos.isUseStateEstimationVisualisation() ? new StateEstimationStyleProvider() : new EmptyStyleProvider()
                 );
             });
 
