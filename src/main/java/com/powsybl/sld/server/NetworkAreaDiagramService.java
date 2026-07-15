@@ -67,7 +67,6 @@ import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.*;
 @ComponentScan(basePackageClasses = {NetworkStoreService.class})
 @Service
 class NetworkAreaDiagramService {
-
     @Value("${diagram-server.nad.max-voltage-levels}")
     private int maxVoltageLevels;
 
@@ -97,16 +96,14 @@ class NetworkAreaDiagramService {
 
     private final ObjectMapper objectMapper;
 
-    NetworkAreaDiagramService(
-            NetworkStoreService networkStoreService,
-            GeoDataService geoDataService,
-            FilterService filterService,
-            NetworkAreaExecutionService diagramExecutionService,
-            NadConfigRepository nadConfigRepository,
-            NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository,
-            @Lazy NetworkAreaDiagramService networkAreaDiagramService,
-            ObjectMapper objectMapper
-    ) {
+    NetworkAreaDiagramService(NetworkStoreService networkStoreService,
+                                     GeoDataService geoDataService,
+                                     FilterService filterService,
+                                     NetworkAreaExecutionService diagramExecutionService,
+                                     NadConfigRepository nadConfigRepository,
+                                     NadVoltageLevelConfiguredPositionRepository nadVoltageLevelConfiguredPositionRepository,
+                                     @Lazy NetworkAreaDiagramService networkAreaDiagramService,
+                                     ObjectMapper objectMapper) {
         this.networkStoreService = networkStoreService;
         this.geoDataService = geoDataService;
         this.filterService = filterService;
@@ -119,20 +116,19 @@ class NetworkAreaDiagramService {
 
     @Transactional
     public UUID createNetworkAreaDiagramConfig(NadConfigInfos nadConfigInfos) {
-        return nadConfigRepository.save(nadConfigInfos.toEntity())
-                .getId();
+        return nadConfigRepository.save(nadConfigInfos.toEntity()).getId();
     }
 
     @Transactional
     public List<UUID> createNetworkAreaDiagramConfigs(List<NadConfigInfos> nadConfigs) {
         List<NadConfigEntity> configs = nadConfigs.stream()
-                .map(NadConfigInfos::toEntity)
-                .toList();
+            .map(NadConfigInfos::toEntity)
+            .toList();
 
         List<NadConfigEntity> savedConfigs = nadConfigRepository.saveAll(configs);
         return savedConfigs.stream()
-                .map(NadConfigEntity::getId)
-                .toList();
+            .map(NadConfigEntity::getId)
+            .toList();
     }
 
     @Transactional
@@ -143,33 +139,29 @@ class NetworkAreaDiagramService {
     @Transactional
     public UUID duplicateNetworkAreaDiagramConfig(UUID originNadConfigUuid) {
         NadConfigEntity nadConfigEntity = nadConfigRepository.findById(originNadConfigUuid)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Failed to duplicate NAD config: no configuration found for UUID " + originNadConfigUuid));
+            .orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Failed to duplicate NAD config: no configuration found for UUID " + originNadConfigUuid)
+            );
 
         NadConfigEntity duplicateEntity = new NadConfigEntity(nadConfigEntity);
         duplicateEntity.setId(UUID.randomUUID()); // Assign new ID for the duplicate
-        return nadConfigRepository.save(duplicateEntity)
-                .getId();
+        return nadConfigRepository.save(duplicateEntity).getId();
     }
 
     @Transactional
     public void updateNetworkAreaDiagramConfig(UUID nadConfigUuid, NadConfigInfos nadConfigInfos) {
         NadConfigEntity entity = nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Failed to update NAD config: no configuration found for UUID " + nadConfigUuid));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Failed to update NAD config: no configuration found for UUID " + nadConfigUuid));
         updateNadConfig(entity, nadConfigInfos);
     }
 
     private void updateNadConfig(@NonNull NadConfigEntity entity, @NonNull NadConfigInfos nadConfigInfos) {
-        Optional.ofNullable(nadConfigInfos.getVoltageLevelIds())
-                .ifPresent(voltageLevels -> entity.setVoltageLevelIds(new HashSet<>(voltageLevels)));
-        Optional.ofNullable(nadConfigInfos.getScalingFactor())
-                .ifPresent(entity::setScalingFactor);
+        Optional.ofNullable(nadConfigInfos.getVoltageLevelIds()).ifPresent(voltageLevels ->
+            entity.setVoltageLevelIds(new HashSet<>(voltageLevels))
+        );
+        Optional.ofNullable(nadConfigInfos.getScalingFactor()).ifPresent(entity::setScalingFactor);
 
-        if (nadConfigInfos.getPositions() != null && !nadConfigInfos.getPositions()
-                .isEmpty()) {
+        if (nadConfigInfos.getPositions() != null && !nadConfigInfos.getPositions().isEmpty()) {
             updatePositions(entity, nadConfigInfos);
         }
     }
@@ -184,8 +176,7 @@ class NetworkAreaDiagramService {
         }
 
         for (NadVoltageLevelPositionInfos info : nadConfigInfos.getPositions()) {
-            if ((info.getId() == null || !uuidPositionsMap.containsKey(info.getId()))
-                && info.getVoltageLevelId() == null) {
+            if ((info.getId() == null || !uuidPositionsMap.containsKey(info.getId())) && info.getVoltageLevelId() == null) {
                 throw new DiagramBusinessException(EQUIPMENT_NOT_FOUND, "Missing id or voltageLevelId");
             }
             if (voltageLevelIdPositionsMap.containsKey(info.getVoltageLevelId())) {
@@ -194,44 +185,33 @@ class NetworkAreaDiagramService {
                 updateVoltageLevelPositions(uuidPositionsMap.get(info.getId()), info);
             } else {
                 NadVoltageLevelPositionEntity newPosition = info.toEntity();
-                entity.getPositions()
-                        .add(newPosition);
+                entity.getPositions().add(newPosition);
                 // We add the newly added position to the map to ensure we don't try to create another position with the same voltageLevelId
                 voltageLevelIdPositionsMap.put(info.getVoltageLevelId(), newPosition);
             }
         }
     }
 
-    private void updateVoltageLevelPositions(
-            @NonNull NadVoltageLevelPositionEntity entity,
-            @NonNull NadVoltageLevelPositionInfos nadVoltageLevelPositionInfos
-    ) {
-        Optional.ofNullable(nadVoltageLevelPositionInfos.getVoltageLevelId())
-                .ifPresent(entity::setVoltageLevelId);
-        Optional.ofNullable(nadVoltageLevelPositionInfos.getXPosition())
-                .ifPresent(entity::setXPosition);
-        Optional.ofNullable(nadVoltageLevelPositionInfos.getYPosition())
-                .ifPresent(entity::setYPosition);
-        Optional.ofNullable(nadVoltageLevelPositionInfos.getXLabelPosition())
-                .ifPresent(entity::setXLabelPosition);
-        Optional.ofNullable(nadVoltageLevelPositionInfos.getYLabelPosition())
-                .ifPresent(entity::setYLabelPosition);
+    private void updateVoltageLevelPositions(@NonNull NadVoltageLevelPositionEntity entity, @NonNull NadVoltageLevelPositionInfos nadVoltageLevelPositionInfos) {
+        Optional.ofNullable(nadVoltageLevelPositionInfos.getVoltageLevelId()).ifPresent(entity::setVoltageLevelId);
+        Optional.ofNullable(nadVoltageLevelPositionInfos.getXPosition()).ifPresent(entity::setXPosition);
+        Optional.ofNullable(nadVoltageLevelPositionInfos.getYPosition()).ifPresent(entity::setYPosition);
+        Optional.ofNullable(nadVoltageLevelPositionInfos.getXLabelPosition()).ifPresent(entity::setXLabelPosition);
+        Optional.ofNullable(nadVoltageLevelPositionInfos.getYLabelPosition()).ifPresent(entity::setYLabelPosition);
     }
 
     @Transactional(readOnly = true)
     public NadConfigInfos getNetworkAreaDiagramConfig(UUID nadConfigUuid) {
-        return nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Failed to retrieve NAD configuration: no configuration found for UUID " + nadConfigUuid))
-                .toDto();
+        return nadConfigRepository.findWithVoltageLevelIdsById(nadConfigUuid).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Failed to retrieve NAD configuration: no configuration found for UUID " + nadConfigUuid
+        )).toDto();
     }
 
     private Set<String> getVoltageLevelIdsFromFilter(UUID networkUuid, String variantId, UUID filterUuid) {
         List<IdentifiableAttributes> filterContent = filterService.exportFilter(networkUuid, variantId, filterUuid);
         return filterContent.stream()
-                .map(IdentifiableAttributes::getId)
-                .collect(Collectors.toSet());
+            .map(IdentifiableAttributes::getId)
+            .collect(Collectors.toSet());
     }
 
     @Transactional
@@ -239,101 +219,71 @@ class NetworkAreaDiagramService {
         nadConfigRepository.deleteById(nadConfigUuid);
     }
 
-    public CompletableFuture<String> generateNetworkAreaDiagramSvgAsync(
-            UUID networkUuid,
-            String variantId,
-            NadRequestInfos nadRequestInfos
-    ) {
-        return diagramExecutionService.supplyAsync(() -> self.generateNetworkAreaDiagramSvg(
-                networkUuid,
-                variantId,
-                nadRequestInfos));
+    public CompletableFuture<String> generateNetworkAreaDiagramSvgAsync(UUID networkUuid, String variantId, NadRequestInfos nadRequestInfos) {
+        return diagramExecutionService.supplyAsync(() -> self.generateNetworkAreaDiagramSvg(networkUuid, variantId, nadRequestInfos));
     }
 
     @Transactional(readOnly = true)
     public String generateNetworkAreaDiagramSvg(UUID networkUuid, String variantId, NadRequestInfos nadRequestInfos) {
         NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder = NadGenerationContext.builder()
-                .networkUuid(networkUuid)
-                .variantId(variantId)
-                .network(DiagramUtils.getNetwork(
-                        networkUuid,
-                        variantId,
-                        networkStoreService,
-                        PreloadingStrategy.COLLECTION));
+            .networkUuid(networkUuid)
+            .variantId(variantId)
+            .network(DiagramUtils.getNetwork(networkUuid, variantId, networkStoreService, PreloadingStrategy.COLLECTION));
 
         // Initial VLs
-        NadGenerationContext nadGenerationContext = initVoltageLevelsAndPositions(
-                nadGenerationContextBuilder,
-                nadRequestInfos);
+        NadGenerationContext nadGenerationContext = initVoltageLevelsAndPositions(nadGenerationContextBuilder, nadRequestInfos);
 
         // Modify the initial VLs
         // This order is important
 
         // Add VLs from filter
         if (nadRequestInfos.getFilterUuid() != null) {
-            nadGenerationContext.getVoltageLevelIds()
-                    .addAll(getVoltageLevelIdsFromFilter(networkUuid, variantId, nadRequestInfos.getFilterUuid()));
+            nadGenerationContext.getVoltageLevelIds().addAll(getVoltageLevelIdsFromFilter(networkUuid, variantId, nadRequestInfos.getFilterUuid()));
         }
 
         // Add VLs from list
-        nadGenerationContext.getVoltageLevelIds()
-                .addAll(nadRequestInfos.getVoltageLevelIds());
+        nadGenerationContext.getVoltageLevelIds().addAll(nadRequestInfos.getVoltageLevelIds());
 
         // Remove VLs from list
-        nadGenerationContext.getVoltageLevelIds()
-                .removeAll(nadRequestInfos.getVoltageLevelToOmitIds());
+        nadGenerationContext.getVoltageLevelIds().removeAll(nadRequestInfos.getVoltageLevelToOmitIds());
 
         // Add VLs from expansion
         // Expansion takes priority over remove
-        if (!nadRequestInfos.getVoltageLevelToExpandIds()
-                .isEmpty()) {
-            nadGenerationContext.getVoltageLevelIds()
-                    .addAll(getExpandedVoltageLevelIds(
-                            nadRequestInfos.getVoltageLevelToExpandIds(),
-                            nadGenerationContext.getNetwork()));
+        if (!nadRequestInfos.getVoltageLevelToExpandIds().isEmpty()) {
+            nadGenerationContext.getVoltageLevelIds().addAll(getExpandedVoltageLevelIds(nadRequestInfos.getVoltageLevelToExpandIds(), nadGenerationContext.getNetwork()));
         }
 
         // Remove non existent VLs
         removeNonExistentVLs(nadGenerationContext);
 
         // Maximum number of VLs
-        int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds()
-                .size();
+        int nbVoltageLevels = nadGenerationContext.getVoltageLevelIds().size();
         if (nbVoltageLevels > maxVoltageLevels) {
-            throw new DiagramBusinessException(
-                    MAX_VOLTAGE_LEVELS_DISPLAYED,
-                    "You need to reduce the number of voltage levels to be displayed in the network area diagram",
-                    Map.of("nbVoltageLevels", nbVoltageLevels, "maxVoltageLevels", maxVoltageLevels));
+            throw new DiagramBusinessException(MAX_VOLTAGE_LEVELS_DISPLAYED, "You need to reduce the number of voltage levels to be displayed in the network area diagram", Map.of("nbVoltageLevels",
+                    nbVoltageLevels, "maxVoltageLevels", maxVoltageLevels));
         }
 
         // Build Powsybl parameters
         List<BaseVoltageConfig> baseVoltagesConfigInfos = voltagesConfig.getBaseVoltagesConfigInfos();
-        buildGraphicalParameters(
-                nadGenerationContext,
-                nadRequestInfos.getCurrentLimitViolationsInfos(),
-                baseVoltagesConfigInfos,
-                nadRequestInfos.getLanguage());
+        buildGraphicalParameters(nadGenerationContext, nadRequestInfos.getCurrentLimitViolationsInfos(), baseVoltagesConfigInfos, nadRequestInfos.getLanguage());
 
         return processSvgAndMetadata(drawSvgAndBuildMetadata(nadGenerationContext));
     }
 
     private void removeNonExistentVLs(NadGenerationContext nadGenerationContext) {
-        nadGenerationContext.setVoltageLevelIds(nadGenerationContext.getVoltageLevelIds()
-                .stream()
-                .filter(vl -> nadGenerationContext.getNetwork()
-                                      .getVoltageLevel(vl) != null)
-                .collect(Collectors.toSet()));
-        nadGenerationContext.setVoltageLevelFilter(VoltageLevelFilter.createVoltageLevelsFilter(
+        nadGenerationContext.setVoltageLevelIds(nadGenerationContext.getVoltageLevelIds().stream()
+            .filter(vl -> nadGenerationContext.getNetwork().getVoltageLevel(vl) != null)
+            .collect(Collectors.toSet()));
+        nadGenerationContext.setVoltageLevelFilter(
+            VoltageLevelFilter.createVoltageLevelsFilter(
                 nadGenerationContext.getNetwork(),
-                new ArrayList<>(nadGenerationContext.getVoltageLevelIds())));
+                new ArrayList<>(nadGenerationContext.getVoltageLevelIds())
+            )
+        );
     }
 
-    private NadGenerationContext initVoltageLevelsAndPositions(
-            NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder,
-            NadRequestInfos nadRequestInfos
-    ) {
-        if (!nadRequestInfos.getPositions()
-                .isEmpty()) { // Init from positions
+    private NadGenerationContext initVoltageLevelsAndPositions(NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder, NadRequestInfos nadRequestInfos) {
+        if (!nadRequestInfos.getPositions().isEmpty()) { // Init from positions
             nadGenerationContextBuilder.voltageLevelIds(new HashSet<>(nadRequestInfos.getVoltageLevelIds()));
             nadGenerationContextBuilder.positions(new ArrayList<>(nadRequestInfos.getPositions()));
             nadGenerationContextBuilder.nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC);
@@ -354,50 +304,41 @@ class NetworkAreaDiagramService {
     }
 
     private void buildGraphicalParameters(
-            NadGenerationContext nadGenerationContext,
-            List<CurrentLimitViolationInfos> currentLimitViolationInfos,
-            List<BaseVoltageConfig> baseVoltagesConfigInfos,
-            String language
-    ) {
-        if (nadGenerationContext.getVoltageLevelIds()
-                .isEmpty()) {
-            throw new DiagramBusinessException(
-                    NO_VOLTAGE_LEVEL_FOUND,
-                    "No voltage level found for the NAD generation context");
+            NadGenerationContext nadGenerationContext, List<CurrentLimitViolationInfos> currentLimitViolationInfos, List<BaseVoltageConfig> baseVoltagesConfigInfos, String language) {
+        if (nadGenerationContext.getVoltageLevelIds().isEmpty()) {
+            throw new DiagramBusinessException(NO_VOLTAGE_LEVEL_FOUND, "No voltage level found for the NAD generation context");
         }
 
-        SvgParameters svgParameters = new SvgParameters().setUndefinedValueSymbol("—")
+        SvgParameters svgParameters = new SvgParameters()
+                .setUndefinedValueSymbol("—")
                 .setSvgWidthAndHeightAdded(true)
                 .setVoltageLevelLegendsIncluded(displayMeasurementsWithNad)
                 .setEdgeInfosIncluded(displayMeasurementsWithNad)
-                .setCssLocation(displayMeasurementsWithNad ? SvgParameters.CssLocation.INSERTED_IN_SVG
-                                                           : SvgParameters.CssLocation.EXTERNAL_NO_IMPORT)
+                .setCssLocation(displayMeasurementsWithNad ? SvgParameters.CssLocation.INSERTED_IN_SVG : SvgParameters.CssLocation.EXTERNAL_NO_IMPORT)
                 .setLanguageTag(language);
 
         LayoutParameters layoutParameters = new LayoutParameters();
         NadParameters nadParameters = new NadParameters();
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
-        Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(
-                currentLimitViolationInfos,
-                StyleProvider.LINE_OVERLOADED_CLASS);
-        nadParameters.setLabelProviderFactory(
-                displayMeasurementsWithNad ? NadMeasurementValidityLabelProvider::new : NadLabelProvider::new);
+        Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
+        nadParameters.setLabelProviderFactory(displayMeasurementsWithNad ? NadMeasurementValidityLabelProvider::new : NadLabelProvider::new);
 
         baseVoltagesConfigInfos.forEach(vl -> vl.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE));
         BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
         baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos);
         baseVoltagesConfig.setDefaultProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
-        nadParameters.setStyleProviderFactory(n -> displayMeasurementsWithNad ? new NadMeasurementValidityStyleProvider(nadGenerationContext.getNetwork(),
-                baseVoltagesConfig) : new NadLimitStyleProvider(
+        nadParameters.setStyleProviderFactory(n -> displayMeasurementsWithNad
+                ? new NadMeasurementValidityStyleProvider(nadGenerationContext.getNetwork(), baseVoltagesConfig)
+                : new NadLimitStyleProvider(
                 nadGenerationContext.getNetwork(),
                 baseVoltagesConfig,
-                limitViolationStyles));
+                limitViolationStyles
+        ));
 
         // Set style provider factory either with geographical data or with the provided positions (if any)
-        if (nadGenerationContext.getNadPositionsGenerationMode()
-            == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES) {
+        if (nadGenerationContext.getNadPositionsGenerationMode() == NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES) {
             nadParameters.setLayoutFactory(prepareGeographicalLayoutFactory(nadGenerationContext));
         } else {
             nadParameters.setLayoutFactory(prepareFixedLayoutFactory(nadGenerationContext));
@@ -406,10 +347,7 @@ class NetworkAreaDiagramService {
         nadGenerationContext.setNadParameters(nadParameters);
     }
 
-    private void initFromNadConfig(
-            NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder,
-            UUID nadConfigUuid
-    ) {
+    private void initFromNadConfig(NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder, UUID nadConfigUuid) {
         NadConfigInfos nadConfigInfos = getNetworkAreaDiagramConfig(nadConfigUuid);
         nadGenerationContextBuilder.voltageLevelIds(new HashSet<>(nadConfigInfos.getVoltageLevelIds()));
         nadGenerationContextBuilder.positions(new ArrayList<>(nadConfigInfos.getPositions()));
@@ -417,12 +355,13 @@ class NetworkAreaDiagramService {
     }
 
     private void initFromConfiguredPositions(NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder) {
-        List<NadVoltageLevelConfiguredPositionEntity> nadVoltageLevelPositionInfos =
-                nadVoltageLevelConfiguredPositionRepository.findAll();
+        List<NadVoltageLevelConfiguredPositionEntity> nadVoltageLevelPositionInfos = nadVoltageLevelConfiguredPositionRepository.findAll();
         if (nadVoltageLevelPositionInfos.isEmpty()) {
             throw new DiagramBusinessException(NO_CONFIGURED_POSITION, "No configured positions found!");
         }
-        nadGenerationContextBuilder.positions(nadVoltageLevelPositionInfos.stream()
+        nadGenerationContextBuilder.positions(
+            nadVoltageLevelPositionInfos
+                .stream()
                 .map(NadVoltageLevelConfiguredPositionEntity::toDto)
                 .toList());
     }
@@ -431,12 +370,10 @@ class NetworkAreaDiagramService {
 
         // In order to draw half the lines that connect to the out of bound voltage levels, we have to know their coordinates.
         // To do so, we create a filter with a depth=1 that will include these out of bound voltage levels.
-        List<VoltageLevel> extendedVoltageLevelFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(nadGenerationContext.getNetwork(),
-                        new ArrayList<>(nadGenerationContext.getVoltageLevelIds()),
-                        1)
-                .voltageLevels()
-                .stream()
-                .toList();
+        List<VoltageLevel> extendedVoltageLevelFilter = VoltageLevelFilter.createVoltageLevelsDepthFilter(
+                nadGenerationContext.getNetwork(),
+                new ArrayList<>(nadGenerationContext.getVoltageLevelIds()),
+                1).voltageLevels().stream().toList();
 
         List<Substation> extendedSubstations = extendedVoltageLevelFilter.stream()
                 .map(VoltageLevel::getNullableSubstation)
@@ -444,51 +381,43 @@ class NetworkAreaDiagramService {
                 .toList();
 
         // Watch out : assignGeoDataCoordinates also modifies the network
-        Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(
-                nadGenerationContext,
-                extendedSubstations);
+        Map<String, Coordinate> substationGeoDataMap = assignGeoDataCoordinates(nadGenerationContext, extendedSubstations);
 
         if (nadGenerationContext.getScalingFactor() == null || nadGenerationContext.getScalingFactor() <= 0) {
             // Let's calculate the scaling factor
-            List<String> substations = nadGenerationContext.getVoltageLevelFilter()
-                    .voltageLevels()
-                    .stream()
-                    .map(VoltageLevel::getNullableSubstation)
-                    .filter(Objects::nonNull)
-                    .map(Substation::getId)
-                    .toList();
+            List<String> substations = nadGenerationContext.getVoltageLevelFilter().voltageLevels().stream()
+                            .map(VoltageLevel::getNullableSubstation)
+                            .filter(Objects::nonNull)
+                            .map(Substation::getId)
+                            .toList();
 
-            List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet()
-                    .stream()
+            List<Coordinate> coordinatesForScaling = substationGeoDataMap.entrySet().stream()
                     .filter(entry -> substations.contains(entry.getKey()))
                     .map(Map.Entry::getValue)
                     .toList();
 
             nadGenerationContext.setScalingFactor(this.calculateScalingFactor(coordinatesForScaling));
         }
-        return new GeographicalLayoutFactory(
-                nadGenerationContext.getNetwork(),
-                nadGenerationContext.getScalingFactor(),
-                RADIUS_FACTOR,
-                BasicForceLayout::new);
+        return new GeographicalLayoutFactory(nadGenerationContext.getNetwork(), nadGenerationContext.getScalingFactor(), RADIUS_FACTOR, BasicForceLayout::new);
     }
 
     private LayoutFactory prepareFixedLayoutFactory(NadGenerationContext nadGenerationContext) {
         Map<String, Point> positionsForFixedLayout = new HashMap<>();
         Map<String, TextPosition> textNodesPositionsForFixedLayout = new HashMap<>();
 
-        nadGenerationContext.getPositions()
-                .forEach(info -> {
-                    positionsForFixedLayout.put(
-                            info.getVoltageLevelId(),
-                            new Point(info.getXPosition(), info.getYPosition()));
-                    textNodesPositionsForFixedLayout.put(
-                            info.getVoltageLevelId(),
-                            new TextPosition(
-                                    new Point(info.getXLabelPosition(), info.getYLabelPosition()),
-                                    new Point(0, 0) // We do not display the edge connections
-                            ));
-                });
+        nadGenerationContext.getPositions().forEach(info -> {
+            positionsForFixedLayout.put(
+                    info.getVoltageLevelId(),
+                    new Point(info.getXPosition(), info.getYPosition())
+            );
+            textNodesPositionsForFixedLayout.put(
+                    info.getVoltageLevelId(),
+                    new TextPosition(
+                            new Point(info.getXLabelPosition(), info.getYLabelPosition()),
+                            new Point(0, 0) // We do not display the edge connections
+                    )
+            );
+        });
 
         return new FixedLayoutFactory(positionsForFixedLayout, textNodesPositionsForFixedLayout, BasicForceLayout::new);
     }
@@ -498,10 +427,11 @@ class NetworkAreaDiagramService {
             String svg = svgAndMetadata.getSvg();
             String metadata = svgAndMetadata.getMetadata();
             Object additionalMetadata = svgAndMetadata.getAdditionalMetadata();
-            return objectMapper.writeValueAsString(objectMapper.createObjectNode()
-                    .put(SVG_TAG, svg)
-                    .putRawValue(METADATA, new RawValue(metadata))
-                    .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
+            return objectMapper.writeValueAsString(
+                    objectMapper.createObjectNode()
+                            .put(SVG_TAG, svg)
+                            .putRawValue(METADATA, new RawValue(metadata))
+                            .putPOJO(ADDITIONAL_METADATA, additionalMetadata));
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException("Failed to parse JSON response", e);
         }
@@ -555,10 +485,9 @@ class NetworkAreaDiagramService {
             return voltageLevelIds;
         }
         return VoltageLevelFilter.createVoltageLevelsDepthFilter(network, new ArrayList<>(voltageLevelIds), 1)
-                .voltageLevels()
-                .stream()
-                .map(VoltageLevel::getId)
-                .collect(Collectors.toSet());
+                        .voltageLevels().stream()
+                        .map(VoltageLevel::getId)
+                        .collect(Collectors.toSet());
     }
 
     private SvgAndMetadata drawSvgAndBuildMetadata(NadGenerationContext nadGenerationContext) {
@@ -568,14 +497,14 @@ class NetworkAreaDiagramService {
                     svgWriter,
                     metadataWriter,
                     nadGenerationContext.getNadParameters(),
-                    nadGenerationContext.getVoltageLevelFilter());
+                    nadGenerationContext.getVoltageLevelFilter()
+            );
             Map<String, Object> additionalMetadata = computeAdditionalMetadata(nadGenerationContext);
 
             return SvgAndMetadata.builder()
                     .svg(svgWriter.toString())
                     .metadata(metadataWriter.toString())
-                    .additionalMetadata(additionalMetadata)
-                    .build();
+                    .additionalMetadata(additionalMetadata).build();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -585,34 +514,24 @@ class NetworkAreaDiagramService {
      * Updates the network with the substation's positions in an extension and return the coordinates for further processing.
      * Note : nadGenerationContext.network is modified by reference
      */
-    public Map<String, Coordinate> assignGeoDataCoordinates(
-            NadGenerationContext nadGenerationContext,
-            List<Substation> substationsToFetch
-    ) {
+    public Map<String, Coordinate> assignGeoDataCoordinates(NadGenerationContext nadGenerationContext, List<Substation> substationsToFetch) {
 
         String substationsGeoDataString = geoDataService.getSubstationsGraphics(
                 nadGenerationContext.getNetworkUuid(),
                 nadGenerationContext.getVariantId(),
-                substationsToFetch.stream()
-                        .map(Substation::getId)
-                        .toList());
-        List<SubstationGeoData> substationsGeoData = ResourceUtils.fromStringToSubstationGeoData(substationsGeoDataString,
-                new ObjectMapper());
+                substationsToFetch.stream().map(Substation::getId).toList()
+        );
+        List<SubstationGeoData> substationsGeoData = ResourceUtils.fromStringToSubstationGeoData(substationsGeoDataString, new ObjectMapper());
         Map<String, Coordinate> substationGeoDataMap = substationsGeoData.stream()
                 .collect(Collectors.toMap(SubstationGeoData::getId, SubstationGeoData::getCoordinate));
 
         for (Substation substation : substationsToFetch) {
-            if (nadGenerationContext.getNetwork()
-                        .getSubstation(substation.getId())
-                        .getExtension(SubstationPosition.class) == null) {
+            if (nadGenerationContext.getNetwork().getSubstation(substation.getId()).getExtension(SubstationPosition.class) == null) {
                 com.powsybl.sld.server.dto.Coordinate coordinate = substationGeoDataMap.get(substation.getId());
                 if (coordinate != null) {
-                    nadGenerationContext.getNetwork()
-                            .getSubstation(substation.getId())
+                    nadGenerationContext.getNetwork().getSubstation(substation.getId())
                             .newExtension(SubstationPositionAdder.class)
-                            .withCoordinate(new com.powsybl.iidm.network.extensions.Coordinate(
-                                    coordinate.getLat(),
-                                    coordinate.getLon()))
+                            .withCoordinate(new com.powsybl.iidm.network.extensions.Coordinate(coordinate.getLat(), coordinate.getLon()))
                             .add();
                 }
             }
@@ -621,17 +540,12 @@ class NetworkAreaDiagramService {
     }
 
     private Map<String, Object> computeAdditionalMetadata(NadGenerationContext nadGenerationContext) {
-        List<VoltageLevelInfos> voltageLevelsInfos = nadGenerationContext.getVoltageLevelFilter()
-                .voltageLevels()
-                .stream()
+        List<VoltageLevelInfos> voltageLevelsInfos = nadGenerationContext.getVoltageLevelFilter().voltageLevels().stream()
                 .map(VoltageLevelInfos::new)
                 .toList();
 
         Map<String, Object> metadata = new HashMap<>();
-        metadata.put(
-                "nbVoltageLevels",
-                nadGenerationContext.getVoltageLevelFilter()
-                        .getNbVoltageLevels());
+        metadata.put("nbVoltageLevels", nadGenerationContext.getVoltageLevelFilter().getNbVoltageLevels());
         metadata.put("voltageLevels", voltageLevelsInfos);
         metadata.put("scalingFactor", nadGenerationContext.getScalingFactor());
 
@@ -641,38 +555,27 @@ class NetworkAreaDiagramService {
     @Transactional
     public void createNadPositionsConfigFromCsv(MultipartFile file) {
         if (!CsvFileValidator.hasCSVFormat(file)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid CSV format for NAD configured positions");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid CSV format for NAD configured positions");
         }
 
         List<NadVoltageLevelPositionInfos> positions;
         try {
             positions = getPositionsFromCsv(file);
             if (positions.isEmpty()) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "No NAD configured positions found from the csv file");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No NAD configured positions found from the csv file");
             }
         } catch (IOException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "The csv file is invalid for NAD configured positions",
-                    e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The csv file is invalid for NAD configured positions", e);
         }
 
         nadVoltageLevelConfiguredPositionRepository.deleteAll();
-        nadVoltageLevelConfiguredPositionRepository.saveAll(positions.stream()
-                .map(NadVoltageLevelPositionInfos::toConfiguredPositionEntity)
-                .toList());
+        nadVoltageLevelConfiguredPositionRepository.saveAll(positions.stream().map(NadVoltageLevelPositionInfos::toConfiguredPositionEntity).toList());
     }
 
     private List<NadVoltageLevelPositionInfos> parsePositions(CsvMapReader mapReader) throws IOException {
         String[] headers = CsvFileValidator.getHeaders(mapReader);
         if (headers.length == 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "The csv file headers are invalid for NAD configured positions");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The csv file headers are invalid for NAD configured positions");
         }
         List<NadVoltageLevelPositionInfos> nadVoltageLevelPositionInfos = new ArrayList<>(mapReader.getRowNumber());
         Map<String, String> row;
@@ -683,23 +586,21 @@ class NetworkAreaDiagramService {
             double xLabelPosition = Double.parseDouble(row.get(CsvFileValidator.X_LABEL_POSITION));
             double yLabelPosition = Double.parseDouble(row.get(CsvFileValidator.Y_LABEL_POSITION));
             NadVoltageLevelPositionInfos positionInfos = NadVoltageLevelPositionInfos.builder()
-                    .voltageLevelId(id)
-                    .xPosition(xPosition)
-                    .yPosition(yPosition)
-                    .xLabelPosition(xLabelPosition)
-                    .yLabelPosition(yLabelPosition)
-                    .build();
+                .voltageLevelId(id)
+                .xPosition(xPosition)
+                .yPosition(yPosition)
+                .xLabelPosition(xLabelPosition)
+                .yLabelPosition(yLabelPosition)
+                .build();
             nadVoltageLevelPositionInfos.add(positionInfos);
         }
         return nadVoltageLevelPositionInfos;
     }
 
     private List<NadVoltageLevelPositionInfos> getPositionsFromCsv(MultipartFile file) throws IOException {
-        try (BOMInputStream bomInputStream = BOMInputStream.builder()
-                .setInputStream(file.getInputStream())
-                .setByteOrderMarks(ByteOrderMark.UTF_8)
-                .get(); BufferedReader fileReader = new BufferedReader(new InputStreamReader(bomInputStream, StandardCharsets.UTF_8));
-                CsvMapReader mapReader = new CsvMapReader(fileReader, CsvFileValidator.CSV_PREFERENCE)) {
+        try (BOMInputStream bomInputStream = BOMInputStream.builder().setInputStream(file.getInputStream()).setByteOrderMarks(ByteOrderMark.UTF_8).get();
+            BufferedReader fileReader = new BufferedReader(new InputStreamReader(bomInputStream, StandardCharsets.UTF_8));
+            CsvMapReader mapReader = new CsvMapReader(fileReader, CsvFileValidator.CSV_PREFERENCE)) {
             return parsePositions(mapReader);
         }
     }
