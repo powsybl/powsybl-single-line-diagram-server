@@ -15,7 +15,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -30,14 +30,14 @@ public class GeoDataService {
     public static final String NETWORK_UUID = "networkUuid";
     static final String SUBSTATIONS_INFOS = "substations/infos";
     private static final String DELIMITER = "/";
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
     @Setter
     private String geoDataServerBaseUri;
 
     public GeoDataService(@Value("${gridsuite.services.geo-data-server.base-uri:http://geo-data-server/}") String geoDataServerBaseUri,
-                          RestTemplate restTemplate) {
+                          RestClient restClient) {
         this.geoDataServerBaseUri = geoDataServerBaseUri;
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
     }
 
     private String getGeoDataServerURI() {
@@ -56,7 +56,10 @@ public class GeoDataService {
                 .buildAndExpand()
                 .toUriString();
 
-        return restTemplate.postForObject(path, substationsIds, String.class);
+        return restClient.post()
+                .uri(path)
+                .body(substationsIds)
+                .retrieve()
+                .body(String.class);
     }
 }
-
