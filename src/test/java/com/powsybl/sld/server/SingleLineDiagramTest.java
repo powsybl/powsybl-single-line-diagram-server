@@ -413,7 +413,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlFr1A"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
                 .build();
 
@@ -438,7 +437,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("ThisVlDoesNotExist"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.GEOGRAPHICAL_COORDINATES)
                 .build();
 
@@ -470,7 +468,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Collections.emptySet())
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -495,7 +492,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Collections.emptySet())
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
@@ -530,7 +526,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Collections.emptySet())
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -553,12 +548,11 @@ class SingleLineDiagramTest {
     }
 
     @Test
-    void testNetworkAreaDiagramWithPositionsFromUser() throws Exception {
-        // We want to test if the user's defined positions are not overridden by the nad config's positions.
+    void testNetworkAreaDiagramWithPositionsFromNadConfig() throws Exception {
+        // The positions of the nad config are the ones used to draw the diagram
         UUID networkUuid = UUID.randomUUID();
         UUID validConfigUuid = UUID.randomUUID();
 
-        // First test, with positions from the nad config
         NadVoltageLevelPositionInfos positionFromConfig = NadVoltageLevelPositionInfos.builder()
                 .voltageLevelId("vlFr1A")
                 .xPosition(75416.26)
@@ -584,7 +578,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Collections.emptySet())
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -593,81 +586,17 @@ class SingleLineDiagramTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestWithPositionFromNadConfig)))
                 .andExpect(request().asyncStarted());
-        MvcResult firstResult = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
+        MvcResult result = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn();
 
-        String firstResultContent = firstResult.getResponse().getContentAsString();
+        String resultContent = result.getResponse().getContentAsString();
 
-        assertTrue(firstResultContent.contains("75416.26")); // Positions from the nad config
-        assertTrue(firstResultContent.contains("12326.69"));
-        assertTrue(firstResultContent.contains("846.1"));
-        assertTrue(firstResultContent.contains("791.1"));
-
-        // Second test, with positions from the user
-        NadVoltageLevelPositionInfos positionFromUser = NadVoltageLevelPositionInfos.builder()
-                .voltageLevelId("vlFr1A")
-                .xPosition(88588.25)
-                .yPosition(99199.85)
-                .xLabelPosition(641.2)
-                .yLabelPosition(932.2)
-                .build();
-
-        NadRequestInfos requestWithPositionsFromUser = NadRequestInfos.builder()
-                .filterUuid(null)
-                .nadConfigUuid(null)
-                .voltageLevelIds(Set.of("vlFr1A"))
-                .voltageLevelToExpandIds(Collections.emptySet())
-                .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(List.of(positionFromUser))
-                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .build();
-
-        mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
-                        .param("variantId", VARIANT_2_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestWithPositionsFromUser)))
-                .andExpect(request().asyncStarted());
-        MvcResult secondResult = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-
-        String secondResultContent = secondResult.getResponse().getContentAsString();
-
-        assertTrue(secondResultContent.contains("88588.25")); // Positions from the user
-        assertTrue(secondResultContent.contains("99199.85"));
-        assertTrue(secondResultContent.contains("641.2"));
-        assertTrue(secondResultContent.contains("932.2"));
-
-        // final test, with positions from both the nad config and the user
-        NadRequestInfos requestWithPositionsFromBoth = NadRequestInfos.builder()
-                .filterUuid(null)
-                .nadConfigUuid(validConfigUuid)
-                .voltageLevelIds(Set.of("vlFr1A"))
-                .voltageLevelToExpandIds(Collections.emptySet())
-                .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(List.of(positionFromUser))
-                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
-                .build();
-
-        mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
-                        .param("variantId", VARIANT_2_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestWithPositionsFromBoth)))
-                .andExpect(request().asyncStarted());
-        MvcResult thirdResult = mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
-                .andExpect(status().isOk())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON_VALUE))
-                .andReturn();
-
-        String thirdResultContent = thirdResult.getResponse().getContentAsString();
-
-        assertTrue(thirdResultContent.contains("88588.25")); // Positions from the user
-        assertTrue(thirdResultContent.contains("99199.85"));
-        assertFalse(thirdResultContent.contains("75416.26")); // We do not want the positions from the nad config
-        assertFalse(thirdResultContent.contains("12326.69"));
+        assertTrue(resultContent.contains("75416.26")); // Positions from the nad config
+        assertTrue(resultContent.contains("12326.69"));
+        assertTrue(resultContent.contains("846.1"));
+        assertTrue(resultContent.contains("791.1"));
     }
 
     @Test
@@ -693,7 +622,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Collections.emptySet())
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -731,7 +659,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Collections.emptySet())
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -821,7 +748,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlFr1A"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -848,7 +774,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlFr1A"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.CONFIGURED)
                 .build();
 
@@ -873,7 +798,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Collections.emptySet())
                 .voltageLevelToExpandIds(Set.of("vlFr1A"))
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -901,7 +825,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlFr3A"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .currentLimitViolationsInfos(List.of(
                     CurrentLimitViolationInfos.builder()
@@ -935,7 +858,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlFr3A"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .currentLimitViolationsInfos(List.of(
                     CurrentLimitViolationInfos.builder()
@@ -981,7 +903,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlFr3A"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -1172,7 +1093,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlEs1B"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -1198,7 +1118,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlEs1B"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Set.of("vlFr2A"))
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -1239,7 +1158,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlEs1B")) // Adds vlEs1B
                 .voltageLevelToExpandIds(Set.of("vlFr1A")) // Adds vlFr2A (vlFr1A's neighour)
                 .voltageLevelToOmitIds(Set.of("vlFr2A"))
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -1273,7 +1191,6 @@ class SingleLineDiagramTest {
             .voltageLevelIds(vlIds)
             .voltageLevelToExpandIds(Collections.emptySet())
             .voltageLevelToOmitIds(Collections.emptySet())
-            .positions(Collections.emptyList())
             .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
             .build();
 
@@ -1591,7 +1508,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlFr1A", "vlNotFound1"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
                 .build();
 
@@ -1614,7 +1530,6 @@ class SingleLineDiagramTest {
                 .voltageLevelIds(Set.of("vlNotFound1", "vlNotFound2"))
                 .voltageLevelToExpandIds(Collections.emptySet())
                 .voltageLevelToOmitIds(Collections.emptySet())
-                .positions(Collections.emptyList())
                 .build();
 
         mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", testNetworkId)
