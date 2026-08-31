@@ -11,6 +11,7 @@ package com.powsybl.sld.server.estim;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.styles.EmptyStyleProvider;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,8 +20,24 @@ import java.util.List;
  */
 public class StateEstimationStyleProvider extends EmptyStyleProvider {
 
+    private static final String VALID_MEASUREMENT_CSS = "sld-measurement-valid";
+    private static final String INVALID_MEASUREMENT_CSS = "sld-measurement-invalid";
+    private static final String CRITICAL_MEASUREMENT_CSS = "sld-measurement-critical";
+
     @Override
-    public List<String> getFeederInfoStyles(FeederInfo info) {
-        return info.getUserDefinedId() != null ? Collections.singletonList(info.getUserDefinedId()) : Collections.emptyList();
+    public List<String> getFeederInfoStyles(FeederInfo feederInfo) {
+        if (feederInfo instanceof EstimMeasurementsFeederInfo estimMeasurementsFeederInfo) {
+            return getMeasurementsStyles(estimMeasurementsFeederInfo);
+        }
+        return Collections.emptyList();
+    }
+
+    private List<String> getMeasurementsStyles(EstimMeasurementsFeederInfo estimMeasurementsFeederInfo) {
+        List<String> styles = new ArrayList<>();
+        styles.add(estimMeasurementsFeederInfo.isValid() ? VALID_MEASUREMENT_CSS : INVALID_MEASUREMENT_CSS);
+        if (estimMeasurementsFeederInfo.isCritical()) {
+            styles.add(CRITICAL_MEASUREMENT_CSS);
+        }
+        return styles;
     }
 }
