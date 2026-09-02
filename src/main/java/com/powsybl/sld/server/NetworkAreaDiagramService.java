@@ -278,20 +278,14 @@ class NetworkAreaDiagramService {
     }
 
     private NadGenerationContext initVoltageLevelsAndPositions(NadGenerationContext.NadGenerationContextBuilder nadGenerationContextBuilder, NadRequestInfos nadRequestInfos) {
-        if (!nadRequestInfos.getPositions().isEmpty()) { // Init from positions
-            nadGenerationContextBuilder.voltageLevelIds(new HashSet<>(nadRequestInfos.getVoltageLevelIds()));
-            nadGenerationContextBuilder.positions(new ArrayList<>(nadRequestInfos.getPositions()));
+        if (nadRequestInfos.getNadConfigUuid() != null) { // Init from nad config
+            initFromNadConfig(nadGenerationContextBuilder, nadRequestInfos.getNadConfigUuid());
             nadGenerationContextBuilder.nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC);
-        } else {
-            if (nadRequestInfos.getNadConfigUuid() != null) { // Init from nad config
-                initFromNadConfig(nadGenerationContextBuilder, nadRequestInfos.getNadConfigUuid());
-                nadGenerationContextBuilder.nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC);
-            } else { // Init from list without positions
-                nadGenerationContextBuilder.voltageLevelIds(new HashSet<>(nadRequestInfos.getVoltageLevelIds()));
-                nadGenerationContextBuilder.nadPositionsGenerationMode(nadRequestInfos.getNadPositionsGenerationMode());
-                if (nadRequestInfos.getNadPositionsGenerationMode() == NadPositionsGenerationMode.CONFIGURED) {
-                    initFromConfiguredPositions(nadGenerationContextBuilder);
-                }
+        } else { // Init from list, the positions are generated
+            nadGenerationContextBuilder.voltageLevelIds(new HashSet<>(nadRequestInfos.getVoltageLevelIds()));
+            nadGenerationContextBuilder.nadPositionsGenerationMode(nadRequestInfos.getNadPositionsGenerationMode());
+            if (nadRequestInfos.getNadPositionsGenerationMode() == NadPositionsGenerationMode.CONFIGURED) {
+                initFromConfiguredPositions(nadGenerationContextBuilder);
             }
         }
 
