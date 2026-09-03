@@ -24,6 +24,7 @@ import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.error.DiagramBusinessException;
 import com.powsybl.sld.server.estim.MeasurementLabelProvider;
 import com.powsybl.sld.server.estim.MeasurementStyleProvider;
+import com.powsybl.sld.server.estim.ObservabilityStyleProvider;
 import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.EmptyStyleProvider;
@@ -154,13 +155,12 @@ class SingleLineDiagramService {
                 baseVoltagesConfig.setDefaultProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
                 return new StyleProvidersList(
-                    sldRequestInfos.isTopologicalColoring()
-                        ? new TopologicalStyleProvider(baseVoltagesConfig, network, parameters)
-                        : new NominalVoltageStyleProvider(baseVoltagesConfig),
+                    sldRequestInfos.isTopologicalColoring() ? new TopologicalStyleProvider(baseVoltagesConfig, network, parameters) : new NominalVoltageStyleProvider(baseVoltagesConfig),
                     new HighlightLineStateStyleProvider(network),
                     new SldSLimitStyleProvider(network, limitViolationStyles),
                     new BusLegendStyleProvider(),
-                    sldRequestInfos.isMeasurements() ? new MeasurementStyleProvider() : new EmptyStyleProvider()
+                    sldRequestInfos.isMeasurements() ? new MeasurementStyleProvider() : new EmptyStyleProvider(),
+                    sldRequestInfos.isObservability() ? new ObservabilityStyleProvider(network) : new EmptyStyleProvider()
                 );
             });
 
