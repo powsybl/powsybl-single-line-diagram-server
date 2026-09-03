@@ -46,7 +46,7 @@ import static org.assertj.core.api.Assertions.tuple;
  * @author Kamil MARUT {@literal <kamil.marut at rte-france.com>}
  */
 @ExtendWith(MockitoExtension.class)
-class StateEstimationLabelProviderTest {
+class MeasurementLabelProviderTest {
 
     private static final String REACTIVE_POWER_UNIT = "Mvar";
     private static final String ACTIVE_POWER_UNIT = "MW";
@@ -80,7 +80,7 @@ class StateEstimationLabelProviderTest {
     @Mock
     private SvgParameters svgParametersMock;
 
-    private StateEstimationLabelProvider provider;
+    private MeasurementLabelProvider provider;
 
     private static Stream<Arguments> provideSidedMeasurements() {
         return Stream.of(
@@ -92,7 +92,7 @@ class StateEstimationLabelProviderTest {
     @BeforeEach
     void setUp() {
         prepareMocks();
-        provider = new StateEstimationLabelProvider(networkMock, sldComponentLibraryMock, layoutParametersMock, svgParametersMock);
+        provider = new MeasurementLabelProvider(networkMock, sldComponentLibraryMock, layoutParametersMock, svgParametersMock);
     }
 
     @Test
@@ -126,7 +126,7 @@ class StateEstimationLabelProviderTest {
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
         assertThat(actualFeederInfos).hasSize(5)
-                .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof EstimMeasurementsFeederInfo))
+                .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(3)
                 .extracting("componentType", "rightLabel", "userDefinedId")
                 .contains(
@@ -134,7 +134,7 @@ class StateEstimationLabelProviderTest {
             tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
             tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null)
         );
-        assertThat(actualFeederInfos).filteredOn(EstimMeasurementsFeederInfo.class::isInstance)
+        assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
                 .hasSize(2)
                 .extracting("componentType", "rightLabel", "isValid", "isCritical")
                 .contains(
@@ -154,7 +154,7 @@ class StateEstimationLabelProviderTest {
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
         assertThat(actualFeederInfos).hasSize(5)
-                .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof EstimMeasurementsFeederInfo))
+                .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(3)
                 .extracting("componentType", "rightLabel", "userDefinedId")
                 .contains(
@@ -162,7 +162,7 @@ class StateEstimationLabelProviderTest {
                         tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
                         tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null)
         );
-        assertThat(actualFeederInfos).filteredOn(EstimMeasurementsFeederInfo.class::isInstance)
+        assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
                 .hasSize(2)
                 .extracting("componentType", "rightLabel", "isValid", "isCritical")
                 .contains(
@@ -206,7 +206,7 @@ class StateEstimationLabelProviderTest {
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
         assertThat(actualFeederInfos).hasSize(6)
-                .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof EstimMeasurementsFeederInfo))
+                .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(4)
                 .extracting("componentType", "rightLabel", "userDefinedId")
                 .contains(
@@ -215,7 +215,7 @@ class StateEstimationLabelProviderTest {
                         tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null),
                         tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of(UNDEFINED_VALUE_SYMBOL + " %"), null)
         );
-        assertThat(actualFeederInfos).filteredOn(EstimMeasurementsFeederInfo.class::isInstance)
+        assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
                 .hasSize(2)
                 .extracting("componentType", "rightLabel", "isValid", "isCritical")
                 .contains(
@@ -258,7 +258,7 @@ class StateEstimationLabelProviderTest {
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
         assertThat(actualFeederInfos).hasSize(5)
-                .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof EstimMeasurementsFeederInfo))
+                .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(3)
                 .extracting("componentType", "rightLabel", "userDefinedId")
                 .contains(
@@ -266,7 +266,7 @@ class StateEstimationLabelProviderTest {
             tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
             tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null)
         );
-        assertThat(actualFeederInfos).filteredOn(EstimMeasurementsFeederInfo.class::isInstance)
+        assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
                 .hasSize(2)
                 .extracting("componentType", "rightLabel", "isValid", "isCritical")
                 .contains(
@@ -311,7 +311,7 @@ class StateEstimationLabelProviderTest {
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
         assertThat(actualFeederInfos).hasSize(6)
-                .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof EstimMeasurementsFeederInfo))
+                .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(4)
                 .extracting("componentType", "rightLabel", "userDefinedId")
                 .contains(
@@ -320,7 +320,7 @@ class StateEstimationLabelProviderTest {
                         tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null),
                         tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of(UNDEFINED_VALUE_SYMBOL + " %"), null)
         );
-        assertThat(actualFeederInfos).filteredOn(EstimMeasurementsFeederInfo.class::isInstance)
+        assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
                 .hasSize(2)
                 .extracting("componentType", "rightLabel", "isValid", "isCritical")
                 .contains(
@@ -533,7 +533,7 @@ class StateEstimationLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).filteredOn(EstimMeasurementsFeederInfo.class::isInstance)
+        assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
                 .extracting("rightLabel")
                 .containsExactly(Optional.of("13.0 MW"), Optional.of("15.0 Mvar"));
     }
@@ -567,7 +567,7 @@ class StateEstimationLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).filteredOn(EstimMeasurementsFeederInfo.class::isInstance)
+        assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
                 .extracting("rightLabel")
                 .contains(Optional.of("400.0 MW"));
     }
@@ -641,7 +641,7 @@ class StateEstimationLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).filteredOn(fi -> fi instanceof EstimMeasurementsFeederInfo)
+        assertThat(actualFeederInfos).filteredOn(fi -> fi instanceof MeasurementFeederInfo)
                 .extracting("rightLabel")
                 .containsExactly(Optional.of("10.0 MW"), Optional.of("11.0 Mvar"));
     }

@@ -22,8 +22,8 @@ import com.powsybl.sld.layout.VerticalSubstationLayoutFactory;
 import com.powsybl.sld.library.SldComponentLibrary;
 import com.powsybl.sld.server.dto.*;
 import com.powsybl.sld.server.error.DiagramBusinessException;
-import com.powsybl.sld.server.estim.StateEstimationLabelProvider;
-import com.powsybl.sld.server.estim.StateEstimationStyleProvider;
+import com.powsybl.sld.server.estim.MeasurementLabelProvider;
+import com.powsybl.sld.server.estim.MeasurementStyleProvider;
 import com.powsybl.sld.server.utils.*;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.EmptyStyleProvider;
@@ -120,8 +120,8 @@ class SingleLineDiagramService {
                 case SldDisplayMode.STATE_VARIABLE:
                     svgParameters.setBusesLegendAdded(true);
                     sldParameters.setLegendWriterFactory(CommonLegendWriter.createFactory(sldRequestInfos.getBusIdToIccValues()));
-                    if (sldRequestInfos.isUseStateEstimationVisualisation()) {
-                        sldParameters.setLabelProviderFactory(StateEstimationLabelProvider::new);
+                    if (sldRequestInfos.isMeasurements()) {
+                        sldParameters.setLabelProviderFactory(MeasurementLabelProvider::new);
                         layoutParameters.setSpaceForFeederInfos(120);
                         layoutParameters.setCellWidth(70);
                     } else {
@@ -160,7 +160,7 @@ class SingleLineDiagramService {
                     new HighlightLineStateStyleProvider(network),
                     new SldSLimitStyleProvider(network, limitViolationStyles),
                     new BusLegendStyleProvider(),
-                    sldRequestInfos.isUseStateEstimationVisualisation() ? new StateEstimationStyleProvider() : new EmptyStyleProvider()
+                    sldRequestInfos.isMeasurements() ? new MeasurementStyleProvider() : new EmptyStyleProvider()
                 );
             });
 

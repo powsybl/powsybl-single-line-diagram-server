@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author Kamil MARUT {@literal <kamil.marut at rte-france.com>}
  */
-public class StateEstimationStyleProvider extends EmptyStyleProvider {
+public class MeasurementStyleProvider extends EmptyStyleProvider {
 
     private static final String VALID_MEASUREMENT_CSS = "sld-measurement-valid";
     private static final String INVALID_MEASUREMENT_CSS = "sld-measurement-invalid";
@@ -26,16 +26,16 @@ public class StateEstimationStyleProvider extends EmptyStyleProvider {
 
     @Override
     public List<String> getFeederInfoStyles(FeederInfo feederInfo) {
-        if (feederInfo instanceof EstimMeasurementsFeederInfo estimMeasurementsFeederInfo) {
-            return getMeasurementsStyles(estimMeasurementsFeederInfo);
+        if (feederInfo instanceof MeasurementFeederInfo measurementFeederInfo) {
+            return getMeasurementsStyles(measurementFeederInfo);
         }
         return Collections.emptyList();
     }
 
-    private List<String> getMeasurementsStyles(EstimMeasurementsFeederInfo estimMeasurementsFeederInfo) {
+    private List<String> getMeasurementsStyles(MeasurementFeederInfo measurementFeederInfo) {
         List<String> styles = new ArrayList<>();
-        styles.add(estimMeasurementsFeederInfo.isValid() ? VALID_MEASUREMENT_CSS : INVALID_MEASUREMENT_CSS);
-        if (estimMeasurementsFeederInfo.isCritical()) {
+        styles.add(measurementFeederInfo.isValid() ? VALID_MEASUREMENT_CSS : INVALID_MEASUREMENT_CSS);
+        if (measurementFeederInfo.isCritical()) {
             styles.add(CRITICAL_MEASUREMENT_CSS);
         }
         return styles;

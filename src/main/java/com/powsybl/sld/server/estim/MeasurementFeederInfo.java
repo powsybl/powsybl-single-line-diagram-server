@@ -18,14 +18,14 @@ import java.util.function.BiFunction;
  * @author Kamil MARUT {@literal <kamil.marut at rte-france.com>}
  */
 @Getter
-public class EstimMeasurementsFeederInfo extends ValueFeederInfo {
+public class MeasurementFeederInfo extends ValueFeederInfo {
 
     private final boolean isValid;
     private final boolean isCritical;
 
-    public EstimMeasurementsFeederInfo(String componentType, LabelProvider.LabelDirection labelDirection,
-                                       double value, String unit, BiFunction<Double, String, String> formatter,
-                                       boolean isValid, boolean isCritical) {
+    public MeasurementFeederInfo(String componentType, LabelProvider.LabelDirection labelDirection,
+                                 double value, String unit, BiFunction<Double, String, String> formatter,
+                                 boolean isValid, boolean isCritical) {
         super(componentType, labelDirection, value, unit, formatter);
         this.isValid = isValid;
         this.isCritical = isCritical;
