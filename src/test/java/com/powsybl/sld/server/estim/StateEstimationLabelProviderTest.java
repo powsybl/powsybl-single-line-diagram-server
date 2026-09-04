@@ -69,6 +69,7 @@ class StateEstimationLabelProviderTest {
     private static final double MEASUREMENT_Q1 = 17D;
     private static final double MEASUREMENT_P2 = 18D;
     private static final double MEASUREMENT_Q2 = 19D;
+    private static final String UNDEFINED_VALUE_SYMBOL = "?";
 
     @Mock
     private Network networkMock;
@@ -188,7 +189,7 @@ class StateEstimationLabelProviderTest {
                         tuple("ARROW_ACTIVE", Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT), null),
                         tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
                         tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null),
-                        tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of("0.0 %"), null)
+                        tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of(UNDEFINED_VALUE_SYMBOL + " %"), null)
         );
     }
 
@@ -212,7 +213,7 @@ class StateEstimationLabelProviderTest {
                         tuple("ARROW_ACTIVE", Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT), null),
                         tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
                         tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null),
-                        tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of("0.0 %"), null)
+                        tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of(UNDEFINED_VALUE_SYMBOL + " %"), null)
         );
         assertThat(actualFeederInfos).filteredOn(EstimMeasurementsFeederInfo.class::isInstance)
                 .hasSize(2)
@@ -292,7 +293,7 @@ class StateEstimationLabelProviderTest {
                         tuple("ARROW_ACTIVE", Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT), null),
                         tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
                         tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null),
-                        tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of("0.0 %"), null)
+                        tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of(UNDEFINED_VALUE_SYMBOL + " %"), null)
         );
     }
 
@@ -317,7 +318,7 @@ class StateEstimationLabelProviderTest {
                         tuple("ARROW_ACTIVE", Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT), null),
                         tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
                         tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null),
-                        tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of("0.0 %"), null)
+                        tuple("VALUE_PERMANENT_LIMIT_PERCENTAGE", Optional.of(UNDEFINED_VALUE_SYMBOL + " %"), null)
         );
         assertThat(actualFeederInfos).filteredOn(EstimMeasurementsFeederInfo.class::isInstance)
                 .hasSize(2)
@@ -646,7 +647,7 @@ class StateEstimationLabelProviderTest {
     }
 
     private void prepareMocks() {
-        ValueFormatter valueFormatter = new ValueFormatter(1, 1, 1, 1, 1, Locale.US, "?");
+        ValueFormatter valueFormatter = new ValueFormatter(1, 1, 1, 1, 1, Locale.US, UNDEFINED_VALUE_SYMBOL);
         Mockito.lenient().when(svgParametersMock.createValueFormatter()).thenReturn(valueFormatter);
         Mockito.lenient().when(svgParametersMock.getCurrentUnit()).thenReturn(CURRENT_UNIT);
         Mockito.lenient().when(svgParametersMock.getActivePowerUnit()).thenReturn(ACTIVE_POWER_UNIT);
