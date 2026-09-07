@@ -22,7 +22,6 @@ import com.powsybl.sld.model.nodes.feeders.FeederWithSides;
 import com.powsybl.sld.server.CommonLabelProvider;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
-import com.powsybl.sld.svg.ValueFeederInfo;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -31,10 +30,6 @@ import java.util.stream.Stream;
  * @author Kamil MARUT {@literal <kamil.marut at rte-france.com>}
  */
 public class StateEstimationLabelProvider extends CommonLabelProvider {
-
-    private static final String VALID_MEASUREMENT_CSS = "sld-measurement-valid";
-    private static final String INVALID_MEASUREMENT_CSS = "sld-measurement-invalid";
-    private static final String CRITICAL_MEASUREMENT_CSS = "sld-measurement-critical";
 
     public StateEstimationLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
         super(network, componentLibrary, layoutParameters, svgParameters);
@@ -113,15 +108,13 @@ public class StateEstimationLabelProvider extends CommonLabelProvider {
     }
 
     private FeederInfo buildMeasurementFeederInfo(Measurement measurement, Observability<?> observability) {
-        Measurement.Type measurementType = measurement.getType();
-        Optional<Boolean> measurementRedundancy = getMeasurementRedundancy(measurement, observability);
-
         double measurementPower = measurement.getValue();
-        String measurementPowerUnit = getMeasurementPowerUnit(measurementType);
-        String measurementCssClass = getMeasurementCssClass(measurement, measurementRedundancy);
+        String measurementPowerUnit = getMeasurementPowerUnit(measurement.getType());
+        boolean measurementValidity = measurement.isValid();
+        boolean measurementCriticality = !getMeasurementRedundancy(measurement, observability).orElse(true);
 
-        return new ValueFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, measurementPower, measurementPowerUnit,
-                (value, unit) -> valueFormatter.formatPower(measurementPower, measurementPowerUnit), measurementCssClass);
+        return new EstimMeasurementsFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, measurementPower, measurementPowerUnit,
+                (value, unit) -> valueFormatter.formatPower(measurementPower, measurementPowerUnit), measurementValidity, measurementCriticality);
     }
 
     private Optional<Boolean> getMeasurementRedundancy(Measurement measurement, Observability<?> observability) {
@@ -166,13 +159,5 @@ public class StateEstimationLabelProvider extends CommonLabelProvider {
             case REACTIVE_POWER -> "Mvar";
             default -> svgParameters.getUndefinedValueSymbol();
         };
-    }
-
-    private String getMeasurementCssClass(Measurement measurement, Optional<Boolean> measurementRedundancy) {
-        String cssClass = measurement.isValid() ? VALID_MEASUREMENT_CSS : INVALID_MEASUREMENT_CSS;
-        if (measurementRedundancy.isPresent() && !measurementRedundancy.get()) {
-            cssClass += " " + CRITICAL_MEASUREMENT_CSS;
-        }
-        return cssClass;
     }
 }

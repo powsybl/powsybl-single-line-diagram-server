@@ -7,6 +7,6 @@ on:
 
 jobs:
   build:
-    uses: powsybl/github-ci/.github/workflows/sonarcloud-maven-tag-analysis.yml@27de863e5794d59dad7cecf85157f3d55511a5aa
+    uses: powsybl/github-ci/.github/workflows/sonarcloud-maven-tag-analysis.yml@c0849fd1236966d31e8f7167ec5beab4517bbf28
     secrets:
       sonar-token: ${{ secrets.SONAR_TOKEN }}

@@ -26,10 +26,7 @@ public class NadRequestInfos {
     private Set<String> voltageLevelToExpandIds = new HashSet<>();
     @Builder.Default
     private Set<String> voltageLevelToOmitIds = new HashSet<>();
-    @Builder.Default
-    private List<NadVoltageLevelPositionInfos> positions = new ArrayList<>();
     private NadPositionsGenerationMode nadPositionsGenerationMode;
-    private UUID nadPositionsConfigUuid;
     private List<CurrentLimitViolationInfos> currentLimitViolationsInfos;
     @Builder.Default
     private String language = "en";
