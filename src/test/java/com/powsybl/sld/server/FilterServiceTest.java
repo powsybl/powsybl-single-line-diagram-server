@@ -6,48 +6,54 @@
  */
 package com.powsybl.sld.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.powsybl.iidm.network.IdentifiableType;
 import com.powsybl.network.store.client.NetworkStoreService;
 import com.powsybl.sld.server.dto.IdentifiableAttributes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClient;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 class FilterServiceTest {
     private static final String BASE_URI = "http://filter-server/";
 
-    @Mock
-    private RestTemplate restTemplate;
-
-    @InjectMocks
     private FilterService filterService;
 
     @Mock
     private NetworkStoreService networkStoreService;
 
+    private MockRestServiceServer mockServer;
     private AutoCloseable mocks;
+
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
+        RestClient.Builder restClientBuilder = RestClient.builder();
+        mockServer = MockRestServiceServer.bindTo(restClientBuilder).build();
+        filterService = new FilterService(BASE_URI, restClientBuilder.build());
         filterService.setFilterServerBaseUri(BASE_URI);
+        objectMapper = new ObjectMapper();
     }
 
     @AfterEach
@@ -56,24 +62,21 @@ class FilterServiceTest {
     }
 
     @Test
-    void testExportFilter() {
+    void testExportFilter() throws JsonProcessingException {
         UUID networkUuid = UUID.randomUUID();
         UUID filterUuid = UUID.randomUUID();
         String variantId = "variantA";
 
         List<IdentifiableAttributes> expectedFilterContent = List.of(new IdentifiableAttributes("vlFr1A", IdentifiableType.VOLTAGE_LEVEL, null));
-        ResponseEntity<List<IdentifiableAttributes>> responseEntity = new ResponseEntity<>(expectedFilterContent, HttpStatus.OK);
+        String path = BASE_URI + "v1/filters/" + filterUuid + "/export?networkUuid=" + networkUuid + "&variantId=" + variantId;
 
-        when(restTemplate.exchange(
-                ArgumentMatchers.contains(filterUuid.toString()),
-                ArgumentMatchers.eq(HttpMethod.GET),
-                ArgumentMatchers.isNull(),
-                ArgumentMatchers.<ParameterizedTypeReference<List<IdentifiableAttributes>>>any())
-        ).thenReturn(responseEntity);
+        mockServer.expect(requestTo(path))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(expectedFilterContent), MediaType.APPLICATION_JSON));
 
         List<IdentifiableAttributes> result = filterService.exportFilter(networkUuid, variantId, filterUuid);
 
-        assertEquals(expectedFilterContent, result);
+        assertThat(result.getFirst()).usingRecursiveComparison().isEqualTo(expectedFilterContent.getFirst());
     }
 
     @Test
@@ -81,14 +84,12 @@ class FilterServiceTest {
         UUID networkUuid = UUID.randomUUID();
         UUID filterUuid = UUID.randomUUID();
         String variantId = "variantA";
+        String path = BASE_URI + "v1/filters/" + filterUuid + "/export?networkUuid=" + networkUuid + "&variantId=" + variantId;
 
-        when(restTemplate.exchange(
-                ArgumentMatchers.contains(filterUuid.toString()),
-                ArgumentMatchers.eq(HttpMethod.GET),
-                ArgumentMatchers.isNull(),
-                ArgumentMatchers.<ParameterizedTypeReference<List<IdentifiableAttributes>>>any())
-        ).thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Filter not found"));
+        mockServer.expect(requestTo(path))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
 
-        assertThrows(ResponseStatusException.class, () -> filterService.exportFilter(networkUuid, variantId, filterUuid));
+        assertThrows(HttpClientErrorException.NotFound.class, () -> filterService.exportFilter(networkUuid, variantId, filterUuid));
     }
 }
