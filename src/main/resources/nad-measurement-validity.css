@@ -1,0 +1,61 @@
+/* TM transit (active/reactive power labels): yellow = valid, brown = invalid */
+/* selector specificity must beat ".nad-edge-infos text" (whose "font" shorthand resets font-weight to normal) */
+.nad-edge-infos text.nad-measurement-valid {
+    fill: #FFD700;
+    font-weight: normal;
+}
+
+.nad-edge-infos text.nad-measurement-invalid {
+    fill: #8B4513;
+    font-weight: bold;
+}
+
+/* Branches (lines, 2WT): green = lowPtm, red = highPtm - classes are on the wrapping <g>, path is a descendant */
+.nad-low-ptm-branch .nad-edge-path {
+    stroke: #008000;
+}
+
+.nad-high-ptm-branch .nad-edge-path {
+    stroke: #e00000;
+}
+
+/* 3WT windings: same rule, but classes land directly on the winding path element */
+.nad-winding.nad-low-ptm-branch {
+    stroke: #008000;
+}
+
+.nad-winding.nad-high-ptm-branch {
+    stroke: #e00000;
+}
+
+/* Electrical nodes (busbars): same green/red rule, connected via their branches */
+.nad-busnode.nad-low-ptm-bus {
+    fill: #008000;
+}
+
+.nad-busnode.nad-high-ptm-bus {
+    fill: #e00000;
+}
+
+/* TM voltage (legend square next to the voltage value): yellow = valid, brown = invalid */
+.nad-legend-square.nad-voltage-valid {
+    background-color: #FFD700;
+}
+
+.nad-legend-square.nad-voltage-invalid {
+    background-color: #8B4513;
+}
+
+/* A node whose SJB voltage TM is invalid turns brown, overriding the green/red Ptm coloring */
+.nad-busnode.nad-voltage-invalid {
+    fill: #8B4513;
+}
+
+/* Branches/3WT windings connected to such an invalid node turn brown too, overriding green/red Ptm coloring */
+.nad-invalid-voltage-branch .nad-edge-path {
+    stroke: #8B4513;
+}
+
+.nad-winding.nad-invalid-voltage-branch {
+    stroke: #8B4513;
+}
