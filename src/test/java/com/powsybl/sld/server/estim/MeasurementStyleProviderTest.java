@@ -25,9 +25,9 @@ import static org.mockito.Mockito.when;
 /**
  * @author Kamil MARUT {@literal <kamil.marut at rte-france.com>}
  */
-class StateEstimationStyleProviderTest {
+class MeasurementStyleProviderTest {
 
-    private StateEstimationStyleProvider provider;
+    private MeasurementStyleProvider provider;
 
     private static Stream<Arguments> provideEstimMeasurementsInfos() {
         return Stream.of(
@@ -40,13 +40,13 @@ class StateEstimationStyleProviderTest {
 
     @BeforeEach
     void setUp() {
-        provider = new StateEstimationStyleProvider();
+        provider = new MeasurementStyleProvider();
     }
 
     @ParameterizedTest
     @MethodSource("provideEstimMeasurementsInfos")
     void testGetFeederInfoStylesReturnsExpectedStyles(boolean isValid, boolean isCritical, List<String> expectedStyles) {
-        EstimMeasurementsFeederInfo feederInfoMock = Mockito.mock(EstimMeasurementsFeederInfo.class);
+        MeasurementFeederInfo feederInfoMock = Mockito.mock(MeasurementFeederInfo.class);
         when(feederInfoMock.isValid()).thenReturn(isValid);
         when(feederInfoMock.isCritical()).thenReturn(isCritical);
 

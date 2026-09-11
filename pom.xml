@@ -57,6 +57,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <liquibase-hibernate-package>com.powsybl.sld.server</liquibase-hibernate-package>
         <powsybl-ws-dependencies.version>2.34.0</powsybl-ws-dependencies.version>
+        <powsybl-network-store.version>1.50.0</powsybl-network-store.version>
         <supercsv.version>2.4.0</supercsv.version>
         <sonar.organization>powsybl-ci-github</sonar.organization>
         <sonar.projectKey>com.powsybl:powsybl-single-line-diagram-server</sonar.projectKey>
@@ -103,6 +104,22 @@
                 <version>${powsybl-ws-dependencies.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-network-store-client</artifactId>
+                <version>${powsybl-network-store.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-network-store-iidm-impl</artifactId>
+                <version>${powsybl-network-store.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.powsybl</groupId>
+                <artifactId>powsybl-network-store-model</artifactId>
+                <version>${powsybl-network-store.version}</version>
             </dependency>
 
             <!-- project specific dependencies -->
