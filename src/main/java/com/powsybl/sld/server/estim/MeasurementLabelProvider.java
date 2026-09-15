@@ -29,9 +29,9 @@ import java.util.stream.Stream;
 /**
  * @author Kamil MARUT {@literal <kamil.marut at rte-france.com>}
  */
-public class StateEstimationLabelProvider extends CommonLabelProvider {
+public class MeasurementLabelProvider extends CommonLabelProvider {
 
-    public StateEstimationLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
+    public MeasurementLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
         super(network, componentLibrary, layoutParameters, svgParameters);
     }
 
@@ -113,7 +113,7 @@ public class StateEstimationLabelProvider extends CommonLabelProvider {
         boolean measurementValidity = measurement.isValid();
         boolean measurementCriticality = !getMeasurementRedundancy(measurement, observability).orElse(true);
 
-        return new EstimMeasurementsFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, measurementPower, measurementPowerUnit,
+        return new MeasurementFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, measurementPower, measurementPowerUnit,
                 (value, unit) -> valueFormatter.formatPower(measurementPower, measurementPowerUnit), measurementValidity, measurementCriticality);
     }
 

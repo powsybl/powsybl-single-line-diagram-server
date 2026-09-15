@@ -1017,7 +1017,7 @@ class SingleLineDiagramTest {
     }
 
     @Test
-    void testSingleLineDiagramWithEstimData() {
+    void testSingleLineDiagramWithMeasurementData() {
         UUID testNetworkId = UUID.randomUUID();
         Network network = createTwoVoltageLevels();
         Generator generator = network.getGenerator("g11");
@@ -1036,12 +1036,32 @@ class SingleLineDiagramTest {
         SldRequestInfos requestInfos = new SldRequestInfos();
         requestInfos.setCurrentLimitViolationsInfos(List.of());
         requestInfos.setBusIdToIccValues(busIdToIcc);
-        requestInfos.setUseStateEstimationVisualisation(true);
+        requestInfos.setMeasurements(true);
 
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
         assertTrue(svg.contains("sld-measurement-valid"));
+    }
+
+    @Test
+    void testSingleLineDiagramWithObservabilityData() {
+        UUID testNetworkId = UUID.randomUUID();
+        Network network = createTwoVoltageLevels();
+        network.getVoltageLevel("vl1").newExtension(ObservabilityAreaAdder.class)
+                .withObservabilityAreaByBusViewBus("vl1_0", 1, ObservabilityArea.ObservabilityStatus.OBSERVABLE)
+                .withObservabilityAreaByBusViewBus("vl1_1", 1, ObservabilityArea.ObservabilityStatus.OBSERVABLE)
+                .add();
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(network);
+
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setObservability(true);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
+        String svg = svgAndMetadata.getSvg();
+        assertNotNull(svg);
+        assertTrue(svg.contains("sld-observability-observable"));
     }
 
     @Test
