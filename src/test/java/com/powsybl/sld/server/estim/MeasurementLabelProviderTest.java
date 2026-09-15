@@ -641,7 +641,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).filteredOn(fi -> fi instanceof MeasurementFeederInfo)
+        assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
                 .extracting("rightLabel")
                 .containsExactly(Optional.of("10.0 MW"), Optional.of("11.0 Mvar"));
     }
