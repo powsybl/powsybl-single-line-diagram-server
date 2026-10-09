@@ -815,6 +815,67 @@ class SingleLineDiagramTest {
     }
 
     @Test
+    void testNetworkAreaDiagramExtensionOfMissingVoltageLevel() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetworkWithDepth());
+
+        // A voltage level of the diagram can be missing from this network: it is skipped and the others are expanded
+        String result = drawNetworkAreaDiagram(testNetworkId, NadRequestInfos.builder()
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Set.of("vlFr1A", "missingVl"))
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .build());
+        assertTrue(result.contains("\"additionalMetadata\":{\"nbVoltageLevels\":2"));
+        assertTrue(result.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
+        assertTrue(result.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+    }
+
+    @Test
+    void testNetworkAreaDiagramExtensionWithFilter() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        UUID filterUuid = UUID.randomUUID();
+        UUID wideFilterUuid = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetworkWithDepth());
+        given(filterService.exportFilter(testNetworkId, null, filterUuid)).willReturn(List.of(
+                new IdentifiableAttributes("vlFr1A", IdentifiableType.VOLTAGE_LEVEL, null)));
+        given(filterService.exportFilter(testNetworkId, null, wideFilterUuid)).willReturn(List.of(
+                new IdentifiableAttributes("vlFr1A", IdentifiableType.VOLTAGE_LEVEL, null),
+                new IdentifiableAttributes("vlFr2A", IdentifiableType.VOLTAGE_LEVEL, null)));
+
+        // vlFr2A, neighbour of vlFr1A, does not match the filter: a diagram showing it only shows what it matches
+        String result = drawNetworkAreaDiagram(testNetworkId, NadRequestInfos.builder()
+                .filterUuid(filterUuid)
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Set.of("vlFr1A"))
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .build());
+        assertTrue(result.contains("\"additionalMetadata\":{\"nbVoltageLevels\":1"));
+
+        // vlFr2A matches the filter but is hidden: the expansion shows it again
+        result = drawNetworkAreaDiagram(testNetworkId, NadRequestInfos.builder()
+                .filterUuid(wideFilterUuid)
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Set.of("vlFr1A"))
+                .voltageLevelToOmitIds(Set.of("vlFr2A"))
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .build());
+        assertTrue(result.contains("\"additionalMetadata\":{\"nbVoltageLevels\":2"));
+        assertTrue(result.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+    }
+
+    private String drawNetworkAreaDiagram(UUID networkUuid, NadRequestInfos nadRequestInfos) throws Exception {
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted());
+        return mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+    }
+
+    @Test
     void testNetworkAreaDiagramWithViolationDefaultClass() throws Exception {
         UUID testNetworkId = UUID.randomUUID();
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
