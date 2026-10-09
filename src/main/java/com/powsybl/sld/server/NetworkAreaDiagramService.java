@@ -34,6 +34,8 @@ import com.powsybl.sld.server.entities.nad.NadConfigEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelConfiguredPositionEntity;
 import com.powsybl.sld.server.entities.nad.NadVoltageLevelPositionEntity;
 import com.powsybl.sld.server.error.DiagramBusinessException;
+import com.powsybl.sld.server.nad.NadMeasurementValidityLabelProvider;
+import com.powsybl.sld.server.nad.NadMeasurementValidityStyleProvider;
 import com.powsybl.sld.server.repository.NadConfigRepository;
 import com.powsybl.sld.server.repository.NadVoltageLevelConfiguredPositionRepository;
 import com.powsybl.sld.server.utils.*;
@@ -67,6 +69,9 @@ import static com.powsybl.sld.server.error.DiagramBusinessErrorCode.*;
 class NetworkAreaDiagramService {
     @Value("${diagram-server.nad.max-voltage-levels}")
     private int maxVoltageLevels;
+
+    @Value("${diagram-server.nad.display-measurements:false}")
+    private boolean displayMeasurementsWithNad;
 
     private static final int DEFAULT_SCALING_FACTOR = 450000;
     private static final int MIN_SCALING_FACTOR = 50000;
@@ -301,9 +306,9 @@ class NetworkAreaDiagramService {
         SvgParameters svgParameters = new SvgParameters()
                 .setUndefinedValueSymbol("—")
                 .setSvgWidthAndHeightAdded(true)
-                .setVoltageLevelLegendsIncluded(false)
-                .setEdgeInfosIncluded(false)
-                .setCssLocation(SvgParameters.CssLocation.EXTERNAL_NO_IMPORT)
+                .setVoltageLevelLegendsIncluded(displayMeasurementsWithNad)
+                .setEdgeInfosIncluded(displayMeasurementsWithNad)
+                .setCssLocation(displayMeasurementsWithNad ? SvgParameters.CssLocation.INSERTED_IN_SVG : SvgParameters.CssLocation.EXTERNAL_NO_IMPORT)
                 .setLanguageTag(language);
 
         LayoutParameters layoutParameters = new LayoutParameters();
@@ -311,14 +316,16 @@ class NetworkAreaDiagramService {
         nadParameters.setSvgParameters(svgParameters);
         nadParameters.setLayoutParameters(layoutParameters);
         Map<String, String> limitViolationStyles = DiagramUtils.createLimitViolationStyles(currentLimitViolationInfos, StyleProvider.LINE_OVERLOADED_CLASS);
-        nadParameters.setLabelProviderFactory(NadLabelProvider::new);
+        nadParameters.setLabelProviderFactory(displayMeasurementsWithNad ? NadMeasurementValidityLabelProvider::new : NadLabelProvider::new);
 
         baseVoltagesConfigInfos.forEach(vl -> vl.setProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE));
         BaseVoltagesConfig baseVoltagesConfig = new BaseVoltagesConfig();
         baseVoltagesConfig.setBaseVoltages(baseVoltagesConfigInfos);
         baseVoltagesConfig.setDefaultProfile(DiagramConstants.BASE_VOLTAGES_DEFAULT_PROFILE);
 
-        nadParameters.setStyleProviderFactory(n -> new NadLimitStyleProvider(
+        nadParameters.setStyleProviderFactory(n -> displayMeasurementsWithNad
+                ? new NadMeasurementValidityStyleProvider(nadGenerationContext.getNetwork(), baseVoltagesConfig)
+                : new NadLimitStyleProvider(
                 nadGenerationContext.getNetwork(),
                 baseVoltagesConfig,
                 limitViolationStyles
