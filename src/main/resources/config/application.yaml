@@ -1,6 +1,9 @@
 spring:
   application:
     name: single-line-diagram-server
+  http:
+    converters:
+      preferred-json-mapper: jackson2
   datasource:
     hikari:
       # By default the limit is 10, following our scalability study this service can be very solicited

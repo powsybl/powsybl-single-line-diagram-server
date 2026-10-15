@@ -56,9 +56,9 @@
         <db-util.version>1.0.5</db-util.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <liquibase-hibernate-package>com.powsybl.sld.server</liquibase-hibernate-package>
-        <powsybl-ws-dependencies.version>2.34.0</powsybl-ws-dependencies.version>
+        <powsybl-ws-dependencies.version>2.35.0-SNAPSHOT</powsybl-ws-dependencies.version>
         <!-- FIXME remove this in the next powsybl release update -->
-        <powsybl-network-store.version>1.50.0</powsybl-network-store.version>
+        <powsybl-network-store.version>1.52.0-SNAPSHOT</powsybl-network-store.version>
         <supercsv.version>2.4.0</supercsv.version>
         <sonar.organization>powsybl-ci-github</sonar.organization>
         <sonar.projectKey>com.powsybl:powsybl-single-line-diagram-server</sonar.projectKey>
@@ -151,6 +151,14 @@
 
         <!-- Compilation dependencies -->
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-jackson2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.powsybl</groupId>
             <artifactId>powsybl-network-area-diagram</artifactId>
         </dependency>
@@ -169,6 +177,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>
@@ -206,8 +218,8 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.liquibase</groupId>
-            <artifactId>liquibase-core</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-liquibase</artifactId>
             <scope>runtime</scope>
         </dependency>
 
@@ -220,6 +232,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

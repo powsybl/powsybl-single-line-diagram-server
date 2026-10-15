@@ -45,7 +45,7 @@ public class GeoDataService {
     }
 
     public String getSubstationsGraphics(UUID networkUuid, String variantId, List<String> substationsIds) {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(getGeoDataServerURI() + SUBSTATIONS_INFOS)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(getGeoDataServerURI() + SUBSTATIONS_INFOS)
                 .queryParam(NETWORK_UUID, networkUuid);
 
         if (!StringUtils.isBlank(variantId)) {
