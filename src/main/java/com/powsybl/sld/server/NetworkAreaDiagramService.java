@@ -232,8 +232,10 @@ class NetworkAreaDiagramService {
         // This order is important
 
         // Add VLs from filter
+        Set<String> filterVoltageLevelIds = null;
         if (nadRequestInfos.getFilterUuid() != null) {
-            nadGenerationContext.getVoltageLevelIds().addAll(getVoltageLevelIdsFromFilter(networkUuid, variantId, nadRequestInfos.getFilterUuid()));
+            filterVoltageLevelIds = getVoltageLevelIdsFromFilter(networkUuid, variantId, nadRequestInfos.getFilterUuid());
+            nadGenerationContext.getVoltageLevelIds().addAll(filterVoltageLevelIds);
         }
 
         // Add VLs from list
@@ -245,7 +247,14 @@ class NetworkAreaDiagramService {
         // Add VLs from expansion
         // Expansion takes priority over remove
         if (!nadRequestInfos.getVoltageLevelToExpandIds().isEmpty()) {
-            nadGenerationContext.getVoltageLevelIds().addAll(getExpandedVoltageLevelIds(nadRequestInfos.getVoltageLevelToExpandIds(), nadGenerationContext.getNetwork()));
+            Set<String> expandedVoltageLevelIds = getExpandedVoltageLevelIds(nadRequestInfos.getVoltageLevelToExpandIds(), nadGenerationContext.getNetwork());
+            if (filterVoltageLevelIds != null) {
+                // A diagram showing a filter only shows what the filter matches
+                expandedVoltageLevelIds = expandedVoltageLevelIds.stream()
+                    .filter(filterVoltageLevelIds::contains)
+                    .collect(Collectors.toSet());
+            }
+            nadGenerationContext.getVoltageLevelIds().addAll(expandedVoltageLevelIds);
         }
 
         // Remove non existent VLs
@@ -468,10 +477,13 @@ class NetworkAreaDiagramService {
     }
 
     private Set<String> getExpandedVoltageLevelIds(@NonNull Set<String> voltageLevelIds, Network network) {
-        if (voltageLevelIds.isEmpty()) {
-            return voltageLevelIds;
+        List<String> existingVoltageLevelIds = voltageLevelIds.stream()
+                .filter(vl -> network.getVoltageLevel(vl) != null)
+                .toList();
+        if (existingVoltageLevelIds.isEmpty()) {
+            return Set.of();
         }
-        return VoltageLevelFilter.createVoltageLevelsDepthFilter(network, new ArrayList<>(voltageLevelIds), 1)
+        return VoltageLevelFilter.createVoltageLevelsDepthFilter(network, existingVoltageLevelIds, 1)
                         .voltageLevels().stream()
                         .map(VoltageLevel::getId)
                         .collect(Collectors.toSet());
