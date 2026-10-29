@@ -40,6 +40,7 @@ import com.powsybl.sld.server.utils.DiagramConstants;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
+import com.powsybl.sld.svg.GraphMetadata;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.ws.commons.error.BaseExceptionHandler;
@@ -59,11 +60,17 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.server.ResponseStatusException;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.IntStream;
 
 import static com.powsybl.sld.library.SldComponentTypeName.ARROW_ACTIVE;
 import static com.powsybl.sld.library.SldComponentTypeName.ARROW_REACTIVE;
@@ -1078,7 +1085,7 @@ class SingleLineDiagramTest {
     }
 
     @Test
-    void testSingleLineDiagramWithMeasurementData() {
+    void testSingleLineDiagramWithMeasurementData() throws Exception {
         UUID testNetworkId = UUID.randomUUID();
         Network network = createTwoVoltageLevels();
         Generator generator = network.getGenerator("g11");
@@ -1088,6 +1095,12 @@ class SingleLineDiagramTest {
                 .setId("active-power-measurement")
                 .setType(Measurement.Type.ACTIVE_POWER)
                 .setValue(15D)
+                .setValid(true)
+                .add();
+        measurements.newMeasurement()
+                .setId("voltage-measurement")
+                .setType(Measurement.Type.VOLTAGE)
+                .setValue(225.123D)
                 .setValid(true)
                 .add();
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(network);
@@ -1102,7 +1115,56 @@ class SingleLineDiagramTest {
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
-        assertTrue(svg.contains("sld-measurement-valid"));
+        List<Element> feederInfoGroups = getFeederInfoGroups(svgAndMetadata, generator.getId());
+        assertEquals(6, feederInfoGroups.size());
+        // The injection's three base P/Q/current infos precede its measurement infos.
+        List<Element> measurementGroups = feederInfoGroups.subList(3, 6);
+        assertEquals(List.of("15", "—", "225.1"), measurementGroups.stream()
+                .map(group -> group.getElementsByTagName("text").item(0).getTextContent()).toList());
+        assertEquals(List.of(List.of("sld-measurement-valid"), List.of(), List.of("sld-measurement-valid")),
+                measurementGroups.stream()
+                        .map(group -> Arrays.stream(group.getAttribute("class").split("\\s+"))
+                                .filter(style -> style.startsWith("sld-measurement-")).toList())
+                        .toList());
+    }
+
+    @Test
+    void testSingleLineDiagramWithoutMeasurementExtensions() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createTwoVoltageLevels());
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setMeasurements(true);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
+
+        List<Element> feederInfoGroups = getFeederInfoGroups(svgAndMetadata, "g11");
+        assertEquals(6, feederInfoGroups.size());
+        List<Element> measurementGroups = feederInfoGroups.subList(3, 6);
+        for (Element group : measurementGroups) {
+            assertTrue(Arrays.stream(group.getAttribute("class").split("\\s+"))
+                    .noneMatch(style -> style.startsWith("sld-measurement-")));
+            assertEquals("—", group.getElementsByTagName("text").item(0).getTextContent());
+        }
+
+        requestInfos.setMeasurements(false);
+        SvgAndMetadata defaultDiagram = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
+        assertEquals(3, getFeederInfoGroups(defaultDiagram, "g11").size());
+    }
+
+    private static List<Element> getFeederInfoGroups(SvgAndMetadata svgAndMetadata, String equipmentId) throws Exception {
+        GraphMetadata metadata = GraphMetadata.parseJson(new StringReader(svgAndMetadata.getMetadata()));
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        NodeList groups = factory.newDocumentBuilder().parse(new InputSource(new StringReader(svgAndMetadata.getSvg()))).getElementsByTagName("g");
+        // Feeder-info IDs can repeat; use metadata to resolve ownership, not to select a single SVG group.
+        return IntStream.range(0, groups.getLength())
+                .mapToObj(index -> (Element) groups.item(index))
+                .filter(group -> {
+                    GraphMetadata.FeederInfoMetadata feederInfo = metadata.getFeederInfoMetadata(group.getAttribute("id"));
+                    return feederInfo != null && equipmentId.equals(feederInfo.equipmentId());
+                })
+                .toList();
     }
 
     @Test

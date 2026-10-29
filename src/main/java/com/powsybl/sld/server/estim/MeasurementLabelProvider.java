@@ -16,6 +16,7 @@ import com.powsybl.sld.library.SldComponentTypeName;
 import com.powsybl.sld.model.coordinate.Direction;
 import com.powsybl.sld.model.nodes.Feeder;
 import com.powsybl.sld.model.nodes.FeederNode;
+import com.powsybl.sld.model.nodes.FeederType;
 import com.powsybl.sld.model.nodes.NodeSide;
 import com.powsybl.sld.model.nodes.feeders.FeederTwLeg;
 import com.powsybl.sld.model.nodes.feeders.FeederWithSides;
@@ -24,6 +25,8 @@ import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
 
 import java.util.*;
+import java.util.function.DoubleFunction;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -31,13 +34,23 @@ import java.util.stream.Stream;
  */
 public class MeasurementLabelProvider extends CommonLabelProvider {
 
+    /**
+     * Feeder types for which the base feeder infos are filtered out before being displayed
+     */
+    private static final Set<FeederType> FEEDER_TYPES_WITH_FILTERED_BASED_INFOS = Set.of(FeederType.BRANCH, FeederType.TWO_WINDINGS_TRANSFORMER_LEG, FeederType.THREE_WINDINGS_TRANSFORMER_LEG);
+
+    /**
+     * Base feeder infos removed for the feeder types defined in {@link #FEEDER_TYPES_WITH_FILTERED_BASED_INFOS}
+     */
+    private static final Set<String> FILTERED_BASE_INFO_COMPONENT_TYPES = Set.of(SldComponentTypeName.VALUE_CURRENT, SldComponentTypeName.VALUE_PERMANENT_LIMIT_PERCENTAGE);
+
     public MeasurementLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
         super(network, componentLibrary, layoutParameters, svgParameters);
     }
 
     @Override
     public List<FeederInfo> getFeederInfos(FeederNode node) {
-        List<FeederInfo> baseFeederInfos = super.getFeederInfos(node);
+        List<FeederInfo> baseFeederInfos = getFilteredBaseFeederInfos(node);
 
         Feeder feeder = node.getFeeder();
         List<FeederInfo> measurementsFeederInfos = new ArrayList<>(switch (feeder.getFeederType()) {
@@ -54,6 +67,16 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
         return Stream.concat(baseFeederInfos.stream(), measurementsFeederInfos.stream()).toList();
     }
 
+    private List<FeederInfo> getFilteredBaseFeederInfos(FeederNode node) {
+        List<FeederInfo> baseFeederInfos = super.getFeederInfos(node);
+        if (!FEEDER_TYPES_WITH_FILTERED_BASED_INFOS.contains(node.getFeeder().getFeederType())) {
+            return baseFeederInfos;
+        }
+        return baseFeederInfos.stream()
+                .filter(feederInfo -> !FILTERED_BASE_INFO_COMPONENT_TYPES.contains(feederInfo.getComponentType()))
+                .toList();
+    }
+
     private List<FeederInfo> getInjectionMeasurementsFeederInfos(FeederNode node) {
         Injection<?> injection = (Injection<?>) network.getIdentifiable(node.getEquipmentId());
         if (injection == null) {
@@ -61,7 +84,7 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
         }
         Measurements<?> measurements = (Measurements<?>) injection.getExtension(Measurements.class);
         InjectionObservability<?> injectionObservability = (InjectionObservability<?>) injection.getExtension(InjectionObservability.class);
-        return buildMeasurementsFeederInfos(measurements, injectionObservability);
+        return buildMeasurementsFeederInfos(getMeasurements(measurements), injectionObservability, getExpectedMeasurementTypes(injection));
     }
 
     private List<FeederInfo> getBranchMeasurementsFeederInfo(FeederNode node, NodeSide nodeSide) {
@@ -72,7 +95,10 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
         ThreeSides branchSide = ThreeSides.valueOf(nodeSide.name());
         Measurements<?> measurements = (Measurements<?>) branch.getExtension(Measurements.class);
         BranchObservability<?> branchObservability = (BranchObservability<?>) branch.getExtension(BranchObservability.class);
-        return buildSidedMeasurementsFeederInfos(measurements, branchSide, branchObservability);
+        List<Measurement> sidedMeasurements = getMeasurements(measurements).stream()
+                .filter(measurement -> branchSide.equals(measurement.getSide()))
+                .toList();
+        return buildMeasurementsFeederInfos(sidedMeasurements, branchObservability, getExpectedMeasurementTypes(branch));
     }
 
     private List<FeederInfo> getHvdcMeasurementsFeederInfos(FeederNode node, NodeSide side) {
@@ -83,38 +109,74 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
         HvdcConverterStation<?> hvdcConverterStation = NodeSide.ONE.equals(side) ? hvdcLine.getConverterStation1() : hvdcLine.getConverterStation2();
         Measurements<?> measurements = (Measurements<?>) hvdcConverterStation.getExtension(Measurements.class);
         InjectionObservability<?> injectionObservability = (InjectionObservability<?>) hvdcConverterStation.getExtension(InjectionObservability.class);
-        return buildMeasurementsFeederInfos(measurements, injectionObservability);
+        return buildMeasurementsFeederInfos(getMeasurements(measurements), injectionObservability, getExpectedMeasurementTypes(hvdcConverterStation));
     }
 
-    private List<FeederInfo> buildSidedMeasurementsFeederInfos(Measurements<?> measurements, ThreeSides measurementSide, BranchObservability<?> branchObservability) {
-        if (measurements == null) {
-            return Collections.emptyList();
-        }
-        return measurements.getMeasurements().stream()
-                .filter(measurement -> measurementSide.equals(measurement.getSide()))
-                .sorted(Comparator.comparing(Measurement::getType))
-                .map(measurement -> buildMeasurementFeederInfo(measurement, branchObservability))
+    private Collection<Measurement> getMeasurements(Measurements<?> measurements) {
+        return measurements == null ? List.of() : measurements.getMeasurements();
+    }
+
+    private List<Measurement.Type> getExpectedMeasurementTypes(Identifiable<?> equipment) {
+        return switch (equipment) {
+            case Generator _ -> List.of(Measurement.Type.VOLTAGE, Measurement.Type.REACTIVE_POWER, Measurement.Type.ACTIVE_POWER);
+            case Battery _ -> List.of(Measurement.Type.VOLTAGE, Measurement.Type.ACTIVE_POWER);
+            case ShuntCompensator _ -> List.of(Measurement.Type.VOLTAGE, Measurement.Type.REACTIVE_POWER);
+            case VscConverterStation _ -> List.of(Measurement.Type.VOLTAGE, Measurement.Type.REACTIVE_POWER, Measurement.Type.ACTIVE_POWER);
+            case StaticVarCompensator _ -> List.of(Measurement.Type.VOLTAGE, Measurement.Type.REACTIVE_POWER);
+            case Load _ -> List.of(Measurement.Type.VOLTAGE, Measurement.Type.REACTIVE_POWER, Measurement.Type.ACTIVE_POWER);
+            case TwoWindingsTransformer _ -> List.of(Measurement.Type.VOLTAGE, Measurement.Type.REACTIVE_POWER, Measurement.Type.ACTIVE_POWER);
+            case Line _ -> List.of(Measurement.Type.VOLTAGE, Measurement.Type.REACTIVE_POWER, Measurement.Type.ACTIVE_POWER);
+            default -> List.of();
+        };
+    }
+
+    private List<FeederInfo> buildMeasurementsFeederInfos(Collection<Measurement> measurements, Observability<?> observability, List<Measurement.Type> expectedTypes) {
+        Set<Measurement.Type> presentTypes = measurements.stream().map(Measurement::getType).collect(Collectors.toSet());
+        Stream<TypedFeederInfo> presentInfos = measurements.stream()
+                .map(measurement -> new TypedFeederInfo(measurement.getType(), buildMeasurementFeederInfo(measurement, observability)));
+        Stream<TypedFeederInfo> missingInfos = expectedTypes.stream()
+                .filter(type -> !presentTypes.contains(type))
+                .map(type -> new TypedFeederInfo(type, buildMissingMeasurementFeederInfo(type)));
+        return Stream.concat(presentInfos, missingInfos)
+                .sorted(Comparator.comparingInt((TypedFeederInfo info) -> getMeasurementTypeOrder(info.type()))
+                        .thenComparing(TypedFeederInfo::type))
+                .map(TypedFeederInfo::feederInfo)
                 .toList();
     }
 
-    private List<FeederInfo> buildMeasurementsFeederInfos(Measurements<?> measurements, Observability<?> observability) {
-        if (measurements == null) {
-            return Collections.emptyList();
-        }
-        return measurements.getMeasurements().stream()
-                .sorted(Comparator.comparing(Measurement::getType))
-                .map(measurement -> buildMeasurementFeederInfo(measurement, observability))
-                .toList();
+    private static int getMeasurementTypeOrder(Measurement.Type type) {
+        return switch (type) {
+            case ACTIVE_POWER -> 0;
+            case REACTIVE_POWER -> 1;
+            case VOLTAGE -> 2;
+            default -> 3;
+        };
+    }
+
+    private record TypedFeederInfo(Measurement.Type type, FeederInfo feederInfo) {
     }
 
     private FeederInfo buildMeasurementFeederInfo(Measurement measurement, Observability<?> observability) {
-        double measurementPower = measurement.getValue();
-        String measurementPowerUnit = getMeasurementPowerUnit(measurement.getType());
+        double measurementValue = measurement.getValue();
         boolean measurementValidity = measurement.isValid();
         boolean measurementCriticality = !getMeasurementRedundancy(measurement, observability).orElse(true);
 
-        return new MeasurementFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, measurementPower, measurementPowerUnit,
-                (value, unit) -> valueFormatter.formatPower(measurementPower, measurementPowerUnit), measurementValidity, measurementCriticality);
+        return new MeasurementFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, measurementValue,
+                getMeasurementFormatter(measurement.getType()), measurementValidity, measurementCriticality);
+    }
+
+    private FeederInfo buildMissingMeasurementFeederInfo(Measurement.Type type) {
+        return new MeasurementFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, Double.NaN,
+                getMeasurementFormatter(type), false, false, true);
+    }
+
+    private DoubleFunction<String> getMeasurementFormatter(Measurement.Type type) {
+        return switch (type) {
+            case ACTIVE_POWER -> value -> valueFormatter.formatPower(value, svgParameters.getActivePowerUnit());
+            case REACTIVE_POWER -> value -> valueFormatter.formatPower(value, svgParameters.getReactivePowerUnit());
+            case VOLTAGE -> valueFormatter::formatVoltage;
+            default -> valueFormatter::formatPower;
+        };
     }
 
     private Optional<Boolean> getMeasurementRedundancy(Measurement measurement, Observability<?> observability) {
@@ -151,13 +213,5 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
 
     private Optional<Boolean> isMeasurementRedundant(ObservabilityQuality<?> observabilityQuality) {
         return observabilityQuality != null ? observabilityQuality.isRedundant() : Optional.empty();
-    }
-
-    private String getMeasurementPowerUnit(Measurement.Type measurementType) {
-        return switch (measurementType) {
-            case ACTIVE_POWER -> "MW";
-            case REACTIVE_POWER -> "Mvar";
-            default -> svgParameters.getUndefinedValueSymbol();
-        };
     }
 }

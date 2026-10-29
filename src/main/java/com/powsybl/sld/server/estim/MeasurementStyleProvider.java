@@ -33,6 +33,9 @@ public class MeasurementStyleProvider extends EmptyStyleProvider {
     }
 
     private List<String> getMeasurementsStyles(MeasurementFeederInfo measurementFeederInfo) {
+        if (measurementFeederInfo.isMissing()) {
+            return Collections.emptyList();
+        }
         List<String> styles = new ArrayList<>();
         styles.add(measurementFeederInfo.isValid() ? VALID_MEASUREMENT_CSS : INVALID_MEASUREMENT_CSS);
         if (measurementFeederInfo.isCritical()) {
