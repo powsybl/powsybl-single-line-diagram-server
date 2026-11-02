@@ -133,8 +133,8 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
 
     private Optional<Boolean> getInjectionMeasurementRedundancy(InjectionObservability<?> injectionObservability, Measurement.Type measurementType) {
         return switch (measurementType) {
-            case ACTIVE_POWER -> isMeasurementRedundant(injectionObservability.getQualityP());
-            case REACTIVE_POWER -> isMeasurementRedundant(injectionObservability.getQualityQ());
+            case ACTIVE_POWER -> isMeasurementRedundant(injectionObservability.getNullableQualityP());
+            case REACTIVE_POWER -> isMeasurementRedundant(injectionObservability.getNullableQualityQ());
             default -> Optional.empty();
         };
     }
@@ -143,8 +143,12 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
         ThreeSides measurementSide = measurement.getSide();
 
         return switch (measurementType) {
-            case ACTIVE_POWER -> ThreeSides.ONE.equals(measurementSide) ? isMeasurementRedundant(branchObservability.getQualityP1()) : isMeasurementRedundant(branchObservability.getQualityP2());
-            case REACTIVE_POWER -> ThreeSides.ONE.equals(measurementSide) ? isMeasurementRedundant(branchObservability.getQualityQ1()) : isMeasurementRedundant(branchObservability.getQualityQ2());
+            case ACTIVE_POWER -> ThreeSides.ONE.equals(measurementSide)
+                    ? isMeasurementRedundant(branchObservability.getNullableQualityP1())
+                    : isMeasurementRedundant(branchObservability.getNullableQualityP2());
+            case REACTIVE_POWER -> ThreeSides.ONE.equals(measurementSide)
+                    ? isMeasurementRedundant(branchObservability.getNullableQualityQ1())
+                    : isMeasurementRedundant(branchObservability.getNullableQualityQ2());
             default -> Optional.empty();
         };
     }
