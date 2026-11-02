@@ -110,13 +110,13 @@ class MeasurementLabelProviderTest {
 
     private static Stream<Arguments> provideInjectionFamilies() {
         return Stream.of(
-                Arguments.of(Generator.class, GENERATOR_WITHOUT_MEASUREMENTS, List.of("? MW", "? Mvar", "?")),
-                Arguments.of(Battery.class, BATTERY_WITHOUT_MEASUREMENTS, List.of("? MW", "?")),
-                Arguments.of(ShuntCompensator.class, CAPACITOR_WITHOUT_MEASUREMENTS, List.of("? Mvar", "?")),
-                Arguments.of(ShuntCompensator.class, INDUCTOR_WITHOUT_MEASUREMENTS, List.of("? Mvar", "?")),
-                Arguments.of(StaticVarCompensator.class, SVC_WITHOUT_MEASUREMENTS, List.of("? Mvar", "?")),
-                Arguments.of(Load.class, LOAD_WITHOUT_MEASUREMENTS, List.of("? MW", "? Mvar", "?")),
-                Arguments.of(VscConverterStation.class, VSC_WITHOUT_MEASUREMENTS, List.of("? MW", "? Mvar", "?"))
+                Arguments.of(Generator.class, GENERATOR_WITHOUT_MEASUREMENTS, List.of("? MW", "? Mvar")),
+                Arguments.of(Battery.class, BATTERY_WITHOUT_MEASUREMENTS, List.of("? MW")),
+                Arguments.of(ShuntCompensator.class, CAPACITOR_WITHOUT_MEASUREMENTS, List.of("? Mvar")),
+                Arguments.of(ShuntCompensator.class, INDUCTOR_WITHOUT_MEASUREMENTS, List.of("? Mvar")),
+                Arguments.of(StaticVarCompensator.class, SVC_WITHOUT_MEASUREMENTS, List.of("? Mvar")),
+                Arguments.of(Load.class, LOAD_WITHOUT_MEASUREMENTS, List.of("? MW", "? Mvar")),
+                Arguments.of(VscConverterStation.class, VSC_WITHOUT_MEASUREMENTS, List.of("? MW", "? Mvar"))
         ).flatMap(arguments -> Stream.of(false, true).map(emptyExtension -> Arguments.of(
                 arguments.get()[0], arguments.get()[1], arguments.get()[2], emptyExtension)));
     }
@@ -137,10 +137,10 @@ class MeasurementLabelProviderTest {
 
     private static Stream<Arguments> providePartialInjectionMeasurements() {
         return Stream.of(
-                Arguments.of(Generator.class, Measurement.Type.ACTIVE_POWER, List.of("13.0", "?", "?")),
-                Arguments.of(Generator.class, Measurement.Type.REACTIVE_POWER, List.of("?", "13.0", "?")),
-                Arguments.of(Battery.class, Measurement.Type.ACTIVE_POWER, List.of("13.0", "?")),
-                Arguments.of(ShuntCompensator.class, Measurement.Type.REACTIVE_POWER, List.of("13.0", "?")),
+                Arguments.of(Generator.class, Measurement.Type.ACTIVE_POWER, List.of("13.0", "?")),
+                Arguments.of(Generator.class, Measurement.Type.REACTIVE_POWER, List.of("?", "13.0")),
+                Arguments.of(Battery.class, Measurement.Type.ACTIVE_POWER, List.of("13.0")),
+                Arguments.of(ShuntCompensator.class, Measurement.Type.REACTIVE_POWER, List.of("13.0")),
                 Arguments.of(StaticVarCompensator.class, Measurement.Type.VOLTAGE, List.of("?", "13.0"))
         );
     }
@@ -188,7 +188,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(6)
+        assertThat(actualFeederInfos).hasSize(5)
                 .filteredOn(feederInfo -> !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(3)
                 .allSatisfy(feederInfo -> assertThat(feederInfo).isExactlyInstanceOf(ValueFeederInfo.class))
@@ -198,7 +198,7 @@ class MeasurementLabelProviderTest {
             tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
             tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null)
         );
-        assertMissingMeasurements(actualFeederInfos, "? MW", "? Mvar", "?");
+        assertMissingMeasurements(actualFeederInfos, "? MW", "? Mvar");
     }
 
     @Test
@@ -211,7 +211,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(6)
+        assertThat(actualFeederInfos).hasSize(5)
                 .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(3)
                 .extracting("componentType", "rightLabel", "userDefinedId")
@@ -221,12 +221,11 @@ class MeasurementLabelProviderTest {
             tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null)
         );
         assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
-                .hasSize(3)
+                .hasSize(2)
                 .extracting("componentType", "rightLabel", "isValid", "isCritical", "isMissing")
                 .containsExactly(
             tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT), true, false, false),
-            tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT), false, true, false),
-            tuple("VALUE_CURRENT", Optional.of(UNDEFINED_VALUE_SYMBOL), false, false, true)
+            tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT), false, true, false)
         );
     }
 
@@ -240,7 +239,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(6)
+        assertThat(actualFeederInfos).hasSize(5)
                 .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(3)
                 .extracting("componentType", "rightLabel", "userDefinedId")
@@ -250,12 +249,11 @@ class MeasurementLabelProviderTest {
                         tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null)
         );
         assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
-                .hasSize(3)
+                .hasSize(2)
                 .extracting("componentType", "rightLabel", "isValid", "isCritical", "isMissing")
                 .containsExactly(
                         tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT), true, false, false),
-                        tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT), false, false, false),
-                        tuple("VALUE_CURRENT", Optional.of(UNDEFINED_VALUE_SYMBOL), false, false, true)
+                        tuple("VALUE_CURRENT", Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT), false, false, false)
         );
     }
 
@@ -270,7 +268,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(5)
+        assertThat(actualFeederInfos).hasSize(4)
                 .filteredOn(feederInfo -> !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(2)
                 .allSatisfy(feederInfo -> assertThat(feederInfo).isExactlyInstanceOf(ValueFeederInfo.class))
@@ -279,7 +277,7 @@ class MeasurementLabelProviderTest {
                         tuple("ARROW_ACTIVE", Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT), null),
                         tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null)
         );
-        assertMissingMeasurements(actualFeederInfos, "? MW", "? Mvar", "?");
+        assertMissingMeasurements(actualFeederInfos, "? MW", "? Mvar");
     }
 
     @ParameterizedTest
@@ -294,7 +292,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(5)
+        assertThat(actualFeederInfos).hasSize(4)
                 .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(2)
                 .extracting("componentType", "rightLabel", "userDefinedId")
@@ -303,12 +301,11 @@ class MeasurementLabelProviderTest {
                         tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null)
         );
         assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
-                .hasSize(3)
+                .hasSize(2)
                 .extracting("componentType", "rightLabel", "isValid", "isCritical", "isMissing")
                 .containsExactly(
                         tuple("VALUE_CURRENT", Optional.of(measurementP + " " + ACTIVE_POWER_UNIT), isValid, isCritical, false),
-                        tuple("VALUE_CURRENT", Optional.of(measurementQ + " " + REACTIVE_POWER_UNIT), isValid, isCritical, false),
-                        tuple("VALUE_CURRENT", Optional.of(UNDEFINED_VALUE_SYMBOL), false, false, true)
+                        tuple("VALUE_CURRENT", Optional.of(measurementQ + " " + REACTIVE_POWER_UNIT), isValid, isCritical, false)
                 );
     }
 
@@ -323,7 +320,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(6)
+        assertThat(actualFeederInfos).hasSize(5)
                 .filteredOn(feederInfo -> !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(3)
                 .allSatisfy(feederInfo -> assertThat(feederInfo).isExactlyInstanceOf(ValueFeederInfo.class))
@@ -333,7 +330,7 @@ class MeasurementLabelProviderTest {
                 tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null),
                 tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null)
         );
-        assertMissingMeasurements(actualFeederInfos, "? MW", "? Mvar", "?");
+        assertMissingMeasurements(actualFeederInfos, "? MW", "? Mvar");
     }
 
     @ParameterizedTest
@@ -348,7 +345,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(6)
+        assertThat(actualFeederInfos).hasSize(5)
                 .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(3)
                 .extracting("componentType", "rightLabel", "userDefinedId")
@@ -358,12 +355,11 @@ class MeasurementLabelProviderTest {
             tuple("VALUE_CURRENT", Optional.of(TERMINAL_I + " " + CURRENT_UNIT), null)
         );
         assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
-                .hasSize(3)
+                .hasSize(2)
                 .extracting("componentType", "rightLabel", "isValid", "isCritical", "isMissing")
                 .containsExactly(
             tuple("VALUE_CURRENT", Optional.of(measurementP + " " + ACTIVE_POWER_UNIT), isValid, isCritical, false),
-            tuple("VALUE_CURRENT", Optional.of(measurementQ + " " + REACTIVE_POWER_UNIT), isValid, isCritical, false),
-            tuple("VALUE_CURRENT", Optional.of(UNDEFINED_VALUE_SYMBOL), false, false, true)
+            tuple("VALUE_CURRENT", Optional.of(measurementQ + " " + REACTIVE_POWER_UNIT), isValid, isCritical, false)
         );
     }
 
@@ -378,7 +374,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(5)
+        assertThat(actualFeederInfos).hasSize(4)
                 .filteredOn(feederInfo -> !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(2)
                 .allSatisfy(feederInfo -> assertThat(feederInfo).isExactlyInstanceOf(ValueFeederInfo.class))
@@ -387,7 +383,7 @@ class MeasurementLabelProviderTest {
                         tuple("ARROW_ACTIVE", Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT), null),
                         tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null)
         );
-        assertMissingMeasurements(actualFeederInfos, "? MW", "? Mvar", "?");
+        assertMissingMeasurements(actualFeederInfos, "? MW", "? Mvar");
     }
 
     @ParameterizedTest
@@ -403,7 +399,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(5)
+        assertThat(actualFeederInfos).hasSize(4)
                 .filteredOn(feederInfo -> feederInfo instanceof ValueFeederInfo && !(feederInfo instanceof MeasurementFeederInfo))
                 .hasSize(2)
                 .extracting("componentType", "rightLabel", "userDefinedId")
@@ -412,12 +408,11 @@ class MeasurementLabelProviderTest {
                         tuple("ARROW_REACTIVE", Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT), null)
         );
         assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
-                .hasSize(3)
+                .hasSize(2)
                 .extracting("componentType", "rightLabel", "isValid", "isCritical", "isMissing")
                 .containsExactly(
                         tuple("VALUE_CURRENT", Optional.of(measurementP + " " + ACTIVE_POWER_UNIT), isValid, isCritical, false),
-                        tuple("VALUE_CURRENT", Optional.of(measurementQ + " " + REACTIVE_POWER_UNIT), isValid, isCritical, false),
-                        tuple("VALUE_CURRENT", Optional.of(UNDEFINED_VALUE_SYMBOL), false, false, true)
+                        tuple("VALUE_CURRENT", Optional.of(measurementQ + " " + REACTIVE_POWER_UNIT), isValid, isCritical, false)
                 );
     }
 
@@ -466,7 +461,7 @@ class MeasurementLabelProviderTest {
         assertThat(actualFeederInfos.get(2).getRightLabel()).isEqualTo(Optional.of(TERMINAL_I + " " + CURRENT_UNIT));
         assertThat(actualFeederInfos.get(3).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT));
         assertThat(actualFeederInfos.get(4).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT));
-        assertThat(actualFeederInfos.get(5).getRightLabel()).isEqualTo(Optional.of(UNDEFINED_VALUE_SYMBOL));
+        assertThat(actualFeederInfos).hasSize(5);
     }
 
     @Test
@@ -486,7 +481,7 @@ class MeasurementLabelProviderTest {
         assertThat(actualFeederInfos.get(2).getRightLabel()).isEqualTo(Optional.of(TERMINAL_I + " " + CURRENT_UNIT));
         assertThat(actualFeederInfos.get(3).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT));
         assertThat(actualFeederInfos.get(4).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT));
-        assertThat(actualFeederInfos.get(5).getRightLabel()).isEqualTo(Optional.of(UNDEFINED_VALUE_SYMBOL));
+        assertThat(actualFeederInfos).hasSize(5);
     }
 
     @Test
@@ -500,12 +495,12 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos.get(0).getRightLabel()).isEqualTo(Optional.of(UNDEFINED_VALUE_SYMBOL));
-        assertThat(actualFeederInfos.get(1).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT));
-        assertThat(actualFeederInfos.get(2).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT));
-        assertThat(actualFeederInfos.get(3).getRightLabel()).isEqualTo(Optional.of(TERMINAL_I + " " + CURRENT_UNIT));
-        assertThat(actualFeederInfos.get(4).getRightLabel()).isEqualTo(Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT));
-        assertThat(actualFeederInfos.get(5).getRightLabel()).isEqualTo(Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT));
+        assertThat(actualFeederInfos).hasSize(5);
+        assertThat(actualFeederInfos.get(0).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_Q + " " + REACTIVE_POWER_UNIT));
+        assertThat(actualFeederInfos.get(1).getRightLabel()).isEqualTo(Optional.of(MEASUREMENT_P + " " + ACTIVE_POWER_UNIT));
+        assertThat(actualFeederInfos.get(2).getRightLabel()).isEqualTo(Optional.of(TERMINAL_I + " " + CURRENT_UNIT));
+        assertThat(actualFeederInfos.get(3).getRightLabel()).isEqualTo(Optional.of(TERMINAL_Q + " " + REACTIVE_POWER_UNIT));
+        assertThat(actualFeederInfos.get(4).getRightLabel()).isEqualTo(Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT));
     }
 
     @Test
@@ -519,10 +514,9 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(6)
+        assertThat(actualFeederInfos).hasSize(5)
                 .extracting("rightLabel")
                 .containsExactly(
-                        Optional.of(UNDEFINED_VALUE_SYMBOL),
                         Optional.of("? Mvar"),
                         Optional.of("? MW"),
                         Optional.of(TERMINAL_I + " " + CURRENT_UNIT),
@@ -677,7 +671,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(6);
+        assertThat(actualFeederInfos).hasSize(5);
         assertThat(actualFeederInfos.getFirst().getRightLabel()).isEqualTo(Optional.of(TERMINAL_P + " " + ACTIVE_POWER_UNIT));
     }
 
@@ -692,8 +686,8 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
-        assertThat(actualFeederInfos).hasSize(6);
-        assertMissingMeasurements(actualFeederInfos, "? MW", "? Mvar", "?");
+        assertThat(actualFeederInfos).hasSize(5);
+        assertMissingMeasurements(actualFeederInfos, "? MW", "? Mvar");
     }
 
     @Test
@@ -769,8 +763,8 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> infos = provider.getFeederInfos(prepareFeederNode(equipmentId, feederType, side));
 
-        assertThat(infos).hasSize(5);
-        assertMissingMeasurements(infos, "?", "?", "?");
+        assertThat(infos).hasSize(4);
+        assertMissingMeasurements(infos, "?", "?");
         assertThat(infos).filteredOn(info -> !(info instanceof MeasurementFeederInfo))
                 .extracting("componentType").containsExactly("ARROW_ACTIVE", "ARROW_REACTIVE");
     }
@@ -812,8 +806,7 @@ class MeasurementLabelProviderTest {
                         tuple("VALUE_CURRENT", Optional.of("?"), false, false, true),
                         tuple("VALUE_CURRENT", Optional.of("225.1"), true, false, false)) : List.of(
                         tuple("VALUE_CURRENT", Optional.of("?"), false, false, true),
-                        tuple("VALUE_CURRENT", Optional.of("19.0"), false, false, false),
-                        tuple("VALUE_CURRENT", Optional.of("?"), false, false, true)));
+                        tuple("VALUE_CURRENT", Optional.of("19.0"), false, false, false)));
     }
 
     @ParameterizedTest
@@ -837,8 +830,8 @@ class MeasurementLabelProviderTest {
 
         assertThat(getMeasurementInfos(infos)).extracting("rightLabel", "isMissing")
                 .containsExactlyElementsOf(side == NodeSide.ONE ? List.of(
-                        tuple(Optional.of("16.0"), false), tuple(Optional.of("?"), true), tuple(Optional.of("?"), true)) : List.of(
-                        tuple(Optional.of("?"), true), tuple(Optional.of("19.0"), false), tuple(Optional.of("?"), true)));
+                        tuple(Optional.of("16.0"), false), tuple(Optional.of("?"), true)) : List.of(
+                        tuple(Optional.of("?"), true), tuple(Optional.of("19.0"), false)));
     }
 
     @ParameterizedTest
@@ -950,7 +943,7 @@ class MeasurementLabelProviderTest {
 
         assertThat(infos).extracting("rightLabel", "isValid", "isCritical", "isMissing")
                 .containsExactly(tuple(Optional.of("?"), false, false, false),
-                        tuple(Optional.of("?"), false, false, true), tuple(Optional.of("?"), false, false, true));
+                        tuple(Optional.of("?"), false, false, true));
         MeasurementStyleProvider styleProvider = new MeasurementStyleProvider();
         assertThat(styleProvider.getFeederInfoStyles(infos.getFirst())).containsExactly("sld-measurement-invalid");
         assertThat(styleProvider.getFeederInfoStyles(infos.get(1))).isEmpty();
@@ -964,7 +957,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> infos = labelProvider.getFeederInfos(prepareFeederNode(GENERATOR_WITHOUT_MEASUREMENTS, FeederType.INJECTION, NodeSide.ONE));
 
-        assertMissingMeasurements(infos, symbol, symbol, symbol);
+        assertMissingMeasurements(infos, symbol, symbol);
     }
 
     private static Stream<String> provideUndefinedSymbols() {
@@ -1022,7 +1015,7 @@ class MeasurementLabelProviderTest {
 
         List<FeederInfo> infos = provider.getFeederInfos(prepareFeederNode(GENERATOR_WITH_EXTRA_MEASUREMENTS, FeederType.INJECTION, NodeSide.ONE));
 
-        assertMissingMeasurements(infos, "? MW", "? Mvar", "?");
+        assertMissingMeasurements(infos, "? MW", "? Mvar");
         assertThat(getMeasurementInfos(infos)).filteredOn(info -> !info.isMissing())
                 .extracting("componentType", "rightLabel", "isValid", "isCritical")
                 .containsExactly(tuple("VALUE_CURRENT", Optional.of("100.0"), true, false));
@@ -1131,7 +1124,7 @@ class MeasurementLabelProviderTest {
         Mockito.when(generator.getTerminal()).thenReturn(terminal);
         Mockito.doReturn(generator).when(networkMock).getIdentifiable(GENERATOR_WITHOUT_MEASUREMENTS);
         assertMissingMeasurements(provider.getFeederInfos(prepareFeederNode(GENERATOR_WITHOUT_MEASUREMENTS, FeederType.INJECTION, NodeSide.ONE)),
-                "? MW", "? Mvar", "?");
+                "? MW", "? Mvar");
         Mockito.verify(generator, Mockito.never()).getRegulatingTerminal();
     }
 

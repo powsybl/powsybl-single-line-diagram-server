@@ -1139,8 +1139,8 @@ class SingleLineDiagramTest {
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
 
         List<Element> feederInfoGroups = getFeederInfoGroups(svgAndMetadata, "g11");
-        assertEquals(6, feederInfoGroups.size());
-        List<Element> measurementGroups = feederInfoGroups.subList(3, 6);
+        assertEquals(5, feederInfoGroups.size());
+        List<Element> measurementGroups = feederInfoGroups.subList(3, 5);
         for (Element group : measurementGroups) {
             assertTrue(Arrays.stream(group.getAttribute("class").split("\\s+"))
                     .noneMatch(style -> style.startsWith("sld-measurement-")));
