@@ -111,7 +111,7 @@ class MeasurementLabelProviderTest {
     private static Stream<Arguments> provideInjectionFamilies() {
         return Stream.of(
                 Arguments.of(Generator.class, GENERATOR_WITHOUT_MEASUREMENTS, List.of("? MW", "? Mvar")),
-                Arguments.of(Battery.class, BATTERY_WITHOUT_MEASUREMENTS, List.of("? MW")),
+                Arguments.of(Battery.class, BATTERY_WITHOUT_MEASUREMENTS, List.of("? MW", "? Mvar")),
                 Arguments.of(ShuntCompensator.class, CAPACITOR_WITHOUT_MEASUREMENTS, List.of("? Mvar")),
                 Arguments.of(ShuntCompensator.class, INDUCTOR_WITHOUT_MEASUREMENTS, List.of("? Mvar")),
                 Arguments.of(StaticVarCompensator.class, SVC_WITHOUT_MEASUREMENTS, List.of("? Mvar")),
@@ -139,7 +139,8 @@ class MeasurementLabelProviderTest {
         return Stream.of(
                 Arguments.of(Generator.class, Measurement.Type.ACTIVE_POWER, List.of("13.0", "?")),
                 Arguments.of(Generator.class, Measurement.Type.REACTIVE_POWER, List.of("?", "13.0")),
-                Arguments.of(Battery.class, Measurement.Type.ACTIVE_POWER, List.of("13.0")),
+                Arguments.of(Battery.class, Measurement.Type.ACTIVE_POWER, List.of("13.0", "?")),
+                Arguments.of(Battery.class, Measurement.Type.REACTIVE_POWER, List.of("?", "13.0")),
                 Arguments.of(ShuntCompensator.class, Measurement.Type.REACTIVE_POWER, List.of("13.0")),
                 Arguments.of(StaticVarCompensator.class, Measurement.Type.VOLTAGE, List.of("?", "13.0"))
         );

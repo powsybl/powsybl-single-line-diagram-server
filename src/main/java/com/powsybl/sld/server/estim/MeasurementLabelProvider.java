@@ -119,7 +119,7 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
     private List<Measurement.Type> getExpectedMeasurementTypes(Identifiable<?> equipment) {
         return switch (equipment) {
             case Generator _ -> List.of(Measurement.Type.REACTIVE_POWER, Measurement.Type.ACTIVE_POWER);
-            case Battery _ -> List.of(Measurement.Type.ACTIVE_POWER);
+            case Battery _ -> List.of(Measurement.Type.REACTIVE_POWER, Measurement.Type.ACTIVE_POWER);
             case ShuntCompensator _ -> List.of(Measurement.Type.REACTIVE_POWER);
             case VscConverterStation _ -> List.of(Measurement.Type.REACTIVE_POWER, Measurement.Type.ACTIVE_POWER);
             case StaticVarCompensator _ -> List.of(Measurement.Type.REACTIVE_POWER);
