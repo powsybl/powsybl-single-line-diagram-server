@@ -60,11 +60,39 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
                 case HVDC -> getHvdcMeasurementsFeederInfos(node, ((FeederWithSides) feeder).getSide());
                 default -> Collections.<FeederInfo>emptyList();
             });
-        if (node.getDirection() == Direction.BOTTOM && !svgParameters.isFeederInfoSymmetry()) {
-            return Stream.concat(measurementsFeederInfos.reversed().stream(), baseFeederInfos.stream()).toList();
-        }
+        boolean measurementsBeforeBaseInfos = node.getDirection() == Direction.BOTTOM
+                && !svgParameters.isFeederInfoSymmetry();
 
-        return Stream.concat(baseFeederInfos.stream(), measurementsFeederInfos.stream()).toList();
+        return insertMeasurementsNextToBaseInfos(
+                baseFeederInfos,
+                measurementsFeederInfos,
+                measurementsBeforeBaseInfos
+        );
+    }
+
+    private List<FeederInfo> insertMeasurementsNextToBaseInfos(List<FeederInfo> baseFeederInfos,
+            List<FeederInfo> measurementsFeederInfos,
+            boolean measurementsBeforeBaseInfos) {
+        List<FeederInfo> result = new ArrayList<>();
+        List<FeederInfo> remainingMeasurements = new ArrayList<>(measurementsFeederInfos);
+
+        for (FeederInfo baseFeederInfo : baseFeederInfos) {
+            FeederInfo matchingMeasurement = remainingMeasurements.stream()
+                    .filter(measurement -> measurement.getComponentType()
+                            .equals(baseFeederInfo.getComponentType()))
+                    .findFirst()
+                    .orElse(null);
+            if (matchingMeasurement == null) {
+                result.add(baseFeederInfo);
+            } else {
+                result.addAll(measurementsBeforeBaseInfos
+                        ? List.of(matchingMeasurement, baseFeederInfo)
+                        : List.of(baseFeederInfo, matchingMeasurement));
+                remainingMeasurements.remove(matchingMeasurement);
+            }
+        }
+        result.addAll(remainingMeasurements);
+        return result;
     }
 
     private List<FeederInfo> getFilteredBaseFeederInfos(FeederNode node) {
@@ -161,13 +189,21 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
         boolean measurementValidity = measurement.isValid();
         boolean measurementCriticality = !getMeasurementRedundancy(measurement, observability).orElse(true);
 
-        return new MeasurementFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, measurementValue,
+        return new MeasurementFeederInfo(getMeasurementComponentType(measurement.getType()), LabelDirection.NONE, measurementValue,
                 getMeasurementFormatter(measurement.getType()), measurementValidity, measurementCriticality);
     }
 
     private FeederInfo buildMissingMeasurementFeederInfo(Measurement.Type type) {
-        return new MeasurementFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, Double.NaN,
+        return new MeasurementFeederInfo(getMeasurementComponentType(type), LabelDirection.NONE, Double.NaN,
                 getMeasurementFormatter(type), false, false, true);
+    }
+
+    private String getMeasurementComponentType(Measurement.Type type) {
+        return switch (type) {
+            case ACTIVE_POWER -> SldComponentTypeName.ARROW_ACTIVE;
+            case REACTIVE_POWER -> SldComponentTypeName.ARROW_REACTIVE;
+            default -> SldComponentTypeName.VALUE_CURRENT;
+        };
     }
 
     private DoubleFunction<String> getMeasurementFormatter(Measurement.Type type) {
