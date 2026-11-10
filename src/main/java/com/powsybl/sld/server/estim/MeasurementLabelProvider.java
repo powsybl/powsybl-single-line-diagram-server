@@ -189,7 +189,7 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
         boolean measurementValidity = measurement.isValid();
         boolean measurementCriticality = !getMeasurementRedundancy(measurement, observability).orElse(true);
 
-        return new MeasurementFeederInfo(getMeasurementComponentType(measurement.getType()), LabelDirection.NONE, measurementValue,
+        return new MeasurementFeederInfo(getMeasurementComponentType(measurement.getType()), measurementValue,
                 getMeasurementFormatter(measurement.getType()), measurementValidity, measurementCriticality);
     }
 

@@ -41,4 +41,11 @@ public class MeasurementFeederInfo extends ValueFeederInfo {
         this.isCritical = isCritical;
         this.isMissing = isMissing;
     }
+
+    public MeasurementFeederInfo(String measurementComponentType, double measurementValue, DoubleFunction<String> measurementFormatter, boolean measurementValidity, boolean measurementCriticality) {
+        super(measurementComponentType, measurementValue, measurementFormatter);
+        this.isValid = measurementValidity;
+        this.isCritical = measurementCriticality;
+        this.isMissing = false;
+    }
 }
