@@ -26,6 +26,7 @@ public class MeasurementFeederInfo extends ValueFeederInfo {
     private final boolean isValid;
     private final boolean isCritical;
     private final boolean isMissing;
+    private final DoubleFunction<String> formatter;
 
     public MeasurementFeederInfo(String componentType, LabelProvider.LabelDirection labelDirection,
                                  double value, DoubleFunction<String> formatter,
@@ -40,6 +41,7 @@ public class MeasurementFeederInfo extends ValueFeederInfo {
         this.isValid = isValid;
         this.isCritical = isCritical;
         this.isMissing = isMissing;
+        this.formatter = formatter;
     }
 
     public MeasurementFeederInfo(String measurementComponentType, double measurementValue, DoubleFunction<String> measurementFormatter, boolean measurementValidity, boolean measurementCriticality) {
@@ -47,5 +49,10 @@ public class MeasurementFeederInfo extends ValueFeederInfo {
         this.isValid = measurementValidity;
         this.isCritical = measurementCriticality;
         this.isMissing = false;
+        this.formatter = measurementFormatter;
+    }
+
+    MeasurementFeederInfo withDirection(LabelProvider.LabelDirection newDirection) {
+        return new MeasurementFeederInfo(getComponentType(), newDirection, getValue(), formatter, isValid, isCritical, isMissing);
     }
 }

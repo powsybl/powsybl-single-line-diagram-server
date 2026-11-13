@@ -23,6 +23,7 @@ import com.powsybl.sld.model.nodes.feeders.FeederWithSides;
 import com.powsybl.sld.server.CommonLabelProvider;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
+import com.powsybl.sld.svg.ValueFeederInfo;
 
 import java.util.*;
 import java.util.function.DoubleFunction;
@@ -85,14 +86,27 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
             if (matchingMeasurement == null) {
                 result.add(baseFeederInfo);
             } else {
+                FeederInfo pairedMeasurement = withBaseInfoDirectionIfNone(matchingMeasurement, baseFeederInfo);
                 result.addAll(measurementsBeforeBaseInfos
-                        ? List.of(matchingMeasurement, baseFeederInfo)
-                        : List.of(baseFeederInfo, matchingMeasurement));
+                        ? List.of(pairedMeasurement, baseFeederInfo)
+                        : List.of(baseFeederInfo, pairedMeasurement));
                 remainingMeasurements.remove(matchingMeasurement);
             }
         }
         result.addAll(remainingMeasurements);
         return result;
+    }
+
+    /**
+     * A measurement without direction (e.g. a missing one) takes the direction of the base info it is paired with.
+     */
+    private static FeederInfo withBaseInfoDirectionIfNone(FeederInfo measurement, FeederInfo baseFeederInfo) {
+        if (measurement instanceof MeasurementFeederInfo measurementFeederInfo
+                && measurementFeederInfo.getDirection() == LabelDirection.NONE
+                && baseFeederInfo instanceof ValueFeederInfo baseValueFeederInfo) {
+            return measurementFeederInfo.withDirection(baseValueFeederInfo.getDirection());
+        }
+        return measurement;
     }
 
     private List<FeederInfo> getFilteredBaseFeederInfos(FeederNode node) {
