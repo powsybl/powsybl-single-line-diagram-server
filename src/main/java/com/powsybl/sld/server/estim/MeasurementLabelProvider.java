@@ -23,6 +23,7 @@ import com.powsybl.sld.model.nodes.feeders.FeederWithSides;
 import com.powsybl.sld.server.CommonLabelProvider;
 import com.powsybl.sld.svg.FeederInfo;
 import com.powsybl.sld.svg.SvgParameters;
+import com.powsybl.sld.svg.ValueFeederInfo;
 
 import java.util.*;
 import java.util.function.DoubleFunction;
@@ -60,11 +61,52 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
                 case HVDC -> getHvdcMeasurementsFeederInfos(node, ((FeederWithSides) feeder).getSide());
                 default -> Collections.<FeederInfo>emptyList();
             });
-        if (node.getDirection() == Direction.BOTTOM && !svgParameters.isFeederInfoSymmetry()) {
-            return Stream.concat(measurementsFeederInfos.reversed().stream(), baseFeederInfos.stream()).toList();
-        }
+        boolean measurementsBeforeBaseInfos = node.getDirection() == Direction.BOTTOM
+                && !svgParameters.isFeederInfoSymmetry();
 
-        return Stream.concat(baseFeederInfos.stream(), measurementsFeederInfos.stream()).toList();
+        return insertMeasurementsNextToBaseInfos(
+                baseFeederInfos,
+                measurementsFeederInfos,
+                measurementsBeforeBaseInfos
+        );
+    }
+
+    private List<FeederInfo> insertMeasurementsNextToBaseInfos(List<FeederInfo> baseFeederInfos,
+            List<FeederInfo> measurementsFeederInfos,
+            boolean measurementsBeforeBaseInfos) {
+        List<FeederInfo> result = new ArrayList<>();
+        List<FeederInfo> remainingMeasurements = new ArrayList<>(measurementsFeederInfos);
+
+        for (FeederInfo baseFeederInfo : baseFeederInfos) {
+            FeederInfo matchingMeasurement = remainingMeasurements.stream()
+                    .filter(measurement -> measurement.getComponentType()
+                            .equals(baseFeederInfo.getComponentType()))
+                    .findFirst()
+                    .orElse(null);
+            if (matchingMeasurement == null) {
+                result.add(baseFeederInfo);
+            } else {
+                FeederInfo pairedMeasurement = withBaseInfoDirectionIfNone(matchingMeasurement, baseFeederInfo);
+                result.addAll(measurementsBeforeBaseInfos
+                        ? List.of(pairedMeasurement, baseFeederInfo)
+                        : List.of(baseFeederInfo, pairedMeasurement));
+                remainingMeasurements.remove(matchingMeasurement);
+            }
+        }
+        result.addAll(remainingMeasurements);
+        return result;
+    }
+
+    /**
+     * A measurement without direction (e.g. a missing one) takes the direction of the base info it is paired with.
+     */
+    private static FeederInfo withBaseInfoDirectionIfNone(FeederInfo measurement, FeederInfo baseFeederInfo) {
+        if (measurement instanceof MeasurementFeederInfo measurementFeederInfo
+                && measurementFeederInfo.getDirection() == LabelDirection.NONE
+                && baseFeederInfo instanceof ValueFeederInfo baseValueFeederInfo) {
+            return measurementFeederInfo.withDirection(baseValueFeederInfo.getDirection());
+        }
+        return measurement;
     }
 
     private List<FeederInfo> getFilteredBaseFeederInfos(FeederNode node) {
@@ -161,13 +203,21 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
         boolean measurementValidity = measurement.isValid();
         boolean measurementCriticality = !getMeasurementRedundancy(measurement, observability).orElse(true);
 
-        return new MeasurementFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, measurementValue,
+        return new MeasurementFeederInfo(getMeasurementComponentType(measurement.getType()), measurementValue,
                 getMeasurementFormatter(measurement.getType()), measurementValidity, measurementCriticality);
     }
 
     private FeederInfo buildMissingMeasurementFeederInfo(Measurement.Type type) {
-        return new MeasurementFeederInfo(SldComponentTypeName.VALUE_CURRENT, LabelDirection.NONE, Double.NaN,
+        return new MeasurementFeederInfo(getMeasurementComponentType(type), LabelDirection.NONE, Double.NaN,
                 getMeasurementFormatter(type), false, false, true);
+    }
+
+    private String getMeasurementComponentType(Measurement.Type type) {
+        return switch (type) {
+            case ACTIVE_POWER -> SldComponentTypeName.ARROW_ACTIVE;
+            case REACTIVE_POWER -> SldComponentTypeName.ARROW_REACTIVE;
+            default -> SldComponentTypeName.VALUE_CURRENT;
+        };
     }
 
     private DoubleFunction<String> getMeasurementFormatter(Measurement.Type type) {
