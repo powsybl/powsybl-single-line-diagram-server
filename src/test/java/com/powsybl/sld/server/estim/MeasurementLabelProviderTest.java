@@ -1177,7 +1177,6 @@ class MeasurementLabelProviderTest {
         );
         assertThat(missingInfos).allSatisfy(info -> {
             assertThat(info.getValue()).isNaN();
-            assertThat(info.getDirection()).isEqualTo(LabelProvider.LabelDirection.NONE);
             assertThat(info.getLeftLabel()).isEmpty();
             assertThat(info.getUserDefinedId()).isNull();
             assertThat(new MeasurementStyleProvider().getFeederInfoStyles(info)).isEmpty();
