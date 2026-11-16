@@ -1131,6 +1131,33 @@ class MeasurementLabelProviderTest {
         Mockito.verify(generator, Mockito.never()).getRegulatingTerminal();
     }
 
+    @Test
+    void testMissingMeasurementInheritsPairedBaseInfoDirection() {
+        prepareUnitlessPowerMocks();
+        Injection<?> generator = prepareInjection(Generator.class, GENERATOR_WITH_PARTIAL_MEASUREMENTS);
+        prepareMeasurements(generator, List.of(
+                prepareMeasurement(Measurement.Type.ACTIVE_POWER, MEASUREMENT_P, true, null)));
+
+        List<FeederInfo> infos = provider.getFeederInfos(
+                prepareFeederNode(GENERATOR_WITH_PARTIAL_MEASUREMENTS, FeederType.INJECTION, NodeSide.ONE));
+
+        LabelProvider.LabelDirection baseDirection = infos.stream()
+                .filter(ValueFeederInfo.class::isInstance)
+                .filter(info -> !(info instanceof MeasurementFeederInfo))
+                .map(ValueFeederInfo.class::cast)
+                .filter(info -> SldComponentTypeName.ARROW_REACTIVE.equals(info.getComponentType()))
+                .findFirst()
+                .orElseThrow()
+                .getDirection();
+
+        assertThat(getMeasurementInfos(infos))
+                .filteredOn(MeasurementFeederInfo::isMissing)
+                .filteredOn(info -> SldComponentTypeName.ARROW_REACTIVE.equals(info.getComponentType()))
+                .singleElement()
+                .extracting(MeasurementFeederInfo::getDirection)
+                .isEqualTo(baseDirection);
+    }
+
     private static List<MeasurementFeederInfo> getMeasurementInfos(List<FeederInfo> infos) {
         return infos.stream().filter(MeasurementFeederInfo.class::isInstance).map(MeasurementFeederInfo.class::cast).toList();
     }
