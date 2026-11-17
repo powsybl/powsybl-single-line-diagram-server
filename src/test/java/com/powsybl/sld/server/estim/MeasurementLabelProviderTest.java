@@ -724,11 +724,6 @@ class MeasurementLabelProviderTest {
         BranchObservability observabilityMock = Mockito.mock(BranchObservability.class);
         Mockito.when(branchMock.getExtension(BranchObservability.class)).thenReturn(observabilityMock);
 
-        ObservabilityQuality<?> qualityMock = Mockito.mock(ObservabilityQuality.class);
-        Mockito.when(qualityMock.isRedundant()).thenReturn(Optional.of(true));
-        Mockito.when(observabilityMock.getQualityP1()).thenReturn(qualityMock);
-        Mockito.when(observabilityMock.getQualityQ1()).thenReturn(qualityMock);
-
         List<FeederInfo> actualFeederInfos = provider.getFeederInfos(feederNodeMock);
 
         assertThat(actualFeederInfos).filteredOn(MeasurementFeederInfo.class::isInstance)
@@ -1283,11 +1278,11 @@ class MeasurementLabelProviderTest {
         ObservabilityQuality<?> nonRedundantObservabilityQuality = Mockito.mock(ObservabilityQuality.class);
         Mockito.lenient().when(nonRedundantObservabilityQuality.isRedundant()).thenReturn(Optional.of(false));
         InjectionObservability<?> injectionObservabilitySideOneMock = Mockito.mock(InjectionObservability.class);
-        Mockito.lenient().when(injectionObservabilitySideOneMock.getQualityP()).thenReturn((ObservabilityQuality) redundantObservabilityQuality);
-        Mockito.lenient().when(injectionObservabilitySideOneMock.getQualityQ()).thenReturn((ObservabilityQuality) redundantObservabilityQuality);
+        Mockito.lenient().doReturn(redundantObservabilityQuality).when(injectionObservabilitySideOneMock).getNullableQualityP();
+        Mockito.lenient().doReturn(redundantObservabilityQuality).when(injectionObservabilitySideOneMock).getNullableQualityQ();
         InjectionObservability<?> injectionObservabilitySideTwoMock = Mockito.mock(InjectionObservability.class);
-        Mockito.lenient().when(injectionObservabilitySideTwoMock.getQualityP()).thenReturn((ObservabilityQuality) nonRedundantObservabilityQuality);
-        Mockito.lenient().when(injectionObservabilitySideTwoMock.getQualityQ()).thenReturn((ObservabilityQuality) nonRedundantObservabilityQuality);
+        Mockito.lenient().doReturn(nonRedundantObservabilityQuality).when(injectionObservabilitySideTwoMock).getNullableQualityP();
+        Mockito.lenient().doReturn(nonRedundantObservabilityQuality).when(injectionObservabilitySideTwoMock).getNullableQualityQ();
 
         VscConverterStation hvdcConverterStationWithoutMeasurementsOne = Mockito.mock(VscConverterStation.class);
         Mockito.lenient().when(hvdcConverterStationWithoutMeasurementsOne.getTerminal()).thenReturn(terminalMock);
@@ -1340,10 +1335,10 @@ class MeasurementLabelProviderTest {
         ObservabilityQuality<?> nonRedundantObservabilityQuality = Mockito.mock(ObservabilityQuality.class);
         Mockito.lenient().when(nonRedundantObservabilityQuality.isRedundant()).thenReturn(Optional.of(false));
         BranchObservability<?> branchObservabilityMock = Mockito.mock(BranchObservability.class);
-        Mockito.lenient().when(branchObservabilityMock.getQualityP1()).thenReturn((ObservabilityQuality) redundantObservabilityQuality);
-        Mockito.lenient().when(branchObservabilityMock.getQualityQ1()).thenReturn((ObservabilityQuality) redundantObservabilityQuality);
-        Mockito.lenient().when(branchObservabilityMock.getQualityP2()).thenReturn((ObservabilityQuality) nonRedundantObservabilityQuality);
-        Mockito.lenient().when(branchObservabilityMock.getQualityQ2()).thenReturn((ObservabilityQuality) nonRedundantObservabilityQuality);
+        Mockito.lenient().doReturn(redundantObservabilityQuality).when(branchObservabilityMock).getNullableQualityP1();
+        Mockito.lenient().doReturn(redundantObservabilityQuality).when(branchObservabilityMock).getNullableQualityQ1();
+        Mockito.lenient().doReturn(nonRedundantObservabilityQuality).when(branchObservabilityMock).getNullableQualityP2();
+        Mockito.lenient().doReturn(nonRedundantObservabilityQuality).when(branchObservabilityMock).getNullableQualityQ2();
 
         Mockito.lenient().when(branchNoMeasurements.getTerminal(TwoSides.ONE)).thenReturn(terminalMock);
         Mockito.lenient().when(branchNoMeasurements.getTerminal(TwoSides.TWO)).thenReturn(terminalMock);
@@ -1374,9 +1369,8 @@ class MeasurementLabelProviderTest {
         ObservabilityQuality<?> missingRedundantObservabilityQuality = Mockito.mock(ObservabilityQuality.class);
         Mockito.lenient().when(missingRedundantObservabilityQuality.isRedundant()).thenReturn(Optional.empty());
         InjectionObservability<?> injectionObservabilityMock = Mockito.mock(InjectionObservability.class);
-        Mockito.lenient().when(injectionObservabilityMock.getQualityP()).thenReturn((ObservabilityQuality) redundantObservabilityQuality);
-        Mockito.lenient().when(injectionObservabilityMock.getQualityQ()).thenReturn((ObservabilityQuality) nonRedundantObservabilityQuality);
-        Mockito.lenient().when(injectionObservabilityMock.getQualityV()).thenReturn((ObservabilityQuality) missingRedundantObservabilityQuality);
+        Mockito.lenient().doReturn(redundantObservabilityQuality).when(injectionObservabilityMock).getNullableQualityP();
+        Mockito.lenient().doReturn(nonRedundantObservabilityQuality).when(injectionObservabilityMock).getNullableQualityQ();
 
         Mockito.lenient().when(injectionNoMeasurementsMock.getTerminal()).thenReturn(terminalMock);
         Mockito.lenient().when(injectionWithMeasurementsMock.getTerminal()).thenReturn(terminalMock);
