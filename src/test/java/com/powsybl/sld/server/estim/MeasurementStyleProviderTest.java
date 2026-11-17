@@ -8,7 +8,10 @@
 
 package com.powsybl.sld.server.estim;
 
+import com.powsybl.diagram.util.ValueFormatter;
+import com.powsybl.sld.library.SldComponentTypeName;
 import com.powsybl.sld.svg.FeederInfo;
+import com.powsybl.sld.svg.LabelProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,6 +20,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,5 +66,31 @@ class MeasurementStyleProviderTest {
         List<String> actualList = provider.getFeederInfoStyles(feederInfoMock);
 
         assertThat(actualList).isEmpty();
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideEstimMeasurementsInfos")
+    void testMissingMeasurementsHaveNoStylesRegardlessOfValidityAndCriticality(boolean isValid, boolean isCritical, List<String> ignoredStyles) {
+        MeasurementFeederInfo feederInfoMock = Mockito.mock(MeasurementFeederInfo.class);
+        when(feederInfoMock.isMissing()).thenReturn(true);
+        Mockito.lenient().when(feederInfoMock.isValid()).thenReturn(isValid);
+        Mockito.lenient().when(feederInfoMock.isCritical()).thenReturn(isCritical);
+
+        assertThat(provider.getFeederInfoStyles(feederInfoMock)).isEmpty();
+    }
+
+    @Test
+    void testMissingFlagDistinguishesAbsentAndExistingInvalidNanMeasurements() {
+        ValueFormatter formatter = new ValueFormatter(1, 1, 1, 1, 1, Locale.US, "?");
+        MeasurementFeederInfo invalidInfo = new MeasurementFeederInfo(SldComponentTypeName.VALUE_CURRENT,
+                LabelProvider.LabelDirection.NONE, Double.NaN, formatter::formatPower, false, false);
+        MeasurementFeederInfo missingInfo = new MeasurementFeederInfo(SldComponentTypeName.VALUE_CURRENT,
+                LabelProvider.LabelDirection.NONE, Double.NaN, formatter::formatPower, false, false, true);
+
+        assertThat(invalidInfo.isMissing()).isFalse();
+        assertThat(missingInfo.isMissing()).isTrue();
+        assertThat(invalidInfo.getRightLabel()).isEqualTo(missingInfo.getRightLabel()).contains("?");
+        assertThat(provider.getFeederInfoStyles(invalidInfo)).containsExactly("sld-measurement-invalid");
+        assertThat(provider.getFeederInfoStyles(missingInfo)).isEmpty();
     }
 }
