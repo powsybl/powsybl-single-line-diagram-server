@@ -1117,12 +1117,11 @@ class SingleLineDiagramTest {
         assertNotNull(svg);
         List<Element> feederInfoGroups = getFeederInfoGroups(svgAndMetadata, generator.getId());
         assertEquals(6, feederInfoGroups.size());
-        // The injection's three base P/Q/current infos precede its measurement infos.
-        List<Element> measurementGroups = feederInfoGroups.subList(3, 6);
-        assertEquals(List.of("15", "—", "225.1"), measurementGroups.stream()
+        assertEquals(List.of("—", "15", "—", "—", "—", "225.1"), feederInfoGroups.stream()
                 .map(group -> group.getElementsByTagName("text").item(0).getTextContent()).toList());
-        assertEquals(List.of(List.of("sld-measurement-valid"), List.of(), List.of("sld-measurement-valid")),
-                measurementGroups.stream()
+        assertEquals(List.of(List.of(), List.of("sld-measurement-valid"), List.of(), List.of(),
+                        List.of(), List.of("sld-measurement-valid")),
+                feederInfoGroups.stream()
                         .map(group -> Arrays.stream(group.getAttribute("class").split("\\s+"))
                                 .filter(style -> style.startsWith("sld-measurement-")).toList())
                         .toList());
