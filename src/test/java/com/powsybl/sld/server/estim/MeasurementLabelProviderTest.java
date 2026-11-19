@@ -160,7 +160,7 @@ class MeasurementLabelProviderTest {
         return Stream.of(
                 Arguments.of(Direction.TOP, false, List.of("10.0", "16.0", "11.0", "?", "225.1")),
                 Arguments.of(Direction.BOTTOM, true, List.of("10.0", "16.0", "11.0", "?", "225.1")),
-                Arguments.of(Direction.BOTTOM, false, List.of("?", "11.0", "16.0", "10.0", "225.1"))
+                Arguments.of(Direction.BOTTOM, false, List.of("225.1", "?", "11.0", "16.0", "10.0"))
         );
     }
 
@@ -1156,6 +1156,27 @@ class MeasurementLabelProviderTest {
                 .singleElement()
                 .extracting(MeasurementFeederInfo::getDirection)
                 .isEqualTo(baseDirection);
+    }
+
+    @Test
+    void testUnpairedMeasurementsAreReversedBeforeBaseFeederInfosForBottomFeeder() {
+        prepareUnitlessPowerMocks();
+        Mockito.when(svgParametersMock.isFeederInfoSymmetry()).thenReturn(false);
+        Branch<?> line = prepareBranch(Line.class, LINE_WITH_PARTIAL_MEASUREMENTS);
+        prepareMeasurements(
+                line, List.of(
+                        prepareMeasurement(Measurement.Type.ACTIVE_POWER, 13D, true, ThreeSides.ONE),
+                        prepareMeasurement(Measurement.Type.ACTIVE_POWER, 15D, true, ThreeSides.ONE),
+                        prepareMeasurement(Measurement.Type.REACTIVE_POWER, 14D, true, ThreeSides.ONE),
+                        prepareMeasurement(Measurement.Type.REACTIVE_POWER, 17D, true, ThreeSides.ONE)));
+
+        FeederNode node = prepareFeederNode(LINE_WITH_PARTIAL_MEASUREMENTS, FeederType.BRANCH, NodeSide.ONE);
+        Mockito.when(node.getDirection()).thenReturn(Direction.BOTTOM);
+
+        List<FeederInfo> infos = provider.getFeederInfos(node);
+
+        assertThat(infos).extracting(info -> info.getRightLabel().orElseThrow())
+                .containsExactly("17.0", "15.0", "14.0", "11.0", "13.0", "10.0");
     }
 
     private static List<MeasurementFeederInfo> getMeasurementInfos(List<FeederInfo> infos) {

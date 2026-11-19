@@ -93,7 +93,12 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
                 remainingMeasurements.remove(matchingMeasurement);
             }
         }
-        result.addAll(remainingMeasurements);
+        if (measurementsBeforeBaseInfos) {
+            // mirror the unpaired measurements, as the base infos are mirrored for bottom feeders
+            result.addAll(0, remainingMeasurements.reversed());
+        } else {
+            result.addAll(remainingMeasurements);
+        }
         return result;
     }
 
@@ -222,8 +227,8 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
 
     private DoubleFunction<String> getMeasurementFormatter(Measurement.Type type) {
         return switch (type) {
-            case ACTIVE_POWER -> value -> valueFormatter.formatPower(value, svgParameters.getActivePowerUnit());
-            case REACTIVE_POWER -> value -> valueFormatter.formatPower(value, svgParameters.getReactivePowerUnit());
+            case ACTIVE_POWER -> value -> valueFormatter.formatPowerWithAbs(value, svgParameters.getActivePowerUnit());
+            case REACTIVE_POWER -> value -> valueFormatter.formatPowerWithAbs(value, svgParameters.getReactivePowerUnit());
             case VOLTAGE -> valueFormatter::formatVoltage;
             default -> valueFormatter::formatPower;
         };
