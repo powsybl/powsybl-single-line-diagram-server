@@ -43,10 +43,11 @@ public class MeasurementLabelProvider extends CommonLabelProvider {
     /**
      * Base feeder infos removed for the feeder types defined in {@link #FEEDER_TYPES_WITH_FILTERED_BASED_INFOS}
      */
-    private static final Set<String> FILTERED_BASE_INFO_COMPONENT_TYPES = Set.of(SldComponentTypeName.VALUE_CURRENT, SldComponentTypeName.VALUE_PERMANENT_LIMIT_PERCENTAGE);
+    private static final Set<String> FILTERED_BASE_INFO_COMPONENT_TYPES = Set.of(SldComponentTypeName.VALUE_PERMANENT_LIMIT_PERCENTAGE);
 
     public MeasurementLabelProvider(Network network, SldComponentLibrary componentLibrary, LayoutParameters layoutParameters, SvgParameters svgParameters) {
         super(network, componentLibrary, layoutParameters, svgParameters);
+        this.setDisplayCurrent(false);
     }
 
     @Override
