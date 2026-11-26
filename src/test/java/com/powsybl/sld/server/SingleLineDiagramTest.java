@@ -40,6 +40,7 @@ import com.powsybl.sld.server.utils.DiagramConstants;
 import com.powsybl.sld.server.utils.NadPositionsGenerationMode;
 import com.powsybl.sld.server.utils.SldDisplayMode;
 import com.powsybl.sld.svg.FeederInfo;
+import com.powsybl.sld.svg.GraphMetadata;
 import com.powsybl.sld.svg.SvgParameters;
 import com.powsybl.sld.svg.styles.NominalVoltageStyleProvider;
 import com.powsybl.ws.commons.error.BaseExceptionHandler;
@@ -59,11 +60,17 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.server.ResponseStatusException;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.IntStream;
 
 import static com.powsybl.sld.library.SldComponentTypeName.ARROW_ACTIVE;
 import static com.powsybl.sld.library.SldComponentTypeName.ARROW_REACTIVE;
@@ -815,6 +822,67 @@ class SingleLineDiagramTest {
     }
 
     @Test
+    void testNetworkAreaDiagramExtensionOfMissingVoltageLevel() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetworkWithDepth());
+
+        // A voltage level of the diagram can be missing from this network: it is skipped and the others are expanded
+        String result = drawNetworkAreaDiagram(testNetworkId, NadRequestInfos.builder()
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Set.of("vlFr1A", "missingVl"))
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .build());
+        assertTrue(result.contains("\"additionalMetadata\":{\"nbVoltageLevels\":2"));
+        assertTrue(result.contains("{\"id\":\"vlFr1A\",\"name\":\"vlFr1A\",\"substationId\":\"subFr1\""));
+        assertTrue(result.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+    }
+
+    @Test
+    void testNetworkAreaDiagramExtensionWithFilter() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        UUID filterUuid = UUID.randomUUID();
+        UUID wideFilterUuid = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetworkWithDepth());
+        given(filterService.exportFilter(testNetworkId, null, filterUuid)).willReturn(List.of(
+                new IdentifiableAttributes("vlFr1A", IdentifiableType.VOLTAGE_LEVEL, null)));
+        given(filterService.exportFilter(testNetworkId, null, wideFilterUuid)).willReturn(List.of(
+                new IdentifiableAttributes("vlFr1A", IdentifiableType.VOLTAGE_LEVEL, null),
+                new IdentifiableAttributes("vlFr2A", IdentifiableType.VOLTAGE_LEVEL, null)));
+
+        // vlFr2A, neighbour of vlFr1A, does not match the filter: a diagram showing it only shows what it matches
+        String result = drawNetworkAreaDiagram(testNetworkId, NadRequestInfos.builder()
+                .filterUuid(filterUuid)
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Set.of("vlFr1A"))
+                .voltageLevelToOmitIds(Collections.emptySet())
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .build());
+        assertTrue(result.contains("\"additionalMetadata\":{\"nbVoltageLevels\":1"));
+
+        // vlFr2A matches the filter but is hidden: the expansion shows it again
+        result = drawNetworkAreaDiagram(testNetworkId, NadRequestInfos.builder()
+                .filterUuid(wideFilterUuid)
+                .voltageLevelIds(Collections.emptySet())
+                .voltageLevelToExpandIds(Set.of("vlFr1A"))
+                .voltageLevelToOmitIds(Set.of("vlFr2A"))
+                .nadPositionsGenerationMode(NadPositionsGenerationMode.AUTOMATIC)
+                .build());
+        assertTrue(result.contains("\"additionalMetadata\":{\"nbVoltageLevels\":2"));
+        assertTrue(result.contains("{\"id\":\"vlFr2A\",\"name\":\"vlFr2A\",\"substationId\":\"subFr2\""));
+    }
+
+    private String drawNetworkAreaDiagram(UUID networkUuid, NadRequestInfos nadRequestInfos) throws Exception {
+        ResultActions mockMvcResultActions = mvc.perform(post("/v1/network-area-diagram/{networkUuid}", networkUuid)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(nadRequestInfos)))
+                .andExpect(request().asyncStarted());
+        return mvc.perform(asyncDispatch(mockMvcResultActions.andReturn()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+    }
+
+    @Test
     void testNetworkAreaDiagramWithViolationDefaultClass() throws Exception {
         UUID testNetworkId = UUID.randomUUID();
         given(networkStoreService.getNetwork(testNetworkId, PreloadingStrategy.COLLECTION)).willReturn(createNetwork());
@@ -1017,7 +1085,7 @@ class SingleLineDiagramTest {
     }
 
     @Test
-    void testSingleLineDiagramWithMeasurementData() {
+    void testSingleLineDiagramWithMeasurementData() throws Exception {
         UUID testNetworkId = UUID.randomUUID();
         Network network = createTwoVoltageLevels();
         Generator generator = network.getGenerator("g11");
@@ -1027,6 +1095,12 @@ class SingleLineDiagramTest {
                 .setId("active-power-measurement")
                 .setType(Measurement.Type.ACTIVE_POWER)
                 .setValue(15D)
+                .setValid(true)
+                .add();
+        measurements.newMeasurement()
+                .setId("voltage-measurement")
+                .setType(Measurement.Type.VOLTAGE)
+                .setValue(225.123D)
                 .setValid(true)
                 .add();
         given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(network);
@@ -1041,7 +1115,55 @@ class SingleLineDiagramTest {
         SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
         String svg = svgAndMetadata.getSvg();
         assertNotNull(svg);
-        assertTrue(svg.contains("sld-measurement-valid"));
+        List<Element> feederInfoGroups = getFeederInfoGroups(svgAndMetadata, generator.getId());
+        assertEquals(5, feederInfoGroups.size());
+        assertEquals(List.of("—", "15", "—", "—", "225.1"), feederInfoGroups.stream()
+                .map(group -> group.getElementsByTagName("text").item(0).getTextContent()).toList());
+        assertEquals(List.of(List.of(), List.of("sld-measurement-valid"), List.of(), List.of(),
+                        List.of("sld-measurement-valid")),
+                feederInfoGroups.stream()
+                        .map(group -> Arrays.stream(group.getAttribute("class").split("\\s+"))
+                                .filter(style -> style.startsWith("sld-measurement-")).toList())
+                        .toList());
+    }
+
+    @Test
+    void testSingleLineDiagramWithoutMeasurementExtensions() throws Exception {
+        UUID testNetworkId = UUID.randomUUID();
+        given(networkStoreService.getNetwork(testNetworkId, null)).willReturn(createTwoVoltageLevels());
+        SldRequestInfos requestInfos = new SldRequestInfos();
+        requestInfos.setCurrentLimitViolationsInfos(List.of());
+        requestInfos.setMeasurements(true);
+
+        SvgAndMetadata svgAndMetadata = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
+
+        List<Element> feederInfoGroups = getFeederInfoGroups(svgAndMetadata, "g11");
+        assertEquals(4, feederInfoGroups.size());
+        List<Element> measurementGroups = feederInfoGroups.subList(3, 4);
+        for (Element group : measurementGroups) {
+            assertTrue(Arrays.stream(group.getAttribute("class").split("\\s+"))
+                    .noneMatch(style -> style.startsWith("sld-measurement-")));
+            assertEquals("—", group.getElementsByTagName("text").item(0).getTextContent());
+        }
+
+        requestInfos.setMeasurements(false);
+        SvgAndMetadata defaultDiagram = singleLineDiagramService.generateSvgAndMetadata(testNetworkId, null, "vl1", requestInfos);
+        assertEquals(3, getFeederInfoGroups(defaultDiagram, "g11").size());
+    }
+
+    private static List<Element> getFeederInfoGroups(SvgAndMetadata svgAndMetadata, String equipmentId) throws Exception {
+        GraphMetadata metadata = GraphMetadata.parseJson(new StringReader(svgAndMetadata.getMetadata()));
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        NodeList groups = factory.newDocumentBuilder().parse(new InputSource(new StringReader(svgAndMetadata.getSvg()))).getElementsByTagName("g");
+        // Feeder-info IDs can repeat; use metadata to resolve ownership, not to select a single SVG group.
+        return IntStream.range(0, groups.getLength())
+                .mapToObj(index -> (Element) groups.item(index))
+                .filter(group -> {
+                    GraphMetadata.FeederInfoMetadata feederInfo = metadata.getFeederInfoMetadata(group.getAttribute("id"));
+                    return feederInfo != null && equipmentId.equals(feederInfo.equipmentId());
+                })
+                .toList();
     }
 
     @Test

@@ -12,9 +12,12 @@ import com.powsybl.sld.svg.LabelProvider;
 import com.powsybl.sld.svg.ValueFeederInfo;
 import lombok.Getter;
 
-import java.util.function.BiFunction;
+import java.util.function.DoubleFunction;
 
 /**
+ * Measurement value and display state. Missing measurements are distinguished explicitly from
+ * existing invalid measurements, which can also have an undefined value.
+ *
  * @author Kamil MARUT {@literal <kamil.marut at rte-france.com>}
  */
 @Getter
@@ -22,12 +25,34 @@ public class MeasurementFeederInfo extends ValueFeederInfo {
 
     private final boolean isValid;
     private final boolean isCritical;
+    private final boolean isMissing;
+    private final DoubleFunction<String> formatter;
 
     public MeasurementFeederInfo(String componentType, LabelProvider.LabelDirection labelDirection,
-                                 double value, String unit, BiFunction<Double, String, String> formatter,
+                                 double value, DoubleFunction<String> formatter,
                                  boolean isValid, boolean isCritical) {
-        super(componentType, labelDirection, value, unit, formatter);
+        this(componentType, labelDirection, value, formatter, isValid, isCritical, false);
+    }
+
+    MeasurementFeederInfo(String componentType, LabelProvider.LabelDirection labelDirection,
+                          double value, DoubleFunction<String> formatter,
+                          boolean isValid, boolean isCritical, boolean isMissing) {
+        super(componentType, labelDirection, value, formatter);
         this.isValid = isValid;
         this.isCritical = isCritical;
+        this.isMissing = isMissing;
+        this.formatter = formatter;
+    }
+
+    public MeasurementFeederInfo(String measurementComponentType, double measurementValue, DoubleFunction<String> measurementFormatter, boolean measurementValidity, boolean measurementCriticality) {
+        super(measurementComponentType, measurementValue, measurementFormatter);
+        this.isValid = measurementValidity;
+        this.isCritical = measurementCriticality;
+        this.isMissing = false;
+        this.formatter = measurementFormatter;
+    }
+
+    MeasurementFeederInfo withDirection(LabelProvider.LabelDirection newDirection) {
+        return new MeasurementFeederInfo(getComponentType(), newDirection, getValue(), formatter, isValid, isCritical, isMissing);
     }
 }
