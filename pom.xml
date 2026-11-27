@@ -58,7 +58,7 @@
         <liquibase-hibernate-package>com.powsybl.sld.server</liquibase-hibernate-package>
         <powsybl-ws-dependencies.version>2.35.0-SNAPSHOT</powsybl-ws-dependencies.version>
         <!-- FIXME remove this in the next powsybl release update -->
-        <powsybl-network-store.version>1.52.0-SNAPSHOT</powsybl-network-store.version>
+        <powsybl-network-store.version>1.54.0-SNAPSHOT</powsybl-network-store.version>
         <supercsv.version>2.4.0</supercsv.version>
         <sonar.organization>powsybl-ci-github</sonar.organization>
         <sonar.projectKey>com.powsybl:powsybl-single-line-diagram-server</sonar.projectKey>
